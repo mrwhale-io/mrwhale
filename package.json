@@ -1,0 +1,22 @@
+{
+  "name": "@mrwhale/mrwhale",
+  "version": "0.1.0",
+  "main": "./dist/index.js",
+  "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "chalk": "^4.1.0",
+    "cleverbot-node": "^0.3.11",
+    "d20": "^1.4.1",
+    "glob": "^7.1.6",
+    "moment": "^2.27.0",
+    "reflect-metadata": "^0.1.13",
+    "translate-google": "^1.4.2",
+    "wikijs": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.14",
+    "typescript": "^3.9.6"
+  }
+}
