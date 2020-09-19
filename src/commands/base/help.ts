@@ -57,8 +57,6 @@ export default class extends Command {
     );
     content.insertNewNode(listNode);
 
-    console.log(content.contentJson());
-
     return message.reply(content);
   }
 }
