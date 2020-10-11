@@ -1,4 +1,4 @@
-import { Message } from "@mrwhale-io/gamejolt";
+import { Message, Content } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { Command } from "./command";
@@ -17,7 +17,13 @@ export class CommandDispatcher {
     if (message.user.id === this.client.userId || !this.ready) {
       return;
     }
+
     const prefix = this.client.prefix;
+
+    if (!message.textContent.trim().startsWith(prefix)) {
+      return;
+    }
+
     const commandName: string = message.textContent
       .trim()
       .slice(prefix.length)
@@ -29,6 +35,10 @@ export class CommandDispatcher {
     );
 
     if (!command) {
+      const content = new Content();
+      content.insertText("Could not find this command.");
+      message.reply(content);
+
       return;
     }
 
