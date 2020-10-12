@@ -9,6 +9,7 @@
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
     "d20": "^1.4.1",
+    "figlet": "^1.5.0",
     "glob": "^7.1.6",
     "moment": "^2.27.0",
     "reflect-metadata": "^0.1.13",
@@ -16,6 +17,7 @@
     "wikijs": "^6.0.1"
   },
   "devDependencies": {
+    "@types/figlet": "^1.2.0",
     "@types/node": "^14.0.14",
     "typescript": "^3.9.6"
   }
