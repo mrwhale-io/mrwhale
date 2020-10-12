@@ -29,6 +29,8 @@ export class BotClient extends Client {
   private readonly friendRequestManager: FriendRequestManager;
   private readonly replyManager: ReplyManager;
   private readonly cleverbotManager: CleverbotManager;
+  private readonly greetingsManager: GreetingsManager;
+  private readonly urlManager: UrlManager;
 
   constructor(clientOptions: ClientOptions, botOptions: BotOptions) {
     super(clientOptions);
