@@ -4,7 +4,11 @@
   "main": "./dist/index.js",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "license": "MIT",
+  "scripts": {
+    "start": "tsc && node dist/index.js"
+  },
   "dependencies": {
+    "@mrwhale-io/gamejolt": "git+https://github.com/mrwhale-io/gamejolt.git",
     "axios": "^0.19.2",
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
