@@ -1,6 +1,12 @@
 import * as moment from "moment";
 import * as chalk from "chalk";
-import { Client, ClientOptions, Message, User } from "@mrwhale-io/gamejolt";
+import {
+  Client,
+  ClientOptions,
+  Message,
+  User,
+  Content,
+} from "@mrwhale-io/gamejolt";
 
 import { BotOptions } from "./types/bot-options";
 import { Command } from "./commands/command";
@@ -11,6 +17,7 @@ import { FriendRequestManager } from "./managers/friend-request-manager";
 import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
 import { Timer } from "./timer";
+import { UrlManager } from "./managers/url-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -20,7 +27,7 @@ export class BotClient extends Client {
   startTime: number;
 
   get uptime() {
-    return Date.now() - this.startTime;
+    return Date.now() - this.chat.startTime;
   }
 
   private timeouts: Set<NodeJS.Timer>;
@@ -44,6 +51,7 @@ export class BotClient extends Client {
     this.commandLoader.loadCommands();
     this.friendRequestManager = new FriendRequestManager(this);
     this.replyManager = new ReplyManager(this);
+    this.urlManager = new UrlManager(this);
 
     if (botOptions.cleverbotToken) {
       /*this.cleverbotManager = new CleverbotManager(
