@@ -9,7 +9,7 @@ export default class extends Command {
     super({
       name: "hangman",
       description: "Play a classic game of hangman.",
-      usage: "<prefix> hangman <start|guess|end>",
+      usage: "<prefix>hangman <start|guess|end>",
       argSeparator: " ",
     });
     this.games = new Map<number, HangmanGame>();
