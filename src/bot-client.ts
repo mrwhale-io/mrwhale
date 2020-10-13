@@ -97,6 +97,18 @@ export class BotClient extends Client {
     }
   }
 
+  @on("member_add")
+  protected onMemberAdd(data: { room_id: number; members: User[] }) {
+    if (data.members) {
+      const content = new Content();
+      const members = data.members
+        .map((member) => member.display_name)
+        .join(", ");
+      content.insertText(`${members} was just added to the group.`);
+      this.chat.sendMessage(content.contentJson(), data.room_id);
+    }
+  }
+
   private logMessage(msg: Message) {
     const timestamp = moment().format("hh:mm");
     const user = msg.user;
