@@ -10,6 +10,7 @@ import { ListenerDecorators } from "./util/listener-decorators";
 import { FriendRequestManager } from "./managers/friend-request-manager";
 import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
+import { Timer } from "./timer";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -57,6 +58,19 @@ export class BotClient extends Client {
   @once("chat_ready")
   protected async onChatReady() {
     this.commandDispatcher.ready = true;
+
+    const interval = 0.2;
+    const roomIds = this.chat.groupChats.map((group) => group.id);
+    const timer = new Timer(this, "join-groups", interval, async () => {
+      if (roomIds.length > 0) {
+        const roomId = roomIds.shift();
+        console.log(`Joining group chat: ${roomId}`);
+        this.chat.joinRoom(roomId);
+      } else {
+        timer.destroy();
+      }
+    });
+
     this.emit("client_ready");
   }
 
