@@ -45,10 +45,10 @@ export class BotClient extends Client {
     this.replyManager = new ReplyManager(this);
 
     if (botOptions.cleverbotToken) {
-      this.cleverbotManager = new CleverbotManager(
+      /*this.cleverbotManager = new CleverbotManager(
         this,
         botOptions.cleverbotToken
-      );
+      );*/
     }
 
     registerListeners(this);
