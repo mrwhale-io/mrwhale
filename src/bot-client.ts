@@ -37,7 +37,6 @@ export class BotClient extends Client {
   private readonly friendRequestManager: FriendRequestManager;
   private readonly replyManager: ReplyManager;
   private readonly cleverbotManager: CleverbotManager;
-  private readonly greetingsManager: GreetingsManager;
   private readonly urlManager: UrlManager;
 
   constructor(clientOptions: ClientOptions, botOptions: BotOptions) {
@@ -52,6 +51,7 @@ export class BotClient extends Client {
     this.friendRequestManager = new FriendRequestManager(this);
     this.replyManager = new ReplyManager(this);
     this.urlManager = new UrlManager(this);
+    // this.greetingsManager = new GreetingsManager(this);
 
     if (botOptions.cleverbotToken) {
       /*this.cleverbotManager = new CleverbotManager(
