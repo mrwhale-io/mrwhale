@@ -17,6 +17,7 @@
     "glob": "^7.1.6",
     "mathjs": "^7.5.1",
     "moment": "^2.27.0",
+    "profanity-util": "^0.2.0",
     "reflect-metadata": "^0.1.13",
     "sqlite3": "^5.0.0",
     "translate-google": "^1.4.2",

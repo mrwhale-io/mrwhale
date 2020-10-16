@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Content, Message } from "@mrwhale-io/gamejolt";
+import * as profanity from "profanity-util";
 
 import { Command } from "../command";
 
@@ -30,7 +31,9 @@ export default class extends Command {
       return message.reply(content);
     }
 
-    content.insertText(`${phrase} - ${result.data.list[0].definition}`);
+    content.insertText(
+      `${phrase} - ${profanity.purify(result.data.list[0].definition)[0]}`
+    );
 
     return message.reply(content);
   }
