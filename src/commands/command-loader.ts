@@ -22,10 +22,10 @@ export class CommandLoader {
 
     const files: string[] = [];
 
-    files.push(...glob.sync(`${path.join(__dirname, "./base")}/**/*.js`));
+    files.push(...glob.sync(`${path.join(__dirname, "./base")}/**/*.ts`));
 
     for (const file of files) {
-      const commandLocation = file.replace(".js", "");
+      const commandLocation = file.replace(".ts", "");
       const loadedCommand: any = this.loadCommand(commandLocation);
       const command: Command = new loadedCommand();
 

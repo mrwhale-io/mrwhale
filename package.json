@@ -5,7 +5,7 @@
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "license": "MIT",
   "scripts": {
-    "start": "tsc && node dist/index.js"
+    "start": "ts-node src/index.ts"
   },
   "dependencies": {
     "@mrwhale-io/gamejolt": "git+https://github.com/mrwhale-io/gamejolt.git",
