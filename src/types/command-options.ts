@@ -3,4 +3,5 @@ export interface CommandOptions {
   description: string;
   usage: string;
   argSeparator?: string;
+  groupOnly?: boolean;
 }

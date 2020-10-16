@@ -9,6 +9,7 @@ export abstract class Command {
   usage: string;
   argSeparator: string;
   commandLocation: string;
+  groupOnly: boolean;
 
   client: BotClient;
 
@@ -17,6 +18,7 @@ export abstract class Command {
     this.description = options.description;
     this.usage = options.usage;
     this.argSeparator = options.argSeparator || ",";
+    this.groupOnly = options.groupOnly || false;
   }
 
   /**

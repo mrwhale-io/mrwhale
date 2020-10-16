@@ -42,6 +42,16 @@ export class CommandDispatcher {
       return;
     }
 
+    if (
+      command.groupOnly &&
+      this.client.chat.friendsList.getByRoom(message.room_id)
+    ) {
+      const content = new Content();
+      content.insertText("This is a group only command.");
+
+      message.reply(content);
+    }
+
     const args: string[] = message.textContent
       .replace(prefix, "")
       .replace(commandName, "")
