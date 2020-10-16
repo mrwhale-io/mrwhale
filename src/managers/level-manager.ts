@@ -80,7 +80,7 @@ export class LevelManager {
   @on("message")
   protected async onMessage(message: Message) {
     if (
-      message.user.id === this.client.userId &&
+      message.user.id === this.client.userId ||
       this.client.chat.friendsList.getByRoom(message.room_id)
     ) {
       return;
