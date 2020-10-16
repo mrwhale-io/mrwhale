@@ -79,13 +79,14 @@ export class LevelManager {
 
   @on("message")
   protected async onMessage(message: Message) {
-    if (message.user.id === this.client.userId) {
+    if (
+      message.user.id === this.client.userId &&
+      this.client.chat.friendsList.getByRoom(message.room_id)
+    ) {
       return;
     }
 
     const timeForExp = this.isTimeForExp(message.room_id, message.user.id);
-
-    console.log(LevelManager.getLevelFromExp(120));
 
     if (!timeForExp) {
       return;
@@ -96,9 +97,6 @@ export class LevelManager {
     const expGained = this.getRandomExp(15, 25);
     const score = await this.getScore(message.user.id, message.room_id);
     const level = LevelManager.getLevelFromExp(score.exp);
-
-    console.log(score);
-    console.log(LevelManager.getLevelFromExp(level));
 
     score.exp += expGained;
     Database.connection.getRepository(Score).save(score);
