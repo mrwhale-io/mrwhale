@@ -49,7 +49,7 @@ export class CommandDispatcher {
       const content = new Content();
       content.insertText("This is a group only command.");
 
-      message.reply(content);
+      return message.reply(content);
     }
 
     const args: string[] = message.textContent
