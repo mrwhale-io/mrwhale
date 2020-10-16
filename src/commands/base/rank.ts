@@ -21,6 +21,12 @@ export default class extends Command {
         .getRepository(Score)
         .findOne({ roomId: message.room_id, userId: message.user.id });
 
+      if (!score) {
+        content.insertText(`You are unranked.`);
+
+        return message.reply(content);
+      }
+
       const scores: Score[] = await Database.connection
         .getRepository(Score)
         .find({ roomId: message.room_id });
