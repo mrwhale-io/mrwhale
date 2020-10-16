@@ -18,6 +18,8 @@ import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
 import { Timer } from "./timer";
 import { UrlManager } from "./managers/url-manager";
+import { Database } from "./database/database";
+import { LevelManager } from "./managers/level-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -38,6 +40,7 @@ export class BotClient extends Client {
   private readonly replyManager: ReplyManager;
   private readonly cleverbotManager: CleverbotManager;
   private readonly urlManager: UrlManager;
+  private readonly levelManager: LevelManager;
 
   constructor(clientOptions: ClientOptions, botOptions: BotOptions) {
     super(clientOptions);
@@ -51,7 +54,7 @@ export class BotClient extends Client {
     this.friendRequestManager = new FriendRequestManager(this);
     this.replyManager = new ReplyManager(this);
     this.urlManager = new UrlManager(this);
-    // this.greetingsManager = new GreetingsManager(this);
+    this.levelManager = new LevelManager(this);
 
     if (botOptions.cleverbotToken) {
       /*this.cleverbotManager = new CleverbotManager(
@@ -88,6 +91,8 @@ export class BotClient extends Client {
     console.log(
       `Client ready! Connected as @${this.chat.currentUser.username}`
     );
+
+    await Database.instance().init();
   }
 
   @on("message")
