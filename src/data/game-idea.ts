@@ -77,13 +77,12 @@ export const environments = [
 ];
 
 export const rules = [
-  "Can only move forward",
-  "Avoid Unkillable objects",
-  "Instant death",
-  "Limited time",
-  "Avoiding Unkillable Objects",
-  "Increasing difficulty until player dies",
-  "Limited inventory",
-  "Gravity",
-  "Bounce off walls"
+  "can only move forward",
+  "avoid Unkillable objects",
+  "instant death",
+  "limited time",
+  "increasing difficulty until player dies",
+  "limited inventory",
+  "dravity",
+  "bounce off walls",
 ];
