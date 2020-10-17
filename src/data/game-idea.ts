@@ -83,6 +83,6 @@ export const rules = [
   "limited time",
   "increasing difficulty until player dies",
   "limited inventory",
-  "dravity",
+  "gravity",
   "bounce off walls",
 ];
