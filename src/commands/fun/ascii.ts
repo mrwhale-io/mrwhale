@@ -11,6 +11,7 @@ export default class extends Command {
     super({
       name: "ascii",
       description: "Generate ascii.",
+      type: "fun",
       usage: "<prefix>ascii <text>",
     });
   }

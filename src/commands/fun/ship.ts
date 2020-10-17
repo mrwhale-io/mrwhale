@@ -8,6 +8,7 @@ export default class extends Command {
     super({
       name: "ship",
       description: "Find out how compatible two users are.",
+      type: "fun",
       usage: "<prefix>ship person1, person2",
     });
   }

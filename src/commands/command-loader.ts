@@ -21,8 +21,13 @@ export class CommandLoader {
     }
 
     const files: string[] = [];
+    const directories = ["fun", "game", "info", "useful"];
 
-    files.push(...glob.sync(`${path.join(__dirname, "./base")}/**/*.ts`));
+    for (const directory of directories) {
+      files.push(
+        ...glob.sync(`${path.join(__dirname, `./${directory}`)}/*.ts`)
+      );
+    }
 
     for (const file of files) {
       const commandLocation = file.replace(".ts", "");

@@ -10,6 +10,7 @@ export default class extends Command {
       name: "hangman",
       description: "Play a classic game of hangman.",
       usage: "<prefix>hangman <start|guess|end>",
+      type: "game",
       argSeparator: " ",
     });
     this.games = new Map<number, HangmanGame>();

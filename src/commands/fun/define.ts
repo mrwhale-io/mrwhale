@@ -9,6 +9,7 @@ export default class extends Command {
     super({
       name: "define",
       description: "Define a word or phrase.",
+      type: "fun",
       usage: "<prefix>define <word>",
     });
   }

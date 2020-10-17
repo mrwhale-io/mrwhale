@@ -8,6 +8,7 @@ export default class extends Command {
     super({
       name: "calculate",
       description: "A calculator.",
+      type: "useful",
       usage: "<prefix>calculate <calculation>",
     });
   }

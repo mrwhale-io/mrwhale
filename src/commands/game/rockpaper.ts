@@ -7,6 +7,7 @@ export default class extends Command {
     super({
       name: "rockpaper",
       description: "Rock. Paper. Scissors.",
+      type: "game",
       usage: "<prefix>rockpaper <rock|paper|scissors>",
     });
   }

@@ -9,6 +9,7 @@ export default class extends Command {
     super({
       name: "wiki",
       description: "Search for a Wiki page.",
+      type: "useful",
       usage: "<prefix>wiki <query>",
     });
   }

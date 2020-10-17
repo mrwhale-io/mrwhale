@@ -7,6 +7,7 @@ export default class extends Command {
     super({
       name: "conchshell",
       description: "Ask the magic conchshell a question.",
+      type: "fun",
       usage: "<prefix>conchshell",
     });
   }

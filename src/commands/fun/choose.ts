@@ -22,6 +22,7 @@ export default class extends Command {
     super({
       name: "choose",
       description: "Choose between one or multiple choices.",
+      "type": "fun",
       usage: "<prefix>choose <choice> or <choice> ...",
     });
   }

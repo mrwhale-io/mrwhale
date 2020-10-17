@@ -8,6 +8,7 @@ export default class extends Command {
     super({
       name: "roll",
       description: "Roll one or multiple dice.",
+      type: "fun",
       usage: "<prefix>roll [n sides] or [n dice] d[n sides]",
     });
   }

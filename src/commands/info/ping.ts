@@ -7,6 +7,7 @@ export default class extends Command {
     super({
       name: "ping",
       description: "Sends back a pong response.",
+      type: "info",
       usage: "<prefix>ping",
     });
   }

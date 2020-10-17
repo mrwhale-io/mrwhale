@@ -8,6 +8,7 @@ export default class extends Command {
     super({
       name: "chucknorris",
       description: "Get a random Chuck Norris joke.",
+      type: "fun",
       usage: "<prefix>chucknorris <firstname> <lastname> <category>",
     });
   }

@@ -7,6 +7,7 @@ export default class extends Command {
     super({
       name: "help",
       description: "Get command help.",
+      type: "info",
       usage: "<prefix>help",
     });
   }
@@ -22,8 +23,8 @@ export default class extends Command {
 
       if (cmd) {
         const contentText = content.state.schema.text(
-          `Name: ${cmd.name}\nDescription: ${
-            cmd.description
+          `Name: ${cmd.name}\nDescription: ${cmd.description}\nType: ${
+            cmd.type
           }\nUsage: ${cmd.usage.replace(/<prefix>/g, this.client.prefix)}`
         );
         const node = content.schema.nodes.codeBlock.create({}, [contentText]);

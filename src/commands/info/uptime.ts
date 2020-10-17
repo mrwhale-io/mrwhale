@@ -8,6 +8,7 @@ export default class extends Command {
     super({
       name: "uptime",
       description: "Get the time the bot has been up without downtime.",
+      type: "info",
       usage: "<prefix>uptime",
     });
   }

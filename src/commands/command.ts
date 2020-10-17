@@ -2,10 +2,12 @@ import { Message } from "@mrwhale-io/gamejolt";
 
 import { CommandOptions } from "../types/command-options";
 import { BotClient } from "../bot-client";
+import { CommandTypes } from "../types/command-types";
 
 export abstract class Command {
   name: string;
   description: string;
+  type: CommandTypes;
   usage: string;
   argSeparator: string;
   commandLocation: string;
@@ -16,6 +18,7 @@ export abstract class Command {
   constructor(options: CommandOptions) {
     this.name = options.name;
     this.description = options.description;
+    this.type = options.type;
     this.usage = options.usage;
     this.argSeparator = options.argSeparator || ",";
     this.groupOnly = options.groupOnly || false;
