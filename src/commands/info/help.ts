@@ -22,13 +22,11 @@ export default class extends Command {
       );
 
       if (cmd) {
-        const contentText = content.state.schema.text(
+        content.insertCodeBlock(
           `Name: ${cmd.name}\nDescription: ${cmd.description}\nType: ${
             cmd.type
           }\nUsage: ${cmd.usage.replace(/<prefix>/g, this.client.prefix)}`
         );
-        const node = content.schema.nodes.codeBlock.create({}, [contentText]);
-        content.insertNewNode(node);
 
         return message.reply(content);
       }
@@ -38,23 +36,13 @@ export default class extends Command {
 
     let listItemNodes = [];
     for (let cmd of commands) {
-      const contentText = content.state.schema.text(
-        `${cmd.name} - ${cmd.description}`
-      );
-      const contentNode = content.state.schema.nodes.paragraph.create({}, [
-        contentText,
-      ]);
+      const contentText = content.textNode(`${cmd.name} - ${cmd.description}`);
+      const contentNode = content.paragraphNode(contentText);
 
-      listItemNodes.push(
-        content.state.schema.nodes.listItem.create({}, [contentNode])
-      );
+      listItemNodes.push(content.listItemNode(contentNode));
     }
 
-    const listNode = content.state.schema.nodes.bulletList.create(
-      {},
-      listItemNodes
-    );
-    content.insertNewNode(listNode);
+    content.insertBulletList(listItemNodes);
 
     return message.reply(content);
   }

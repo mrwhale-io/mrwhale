@@ -19,25 +19,17 @@ export default class extends Command {
     const languages = translate.languages;
 
     for (let language in languages) {
-      const contentText = content.state.schema.text(language);
-      const contentNode = content.state.schema.nodes.paragraph.create({}, [
-        contentText,
-      ]);
+      const contentText = content.textNode(language);
+      const contentNode = content.paragraphNode(contentText);
 
-      listItemNodes.push(
-        content.state.schema.nodes.listItem.create({}, [contentNode])
-      );
+      listItemNodes.push(content.listItemNode(contentNode));
 
       if (language === "zu") {
         break;
       }
     }
 
-    const listNode = content.state.schema.nodes.bulletList.create(
-      {},
-      listItemNodes
-    );
-    content.insertNewNode(listNode);
+    content.insertBulletList(listItemNodes);
 
     return message.reply(content);
   }

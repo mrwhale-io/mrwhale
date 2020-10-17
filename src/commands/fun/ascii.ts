@@ -21,12 +21,8 @@ export default class extends Command {
       return message.reply("Please provide some text.");
     }
 
-    const content = new Content();
     const rendered = await figletAsync(text);
-
-    const contentText = content.state.schema.text(`${rendered}`);
-    const node = content.schema.nodes.codeBlock.create({}, [contentText]);
-    content.insertNewNode(node);
+    const content = new Content().insertCodeBlock(`${rendered}`);
 
     return message.reply(content);
   }

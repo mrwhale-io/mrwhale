@@ -55,11 +55,8 @@ export default class extends Command {
           level: 0,
           rank: "n/a",
         };
-        const contentText = content.state.schema.text(
-          this.getRankInfo(scores, info)
-        );
-        const node = content.schema.nodes.codeBlock.create({}, [contentText]);
-        content.insertNewNode(node);
+
+        content.insertCodeBlock(this.getRankInfo(scores, info));
 
         return message.reply(content);
       }
@@ -80,11 +77,7 @@ export default class extends Command {
         rank: playerSorted.findIndex((p) => p.userId === message.user.id) + 1,
       };
 
-      const contentText = content.state.schema.text(
-        this.getRankInfo(playerSorted, info)
-      );
-      const node = content.schema.nodes.codeBlock.create({}, [contentText]);
-      content.insertNewNode(node);
+      content.insertCodeBlock(this.getRankInfo(playerSorted, info));
 
       return message.reply(content);
     } catch {
