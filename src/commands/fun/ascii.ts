@@ -17,12 +17,11 @@ export default class extends Command {
   }
 
   async action(message: Message, [text]: [string]) {
-    const content = new Content();
     if (!text) {
-      content.insertText("Please provide some text.");
-      return message.reply(content);
+      return message.reply("Please provide some text.");
     }
 
+    const content = new Content();
     const rendered = await figletAsync(text);
 
     const contentText = content.state.schema.text(`${rendered}`);

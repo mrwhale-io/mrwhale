@@ -88,9 +88,7 @@ export default class extends Command {
 
       return message.reply(content);
     } catch {
-      content.insertText(`An error occured while fetching rank.`);
-
-      return message.reply(content);
+      return message.reply(`An error occured while fetching rank.`);
     }
   }
 }

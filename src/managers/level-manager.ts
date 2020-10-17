@@ -1,4 +1,4 @@
-import { Message, Content } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
@@ -104,13 +104,9 @@ export class LevelManager {
     const newLevel = LevelManager.getLevelFromExp(score.exp);
 
     if (newLevel > level) {
-      const content = new Content();
-
-      content.insertText(
+      return message.reply(
         `Congrats ${message.user.display_name}, you just advanced to level ${newLevel}!`
       );
-
-      return message.reply(content);
     }
   }
 }

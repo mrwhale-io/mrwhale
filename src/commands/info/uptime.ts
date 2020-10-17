@@ -1,4 +1,4 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 import { TimeUtilities } from "../../util/time";
@@ -14,10 +14,8 @@ export default class extends Command {
   }
 
   async action(message: Message) {
-    const uptime = TimeUtilities.convertMs(this.client.uptime);
-    const content = new Content();
-    content.insertText(`I have been up ${uptime.toString()}`);
-
-    return message.reply(content);
+    return message.reply(
+      `I have been up ${TimeUtilities.convertMs(this.client.uptime).toString()}`
+    );
   }
 }

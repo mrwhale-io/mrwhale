@@ -33,9 +33,7 @@ export default class extends Command {
         return message.reply(content);
       }
 
-      content.insertText("Could not find this command");
-
-      return message.reply(content);
+      return message.reply("Could not find this command");
     }
 
     let listItemNodes = [];

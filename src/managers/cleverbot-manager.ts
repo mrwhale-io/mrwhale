@@ -1,4 +1,4 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
@@ -47,11 +47,8 @@ export class CleverbotManager {
 
     if (!hasCommand && message.isMentioned) {
       const response = await this.cleverbot.speak(message);
-      const content = new Content();
 
-      content.insertText(response);
-
-      return message.reply(content);
+      return message.reply(response);
     }
   }
 }

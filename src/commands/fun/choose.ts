@@ -1,4 +1,4 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -22,7 +22,7 @@ export default class extends Command {
     super({
       name: "choose",
       description: "Choose between one or multiple choices.",
-      "type": "fun",
+      type: "fun",
       usage: "<prefix>choose <choice> or <choice> ...",
     });
   }
@@ -36,10 +36,8 @@ export default class extends Command {
   }
 
   async action(message: Message, [choices]: [string]) {
-    const content = new Content();
     if (!choices) {
-      content.insertText("No choices have been passed.");
-      return message.reply(content);
+      return message.reply("No choices have been passed.");
     }
 
     const options = choices.split(" or ");
@@ -47,12 +45,10 @@ export default class extends Command {
     if (options.length > 1) {
       const index = Math.floor(Math.random() * responses.length);
       const choice = this.multiDecide(options);
-      content.insertText(responses[index].replace(/<<CHOICE>>/g, choice));
 
-      return message.reply(content);
+      return message.reply(responses[index].replace(/<<CHOICE>>/g, choice));
     } else {
-      content.insertText("Please pass two or more choices.");
-      return message.reply(content);
+      return message.reply("Please pass two or more choices.");
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -13,7 +13,6 @@ export default class extends Command {
   }
 
   async action(message: Message) {
-    const content = new Content();
     const conchShellResponses = [
       `I don't think so.`,
       `Yes.`,
@@ -25,18 +24,15 @@ export default class extends Command {
     if (
       message.textContent.match(/w(?:o|u|ha)t\s(?:do|to|(?:sh|w)ould)[\s\S]*/gi)
     ) {
-      content.insertText(`🐚 Nothing.`);
-      return message.reply(content);
+      return message.reply(`🐚 Nothing.`);
     }
 
     if (
       message.textContent.match(/(will\si\s(?:ever)?\s*get\smarried(\?*))/gi)
     ) {
-      content.insertText(`🐚 Maybe someday.`);
-      return message.reply(content);
+      return message.reply(`🐚 Maybe someday.`);
     }
-    content.insertText(`🐚 ${conchShellResponses[index]}`);
 
-    return message.reply(content);
+    return message.reply(`🐚 ${conchShellResponses[index]}`);
   }
 }

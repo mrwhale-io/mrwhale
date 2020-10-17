@@ -19,7 +19,6 @@ export class CommandDispatcher {
     }
 
     const prefix = this.client.prefix;
-
     if (!message.textContent.trim().startsWith(prefix)) {
       return;
     }
@@ -35,21 +34,14 @@ export class CommandDispatcher {
     );
 
     if (!command) {
-      const content = new Content();
-      content.insertText("Could not find this command.");
-      message.reply(content);
-
-      return;
+      return message.reply("Could not find this command.");
     }
 
     if (
       command.groupOnly &&
       this.client.chat.friendsList.getByRoom(message.room_id)
     ) {
-      const content = new Content();
-      content.insertText("This is a group only command.");
-
-      return message.reply(content);
+      return message.reply("This is a group only command.");
     }
 
     const args: string[] = message.textContent

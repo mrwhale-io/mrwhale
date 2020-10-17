@@ -1,4 +1,4 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 import * as math from "mathjs";
 
 import { Command } from "../command";
@@ -21,22 +21,16 @@ export default class extends Command {
   }
 
   async action(message: Message, [expression]: [string]) {
-    const content = new Content();
-
     if (!expression) {
-      content.insertText("Please enter a calculation.");
-      return message.reply(content);
+      return message.reply("Please enter a calculation.");
     }
 
     try {
       let result = math.evaluate(this.replaceOperations(expression));
-      content.insertText(result.toString());
 
-      return message.reply(content);
+      return message.reply(result.toString());
     } catch (e) {
-      content.insertText("Invalid calculation.");
-
-      return message.reply(content);
+      return message.reply("Invalid calculation.");
     }
   }
 }

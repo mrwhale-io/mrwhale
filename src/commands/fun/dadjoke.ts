@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -14,15 +14,13 @@ export default class extends Command {
   }
 
   async action(message: Message) {
-    const content = new Content();
     const url = `https://icanhazdadjoke.com/`;
     const result = await axios.get(url, {
       headers: {
         accept: "application/json",
       },
     });
-    content.insertText(result.data.joke);
 
-    return message.reply(content);
+    return message.reply(result.data.joke);
   }
 }

@@ -1,4 +1,4 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
@@ -16,11 +16,8 @@ export class ReplyManager {
       return;
     }
 
-    const content = new Content();
     if (message.textContent.match(/O[\\?_]+O/)) {
-      content.insertText(message.toString().match(/O[?_]+O/)[0]);
-
-      return message.reply(content);
+      return message.reply(message.toString().match(/O[?_]+O/)[0]);
     }
   }
 }

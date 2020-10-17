@@ -1,5 +1,5 @@
 import crypto = require("crypto");
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -14,15 +14,12 @@ export default class extends Command {
   }
 
   async action(message: Message, [firstUser, secondUser]: [string, string]) {
-    const content = new Content();
     if (!firstUser) {
-      content.insertText("First user is missing.");
-      return message.reply(content);
+      return message.reply("First user is missing.");
     }
 
     if (!secondUser) {
-      content.insertText("Second user is missing.");
-      return message.reply(content);
+      return message.reply("Second user is missing.");
     }
 
     const users = [
@@ -42,10 +39,8 @@ export default class extends Command {
 
     const percent = parseInt(result.substr(0, 2), 10);
 
-    content.insertText(
+    return message.reply(
       `💘 There's a ${percent}% match between ${firstUser} and ${secondUser} 💘`
     );
-
-    return message.reply(content);
   }
 }

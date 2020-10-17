@@ -1,5 +1,5 @@
 import * as d20 from "d20";
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -15,18 +15,14 @@ export default class extends Command {
 
   async action(message: Message, args: string[]) {
     const max = 20;
-    const content = new Content();
     let passed = true;
 
     if (!args || args.length < 1) {
-      content.insertText(`🎲 You rolled a ${d20.roll("6")}`);
-      return message.reply(content);
+      return message.reply(`🎲 You rolled a ${d20.roll("6")}`);
     }
 
     if (args[0].split("d").length <= 1) {
-      content.insertText(`🎲 You rolled a ${d20.roll(args[0] || "6")}`);
-
-      return message.reply(content);
+      return message.reply(`🎲 You rolled a ${d20.roll(args[0] || "6")}`);
     } else {
       for (let i = 0; i < args.length; i++) {
         const current = parseInt(args[i].split("d")[0], 10);
@@ -36,15 +32,11 @@ export default class extends Command {
       }
 
       if (passed) {
-        content.insertText(
+        return message.reply(
           `🎲 You rolled a ${d20.roll(args.toString().replace(",", "+"), true)}`
         );
-
-        return message.reply(content);
       } else {
-        content.insertText(`You tried to roll too many dice at once.`);
-
-        return message.reply(content);
+        return message.reply(`You tried to roll too many dice at once.`);
       }
     }
   }

@@ -1,4 +1,4 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { HangmanGame } from "../../types/hangman-game";
 import { Command } from "../command";
@@ -19,13 +19,10 @@ export default class extends Command {
   private games: Map<number, HangmanGame>;
 
   async action(message: Message, [commandName, input]: [string, string]) {
-    const content = new Content();
     if (!commandName) {
-      content.insertText(
+      return message.reply(
         "Please provide a command. Use !help hangman for more info."
       );
-
-      return message.reply(content);
     }
 
     if (this.games.has(message.room_id)) {
@@ -46,9 +43,7 @@ export default class extends Command {
     // Create a new hangman game
     if (commandName === "start") {
       if (this.games.has(message.room_id)) {
-        content.insertText("There is already an active game for this room.");
-
-        return message.reply(content);
+        return message.reply("There is already an active game for this room.");
       } else {
         let newGame = new HangmanGame(message.user.id);
         let started = newGame.start();
@@ -61,40 +56,31 @@ export default class extends Command {
           for (let i = 0; i < letters.length; i++) {
             output += letters[i] + " ";
           }
-          content.insertText(output);
 
-          return message.reply(content);
+          return message.reply(output);
         }
       }
     } else if (commandName === "end") {
       if (!this.games.get(message.room_id)) {
-        content.insertText("There is no game in progress.");
-        return message.reply(content);
+        return message.reply("There is no game in progress.");
       }
 
       // Only allow the user that created the game to end it
       if (this.games.get(message.room_id).ownerId !== message.user.id) {
-        content.insertText("You must be the owner of this game to end it.");
-
-        return message.reply(content);
+        return message.reply("You must be the owner of this game to end it.");
       }
 
       let output = this.games.get(message.room_id).gameOver(false);
       this.games.delete(message.room_id);
-      content.insertText(output);
 
-      return message.reply(content);
+      return message.reply(output);
     } else if (commandName === "guess") {
       if (!this.games.has(message.room_id)) {
-        content.insertText("There is no game in progress for this room.");
-
-        return message.reply(content);
+        return message.reply("There is no game in progress for this room.");
       }
 
       if (!input) {
-        content.insertText("Please provide a guess.");
-
-        return message.reply(content);
+        return message.reply("Please provide a guess.");
       }
 
       // Destroy the game after 5 minutes
@@ -105,19 +91,16 @@ export default class extends Command {
 
       if (diff.seconds > 300) {
         this.games.delete(message.room_id);
-        content.insertText(
+
+        return message.reply(
           "The game has ended. Use hangman start to begin another game."
         );
-
-        return message.reply(content);
       }
 
       // Only use the first character as the guess
       input = input[0];
 
-      content.insertText(this.games.get(message.room_id).guess(input));
-
-      return message.reply(content);
+      return message.reply(this.games.get(message.room_id).guess(input));
     }
   }
 }

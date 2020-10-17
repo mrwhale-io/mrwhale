@@ -1,4 +1,4 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -28,11 +28,8 @@ export default class extends Command {
   }
 
   async action(message: Message, [choice]: [string]) {
-    const content = new Content();
     if (!choice || choice === "") {
-      content.insertText("Please pass a choice.");
-
-      return message.reply(content);
+      return message.reply("Please pass a choice.");
     }
 
     const userChoice = choice.trim().toLowerCase();
@@ -42,8 +39,7 @@ export default class extends Command {
     const validChoices = /\b(rock|paper|scissors)\b/;
 
     if (!message.textContent.match(validChoices)) {
-      content.insertText("Please pass rock, paper, scissors.");
-      return message.reply(content);
+      return message.reply("Please pass rock, paper, scissors.");
     }
 
     if (compChoice < 0.34) {
@@ -55,8 +51,7 @@ export default class extends Command {
     }
 
     const result = this.compare(userChoice, compChoiceStr);
-    content.insertText(`${compChoiceStr}. ${result}`);
 
-    return message.reply(content);
+    return message.reply(`${compChoiceStr}. ${result}`);
   }
 }
