@@ -21,7 +21,7 @@ export class CommandLoader {
     }
 
     const files: string[] = [];
-    const directories = ["fun", "game", "info", "useful"];
+    const directories = ["admin", "fun", "game", "info", "useful"];
 
     for (const directory of directories) {
       files.push(
@@ -39,6 +39,28 @@ export class CommandLoader {
       this.client.commands.push(command);
       this.loadedCommands++;
     }
+  }
+
+  reloadCommand(commandName: string) {
+    const cmdIndex = this.client.commands.findIndex(
+      (cmd) => cmd.name === commandName
+    );
+
+    if (cmdIndex === -1) {
+      return false;
+    }
+
+    const loadedCommandType: any = this.loadCommand(
+      this.client.commands[cmdIndex].commandLocation
+    );
+    const loadedCommand: Command = new loadedCommandType();
+    this.client.commands[cmdIndex].register(
+      this.client,
+      loadedCommand.commandLocation
+    );
+    this.client.commands[cmdIndex] = loadedCommand;
+
+    return true;
   }
 
   private loadCommand(classLocation: string) {

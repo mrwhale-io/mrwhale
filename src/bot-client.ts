@@ -27,6 +27,7 @@ export class BotClient extends Client {
   commands: Command[] = [];
   prefix: string;
   startTime: number;
+  ownerId: number;
 
   get uptime() {
     return Date.now() - this.chat.startTime;
@@ -45,6 +46,8 @@ export class BotClient extends Client {
   constructor(clientOptions: ClientOptions, botOptions: BotOptions) {
     super(clientOptions);
     this.prefix = botOptions.prefix;
+    this.ownerId = botOptions.ownerId;
+
     this.commandDispatcher = new CommandDispatcher(this);
     this.commandLoader = new CommandLoader(this);
     this.timeouts = new Set();
@@ -176,5 +179,17 @@ export class BotClient extends Client {
   clearInterval(interval: NodeJS.Timer) {
     clearInterval(interval);
     this.intervals.delete(interval);
+  }
+
+  reloadCommand(command: string) {
+    if (!command) {
+      throw new Error(`A command name or 'all' must be provided.`);
+    }
+
+    if (command === "all") {
+      this.commandLoader.loadCommands();
+    } else {
+      this.commandLoader.reloadCommand(command);
+    }
   }
 }

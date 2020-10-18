@@ -7,4 +7,5 @@ export interface CommandOptions {
   usage: string;
   argSeparator?: string;
   groupOnly?: boolean;
+  ownerOnly?: boolean;
 }

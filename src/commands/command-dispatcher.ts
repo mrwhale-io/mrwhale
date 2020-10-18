@@ -1,4 +1,4 @@
-import { Message, Content } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { Command } from "./command";
@@ -42,6 +42,10 @@ export class CommandDispatcher {
       this.client.chat.friendsList.getByRoom(message.room_id)
     ) {
       return message.reply("This is a group only command.");
+    }
+
+    if (command.ownerOnly && message.user.id !== this.client.ownerId) {
+      return message.reply("This is an owner only command.");
     }
 
     const args: string[] = message.textContent

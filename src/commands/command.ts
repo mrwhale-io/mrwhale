@@ -12,6 +12,7 @@ export abstract class Command {
   argSeparator: string;
   commandLocation: string;
   groupOnly: boolean;
+  ownerOnly: boolean;
 
   client: BotClient;
 
@@ -22,6 +23,7 @@ export abstract class Command {
     this.usage = options.usage;
     this.argSeparator = options.argSeparator || ",";
     this.groupOnly = options.groupOnly || false;
+    this.ownerOnly = options.ownerOnly || false;
   }
 
   /**
@@ -46,6 +48,10 @@ export abstract class Command {
 
     if (!this.description) {
       throw new Error(`Command must have a description`);
+    }
+
+    if (!this.type) {
+      throw new Error(`Command must have a type`);
     }
   }
 }
