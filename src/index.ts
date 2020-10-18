@@ -7,8 +7,8 @@ try {
     {
       userId: config.userId,
       frontend: config.frontend,
-      baseApiUrl: "http://development.gamejolt.com/site-api",
-      baseChatUrl: "http://chat.development.gamejolt.com/chatex",
+      baseApiUrl: config.baseApiUrl,
+      baseChatUrl: config.baseChatUrl,
     },
     {
       prefix: "!",
