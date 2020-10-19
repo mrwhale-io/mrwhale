@@ -1,6 +1,6 @@
 import { hangman } from "../data/hangman";
 
-const availableLetters: string = "abcdefghijklmnopqrstuvwzyz";
+const availableLetters: string = "abcdefghijklmnopqrstuvwxyz";
 
 export class HangmanGame {
   constructor(ownerId: number) {
