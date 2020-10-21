@@ -10,7 +10,7 @@ export class Time {
   miliseconds: number;
 
   toString() {
-    let timeStr: string = "";
+    let timeStr = "";
 
     if (this.days > 0) {
       timeStr += this.days;

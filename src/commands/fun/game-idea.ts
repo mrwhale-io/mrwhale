@@ -1,6 +1,7 @@
-import * as seedrandom from "seedrandom";
-import { Command } from "../command";
 import { Message, Content } from "@mrwhale-io/gamejolt";
+import * as seedrandom from "seedrandom";
+
+import { Command } from "../command";
 import {
   environments,
   genres,
