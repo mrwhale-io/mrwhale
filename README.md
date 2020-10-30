@@ -19,5 +19,5 @@ Mr. Whale is a bot for the Game Jolt chat system.
 - `roll` - Roll one or multiple dice.
 - `ship` - Find out how compatible two users are.
 - `translate` - Translate to specified language. Use langs command for supported languages.
-- `uptime` - Get the time the bot has been up without downtime.
+- `info` - Get bot information.
 - `wiki` - Search for a Wiki page.
