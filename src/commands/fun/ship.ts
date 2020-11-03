@@ -9,7 +9,7 @@ export default class extends Command {
       name: "ship",
       description: "Find out how compatible two users are.",
       type: "fun",
-      usage: "<prefix>ship person1, person2",
+      usage: "<prefix>ship @user1 @user2",
     });
   }
 
