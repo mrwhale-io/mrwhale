@@ -27,7 +27,7 @@ export default class extends Command {
     });
   }
 
-  private multiDecide(options: string[]) {
+  private multiDecide(options: string[]): string {
     const selected = options[Math.floor(Math.random() * options.length)];
     if (!selected) {
       return this.multiDecide(options);
@@ -40,11 +40,12 @@ export default class extends Command {
       return message.reply("No choices have been passed.");
     }
 
-    const options = choices.split(" or ");
+    const separators = ["or", ","];
+    const options = choices.split(new RegExp(separators.join("|"), "g"));
 
     if (options.length > 1) {
       const index = Math.floor(Math.random() * responses.length);
-      const choice = this.multiDecide(options);
+      const choice = this.multiDecide(options).trim();
 
       return message.reply(responses[index].replace(/<<CHOICE>>/g, choice));
     } else {
