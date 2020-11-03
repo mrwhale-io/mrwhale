@@ -35,13 +35,14 @@ export default class extends Command {
     return selected;
   }
 
-  async action(message: Message, [choices]: [string]) {
+  async action(message: Message, args: string[]) {
+    const choices = args.join();
     if (!choices) {
       return message.reply("No choices have been passed.");
     }
 
     const separators = ["or", ","];
-    const options = choices.split(new RegExp(separators.join("|"), "g"));
+    const options = choices.split(new RegExp(separators.join("|"), "gi"));
 
     if (options.length > 1) {
       const index = Math.floor(Math.random() * responses.length);
