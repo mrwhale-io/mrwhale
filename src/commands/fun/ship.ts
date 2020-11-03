@@ -1,5 +1,5 @@
 import crypto = require("crypto");
-import { Message } from "@mrwhale-io/gamejolt";
+import { Message, Content } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -13,34 +13,52 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [firstUser, secondUser]: [string, string]) {
+  async action(message: Message) {
+    const firstUser = message.mentions.find(
+      (user) => user.id !== message.user.id
+    );
+
     if (!firstUser) {
-      return message.reply("First user is missing.");
+      return message.reply("You must mention two users.");
     }
+
+    const secondUser =
+      message.mentions.find(
+        (user) => user.id !== firstUser.id && user.id !== message.user.id
+      ) || message.user;
 
     if (!secondUser) {
-      return message.reply("Second user is missing.");
+      return message.reply("You must mention two users.");
     }
 
-    const users = [
-      firstUser.trim().toLowerCase(),
-      secondUser.trim().toLowerCase(),
-    ].sort();
-
+    const users = [firstUser, secondUser].sort((a, b) => a.id - b.id);
     const hash = crypto
       .createHash("md5")
-      .update(users.toString())
+      .update(`${users[0].id}${users[1].id}`)
       .digest("hex");
 
+    const radix = 10;
     const result = hash
       .split("")
-      .filter((h) => !isNaN(parseInt(h, 10)))
+      .filter((h) => !isNaN(parseInt(h, radix)))
       .join("");
 
-    const percent = parseInt(result.substr(0, 2), 10);
+    const percent = parseInt(result.substr(0, 2), radix);
 
-    return message.reply(
-      `💘 There's a ${percent}% match between ${firstUser} and ${secondUser} 💘`
-    );
+    const content = new Content();
+    const nodes = [
+      content.textNode(`💘 There's a ${percent}% match between `),
+      content.textNode(firstUser.username, [
+        content.mention(firstUser.username),
+      ]),
+      content.textNode(" and "),
+      content.textNode(secondUser.username, [
+        content.mention(secondUser.username),
+      ]),
+      content.textNode(" 💘"),
+    ];
+    content.insertNewNode(nodes);
+
+    return message.reply(content);
   }
 }
