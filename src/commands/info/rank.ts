@@ -11,7 +11,7 @@ interface PlayerInfo {
   levelExp: number;
   remainingExp: number;
   level: number;
-  rank: number | string;
+  rank: string;
 }
 
 export default class extends Command {
@@ -25,8 +25,8 @@ export default class extends Command {
     });
   }
 
-  private getRankInfo(scores: Score[], info: PlayerInfo) {
-    const rankTxt = `Rank: ${info.rank}/${scores.length}\n`;
+  private getRankInfo(info: PlayerInfo) {
+    const rankTxt = `Rank: ${info.rank}\n`;
     const levelTxt = `Level: ${info.level}\n`;
     const expTxt = `Level Exp: ${info.remainingExp}/${info.levelExp}\nTotal Exp: ${info.totalExp}`;
 
@@ -56,7 +56,7 @@ export default class extends Command {
           rank: "n/a",
         };
 
-        content.insertCodeBlock(this.getRankInfo(scores, info));
+        content.insertCodeBlock(this.getRankInfo(info));
 
         return message.reply(content);
       }
@@ -68,16 +68,18 @@ export default class extends Command {
         xp += LevelManager.levelToExp(i);
       }
 
+      const rank =
+        playerSorted.findIndex((p) => p.userId === message.user.id) + 1;
       const info: PlayerInfo = {
         name: message.user.display_name,
         totalExp: score.exp,
         levelExp: LevelManager.levelToExp(level),
         remainingExp: score.exp - xp,
         level,
-        rank: playerSorted.findIndex((p) => p.userId === message.user.id) + 1,
+        rank: `${rank}/${scores.length}`,
       };
 
-      content.insertCodeBlock(this.getRankInfo(playerSorted, info));
+      content.insertCodeBlock(this.getRankInfo(info));
 
       return message.reply(content);
     } catch {
