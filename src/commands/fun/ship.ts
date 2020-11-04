@@ -1,5 +1,5 @@
 import crypto = require("crypto");
-import { Message, Content } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -9,56 +9,38 @@ export default class extends Command {
       name: "ship",
       description: "Find out how compatible two users are.",
       type: "fun",
-      usage: "<prefix>ship @user1 @user2",
+      usage: "<prefix>ship person1, person2",
     });
   }
 
-  async action(message: Message) {
-    const firstUser = message.mentions.find(
-      (user) => user.id !== message.user.id
-    );
-
+  async action(message: Message, [firstUser, secondUser]: [string, string]) {
     if (!firstUser) {
-      return message.reply("You must mention two users.");
+      return message.reply("First user is missing.");
     }
-
-    const secondUser =
-      message.mentions.find(
-        (user) => user.id !== firstUser.id && user.id !== message.user.id
-      ) || message.user;
 
     if (!secondUser) {
-      return message.reply("You must mention two users.");
+      return message.reply("Second user is missing.");
     }
 
-    const users = [firstUser, secondUser].sort((a, b) => a.id - b.id);
+    const users = [
+      firstUser.trim().toLowerCase(),
+      secondUser.trim().toLowerCase(),
+    ].sort();
+
     const hash = crypto
       .createHash("md5")
-      .update(`${users[0].id}${users[1].id}`)
+      .update(users.toString())
       .digest("hex");
 
-    const radix = 10;
     const result = hash
       .split("")
-      .filter((h) => !isNaN(parseInt(h, radix)))
+      .filter((h) => !isNaN(parseInt(h, 10)))
       .join("");
 
-    const percent = parseInt(result.substr(0, 2), radix);
+    const percent = parseInt(result.substr(0, 2), 10);
 
-    const content = new Content();
-    const nodes = [
-      content.textNode(`💘 There's a ${percent}% match between `),
-      content.textNode(firstUser.username, [
-        content.mention(firstUser.username),
-      ]),
-      content.textNode(" and "),
-      content.textNode(secondUser.username, [
-        content.mention(secondUser.username),
-      ]),
-      content.textNode(" 💘"),
-    ];
-    content.insertNewNode(nodes);
-
-    return message.reply(content);
+    return message.reply(
+      `💘 There's a ${percent}% match between ${firstUser} and ${secondUser} 💘`
+    );
   }
 }
