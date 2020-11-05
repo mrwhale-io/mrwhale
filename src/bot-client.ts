@@ -20,6 +20,7 @@ import { Timer } from "./timer";
 import { UrlManager } from "./managers/url-manager";
 import { Database } from "./database/database";
 import { LevelManager } from "./managers/level-manager";
+import { Policer } from './managers/policer';
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -42,6 +43,7 @@ export class BotClient extends Client {
   private readonly cleverbotManager: CleverbotManager;
   private readonly urlManager: UrlManager;
   private readonly levelManager: LevelManager;
+  private readonly policer: Policer;
 
   constructor(clientOptions: ClientOptions, botOptions: BotOptions) {
     super(clientOptions);
@@ -58,6 +60,7 @@ export class BotClient extends Client {
     this.replyManager = new ReplyManager(this);
     this.urlManager = new UrlManager(this);
     this.levelManager = new LevelManager(this);
+    this.policer = new Policer(this);
 
     if (botOptions.cleverbotToken) {
       /*this.cleverbotManager = new CleverbotManager(
