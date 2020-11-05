@@ -1,4 +1,4 @@
-import { Message } from "@mrwhale-io/gamejolt";
+import { Content, Message } from "@mrwhale-io/gamejolt";
 import axios from "axios";
 import * as qs from "querystring";
 
@@ -38,7 +38,10 @@ export default class extends Command {
     };
 
     const result = await axios.post(url, qs.stringify(body), requestConfig);
+    const pastebin = result.data;
+    const content = new Content();
+    content.insertText(pastebin, [content.autoLink(pastebin, pastebin)]);
 
-    return message.reply(result.data);
+    return message.reply(content);
   }
 }
