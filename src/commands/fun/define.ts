@@ -15,8 +15,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, args: string[]) {
-    const phrase = args.join(" ");
+  async action(message: Message, [phrase]: [string]) {
     const url = `https://api.urbandictionary.com/v0/define?page=1&term=${phrase}`;
 
     if (!phrase) {
