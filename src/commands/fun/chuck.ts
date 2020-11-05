@@ -31,8 +31,14 @@ export default class extends Command {
       url += `&category=[${category}]`;
     }
 
-    const result = await axios.get(url);
-
-    return message.reply(result.data.value.joke);
+    try {
+      const { data } = await axios.get(url);
+      if (!data.value || !data.value.joke) {
+        return message.reply("Could not fetch chuck norris joke.");
+      }
+      return message.reply(data.value.joke);
+    } catch {
+      return message.reply("Could not fetch chuck norris joke.");
+    }
   }
 }

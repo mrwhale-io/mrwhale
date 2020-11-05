@@ -14,13 +14,17 @@ export default class extends Command {
   }
 
   async action(message: Message) {
-    const url = `https://icanhazdadjoke.com/`;
-    const result = await axios.get(url, {
-      headers: {
-        accept: "application/json",
-      },
-    });
+    try {
+      const url = `https://icanhazdadjoke.com/`;
+      const result = await axios.get(url, {
+        headers: {
+          accept: "application/json",
+        },
+      });
 
-    return message.reply(result.data.joke);
+      return message.reply(result.data.joke);
+    } catch {
+      return message.reply("Could not fetch dad joke.");
+    }
   }
 }
