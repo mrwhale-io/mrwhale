@@ -34,9 +34,10 @@ export class BotClient extends Client {
     return Date.now() - this.chat.startTime;
   }
 
-  /**
-   * Toggles cleverbot on/off.
-   */
+  get cleverbot() {
+    return this.cleverbotManager.isEnabled;
+  }
+
   set cleverbot(value: boolean) {
     this.cleverbotManager.isEnabled = value;
   }
