@@ -1,4 +1,4 @@
-import { Message } from "@mrwhale-io/gamejolt";
+import { Content, Message } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
@@ -10,6 +10,8 @@ const { on, registerListeners } = ListenerDecorators;
 export class CleverbotManager {
   private client: BotClient;
   private cleverbot: CleverbotPlugin;
+
+  isEnabled = true;
 
   constructor(client: BotClient, token: string) {
     this.client = client;
@@ -43,10 +45,16 @@ export class CleverbotManager {
       return;
     }
 
-    const hasCommand = this.hasCommand(message);
-
-    if (!hasCommand && message.isMentioned) {
+    if (this.isEnabled && !this.hasCommand(message) && message.isMentioned) {
       const response = await this.cleverbot.speak(message);
+      const content = new Content();
+      const nodes = [
+        content.textNode(`@${message.user.username} `, [
+          content.mention(message.user.username),
+        ]),
+        content.textNode(response),
+      ];
+      content.insertNewNode(nodes);
 
       return message.reply(response);
     }

@@ -20,7 +20,7 @@ import { Timer } from "./timer";
 import { UrlManager } from "./managers/url-manager";
 import { Database } from "./database/database";
 import { LevelManager } from "./managers/level-manager";
-import { Policer } from './managers/policer';
+import { Policer } from "./managers/policer";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -32,6 +32,13 @@ export class BotClient extends Client {
 
   get uptime() {
     return Date.now() - this.chat.startTime;
+  }
+
+  /**
+   * Toggles cleverbot on/off.
+   */
+  set cleverbot(value: boolean) {
+    this.cleverbotManager.isEnabled = value;
   }
 
   private timeouts: Set<NodeJS.Timer>;
@@ -63,10 +70,10 @@ export class BotClient extends Client {
     this.policer = new Policer(this);
 
     if (botOptions.cleverbotToken) {
-      /*this.cleverbotManager = new CleverbotManager(
+      this.cleverbotManager = new CleverbotManager(
         this,
         botOptions.cleverbotToken
-      );*/
+      );
     }
 
     registerListeners(this);
