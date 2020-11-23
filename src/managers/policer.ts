@@ -77,9 +77,11 @@ export class Policer {
             content.mention(message.user.username),
           ]),
           content.textNode(
-            profanityResponses[
-              Math.floor(Math.random() * profanityResponses.length)
-            ]
+            ` ${
+              profanityResponses[
+                Math.floor(Math.random() * profanityResponses.length)
+              ]
+            }`
           ),
         ];
         content.insertNewNode(nodes);
@@ -104,7 +106,9 @@ export class Policer {
             content.mention(message.user.username),
           ]),
           content.textNode(
-            rageResponses[Math.floor(Math.random() * rageResponses.length)]
+            ` ${
+              rageResponses[Math.floor(Math.random() * rageResponses.length)]
+            }`
           ),
         ];
         content.insertNewNode(nodes);
