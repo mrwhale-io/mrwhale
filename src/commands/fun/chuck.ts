@@ -10,6 +10,7 @@ export default class extends Command {
       description: "Get a random Chuck Norris joke.",
       type: "fun",
       usage: "<prefix>chucknorris <firstname> <lastname> <category>",
+      aliases: ["chuck", "norris"],
     });
   }
 

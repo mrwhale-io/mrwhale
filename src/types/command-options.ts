@@ -8,4 +8,5 @@ export interface CommandOptions {
   argSeparator?: string;
   groupOnly?: boolean;
   ownerOnly?: boolean;
+  aliases?: string[];
 }

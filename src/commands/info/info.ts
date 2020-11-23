@@ -10,6 +10,7 @@ export default class extends Command {
       description: "Get bot information.",
       type: "info",
       usage: "<prefix>info",
+      aliases: ["uptime", "stats"],
     });
   }
 

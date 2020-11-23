@@ -13,7 +13,7 @@ export abstract class Command {
   commandLocation: string;
   groupOnly: boolean;
   ownerOnly: boolean;
-
+  aliases: string[];
   client: BotClient;
 
   constructor(options: CommandOptions) {
@@ -24,6 +24,7 @@ export abstract class Command {
     this.argSeparator = options.argSeparator || ",";
     this.groupOnly = options.groupOnly || false;
     this.ownerOnly = options.ownerOnly || false;
+    this.aliases = options.aliases || [];
   }
 
   /**

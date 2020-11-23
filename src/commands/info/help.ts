@@ -18,14 +18,19 @@ export default class extends Command {
 
     if (commandName) {
       const cmd = this.client.commands.find(
-        (c: Command) => c.name === commandName
+        (c: Command) =>
+          c.name === commandName ||
+          c.aliases.map((alias) => alias.toLowerCase()).includes(commandName)
       );
 
       if (cmd) {
         content.insertCodeBlock(
           `Name: ${cmd.name}\nDescription: ${cmd.description}\nType: ${
             cmd.type
-          }\nUsage: ${cmd.usage.replace(/<prefix>/g, this.client.prefix)}`
+          }\nUsage: ${cmd.usage.replace(
+            /<prefix>/g,
+            this.client.prefix
+          )}\nAliases: ${cmd.aliases.join()}`
         );
 
         return message.reply(content);

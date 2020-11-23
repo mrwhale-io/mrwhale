@@ -29,7 +29,9 @@ export class CleverbotManager {
       .split(" ")[0];
 
     const command: Command = this.client.commands.find(
-      (cmd) => cmd.name.toLowerCase() === commandName.toLowerCase()
+      (cmd) =>
+        cmd.name.toLowerCase() === commandName.toLowerCase() ||
+        cmd.aliases.map((alias) => alias.toLowerCase()).includes(commandName)
     );
 
     if (!command) {
@@ -52,11 +54,11 @@ export class CleverbotManager {
         content.textNode(`@${message.user.username} `, [
           content.mention(message.user.username),
         ]),
-        content.textNode(response),
+        content.textNode(` ${response}`),
       ];
       content.insertNewNode(nodes);
 
-      return message.reply(response);
+      return message.reply(content);
     }
   }
 }

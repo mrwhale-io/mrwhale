@@ -30,7 +30,9 @@ export class CommandDispatcher {
       .split(" ")[0];
 
     const command: Command = this.client.commands.find(
-      (cmd) => cmd.name.toLowerCase() === commandName.toLowerCase()
+      (cmd) =>
+        cmd.name.toLowerCase() === commandName.toLowerCase() ||
+        cmd.aliases.map((alias) => alias.toLowerCase()).includes(commandName)
     );
 
     if (!command) {

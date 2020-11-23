@@ -9,6 +9,7 @@ export default class extends Command {
       description: "Rock. Paper. Scissors.",
       type: "game",
       usage: "<prefix>rockpaper <rock|paper|scissors>",
+      aliases: ["rps"],
     });
   }
 

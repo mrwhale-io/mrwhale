@@ -10,6 +10,7 @@ export default class extends Command {
       description: "A calculator.",
       type: "useful",
       usage: "<prefix>calculate <calculation>",
+      aliases: ["calc"],
     });
   }
 
