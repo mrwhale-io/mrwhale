@@ -20,7 +20,7 @@ export default class extends Command {
       name: "rank",
       description: "Get your current rank.",
       usage: "<prefix>rank",
-      type: "info",
+      type: "utility",
       groupOnly: true,
     });
   }

@@ -8,7 +8,7 @@ export default class extends Command {
     super({
       name: "langs",
       description: "List supported languages for the translate command.",
-      type: "info",
+      type: "utility",
       usage: "<prefix>langs",
     });
   }

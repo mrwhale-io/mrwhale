@@ -8,7 +8,7 @@ export default class extends Command {
     super({
       name: "info",
       description: "Get bot information.",
-      type: "info",
+      type: "utility",
       usage: "<prefix>info",
       aliases: ["uptime", "stats"],
     });

@@ -1,1 +1,1 @@
-export type CommandTypes = "admin" | "useful" | "fun" | "info" | "game";
+export type CommandTypes = "admin" | "useful" | "fun" | "utility" | "game";
