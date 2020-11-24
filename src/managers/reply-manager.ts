@@ -16,8 +16,9 @@ export class ReplyManager {
       return;
     }
 
-    if (message.textContent.match(/O[\\?_]+O/)) {
-      return message.reply(message.toString().match(/O[?_]+O/)[0]);
+    const regex = /O_{1,5}O/i;
+    if (message.textContent.match(regex)) {
+      return message.reply(message.toString().match(regex)[0]);
     }
   }
 }
