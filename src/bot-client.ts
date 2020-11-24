@@ -6,6 +6,7 @@ import {
   Message,
   User,
   Content,
+  Room,
 } from "@mrwhale-io/gamejolt";
 
 import { BotOptions } from "./types/bot-options";
@@ -158,15 +159,39 @@ export class BotClient extends Client {
     }
   }
 
+  @on("group_add")
+  protected onGroupAdd(group: Room) {
+    if (group) {
+      console.log(`Added to a group`, group);
+      this.chat.joinRoom(group.id).receive("ok", () => {
+        const content = new Content();
+        const nodes = [
+          content.textNode(`Thank you for adding me to your group! Use `),
+          content.textNode(`${this.prefix}help`, [
+            content.code(`${this.prefix}help`),
+          ]),
+          content.textNode(` for a list of commands.`),
+        ];
+        content.insertNewNode(nodes);
+
+        this.chat.sendMessage(content.contentJson(), group.id);
+      });
+    }
+  }
+
   @on("member_add")
   protected onMemberAdd(data: { room_id: number; members: User[] }) {
     if (data.members) {
       const content = new Content();
       const members = data.members
+        .filter((member) => member.id !== this.userId)
         .map((member) => member.display_name)
         .join(", ");
-      content.insertText(`${members} was just added to the group.`);
-      this.chat.sendMessage(content.contentJson(), data.room_id);
+
+      if (members) {
+        content.insertText(`${members} was just added to the group.`);
+        this.chat.sendMessage(content.contentJson(), data.room_id);
+      }
     }
   }
 
