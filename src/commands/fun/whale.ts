@@ -21,7 +21,11 @@ export default class extends Command {
 
     if (size) {
       const radix = 10;
-      whaleSize = parseInt(size, radix);
+      const parsedSize = parseInt(size, radix);
+
+      if (!isNaN(parsedSize)) {
+        whaleSize = parsedSize;
+      }
     }
 
     whaleSize = Math.min(Math.max(whaleSize, min), max);
