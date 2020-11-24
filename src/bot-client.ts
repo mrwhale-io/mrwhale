@@ -138,6 +138,26 @@ export class BotClient extends Client {
     }
   }
 
+  @on("friend_add")
+  protected onFriendAdd(friend: User) {
+    if (friend) {
+      console.log(`User @${friend.username} added as friend`);
+      this.chat.joinRoom(friend.room_id).receive("ok", () => {
+        const content = new Content();
+        const nodes = [
+          content.textNode(`Thank you for adding me as a friend! Use `),
+          content.textNode(`${this.prefix}help`, [
+            content.code(`${this.prefix}help`),
+          ]),
+          content.textNode(` for a list of commands.`),
+        ];
+        content.insertNewNode(nodes);
+
+        this.chat.sendMessage(content.contentJson(), friend.room_id);
+      });
+    }
+  }
+
   @on("member_add")
   protected onMemberAdd(data: { room_id: number; members: User[] }) {
     if (data.members) {
