@@ -11,7 +11,7 @@ export class CleverbotManager {
   private client: BotClient;
   private cleverbot: CleverbotPlugin;
 
-  isEnabled = true;
+  isEnabled = false;
 
   constructor(client: BotClient, token: string) {
     this.client = client;
