@@ -12,6 +12,7 @@ export default class extends Command {
         "Translate to specified language. Use langs command for supported languages.",
       type: "useful",
       usage: "<prefix>translate <lang>, <text>",
+      examples: ["<prefix>translate es, Hello", "<prefix>translate auto, Hola"],
     });
   }
 

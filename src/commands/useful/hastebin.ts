@@ -10,6 +10,7 @@ export default class extends Command {
       description: "Upload text to hastebin.",
       type: "useful",
       usage: "<prefix>hastebin <paste>",
+      examples: ["<prefix>hastebin Here is some text."],
     });
   }
 

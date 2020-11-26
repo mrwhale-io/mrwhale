@@ -10,6 +10,7 @@ export default class extends Command {
       description: "Generate a whale face.",
       type: "fun",
       usage: "<prefix>whale <length>",
+      examples: ["<prefix>whale 10"],
     });
   }
 

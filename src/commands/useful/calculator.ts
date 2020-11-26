@@ -10,6 +10,11 @@ export default class extends Command {
       description: "A calculator.",
       type: "useful",
       usage: "<prefix>calculate <calculation>",
+      examples: [
+        "<prefix>calculate 12 / (2.3 + 0.7)",
+        "<prefix>calculate sin(45 deg) ^ 2",
+        "<prefix>calculate 12.7 cm to inch",
+      ],
       aliases: ["calc"],
     });
   }

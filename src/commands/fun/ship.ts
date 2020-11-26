@@ -10,6 +10,7 @@ export default class extends Command {
       description: "Find out how compatible two users are.",
       type: "fun",
       usage: "<prefix>ship person1, person2",
+      examples: ["<prefix>ship Mr. Whale, Mrs. Whale"],
     });
   }
 

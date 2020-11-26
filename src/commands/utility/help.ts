@@ -24,16 +24,17 @@ export default class extends Command {
       );
 
       if (cmd) {
-        let response = `Name: ${cmd.name}\nDescription: ${
-          cmd.description
-        }\nType: ${cmd.type}\nUsage: ${cmd.usage.replace(
-          /<prefix>/g,
-          this.client.prefix
-        )}`;
+        let response = `Name: ${cmd.name}\nDescription: ${cmd.description}\nType: ${cmd.type}\nUsage: ${cmd.usage}`;
+
+        if (cmd.examples.length > 0) {
+          response += `\nExamples: ${cmd.examples.join(", ")}`;
+        }
 
         if (cmd.aliases.length > 0) {
-          response += `\nAliases: ${cmd.aliases.join()}`;
+          response += `\nAliases: ${cmd.aliases.join(", ")}`;
         }
+
+        response = response.replace(/<prefix>/g, this.client.prefix);
 
         content.insertCodeBlock(response);
         return message.reply(content);
@@ -46,7 +47,7 @@ export default class extends Command {
         let listItemNodes = [];
         for (let command of commands) {
           const contentText = content.textNode(
-            `${command.name} - ${command.description}`
+            `${this.client.prefix}${command.name} - ${command.description}`
           );
           const contentNode = content.paragraphNode(contentText);
 

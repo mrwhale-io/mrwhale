@@ -24,6 +24,10 @@ export default class extends Command {
       description: "Choose between one or multiple choices.",
       type: "fun",
       usage: "<prefix>choose <choice> or <choice> ...",
+      examples: [
+        "<prefix>choose Whale or Dolphin",
+        "<prefix>choose Apple, Orange, Banana",
+      ],
       aliases: ["choice", "decide"],
     });
   }

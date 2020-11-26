@@ -9,6 +9,7 @@ export default class extends Command {
       description: "Ask the magic conchshell a question.",
       type: "fun",
       usage: "<prefix>conchshell",
+      examples: ["<prefix>conchshell will i ever get married?"],
       aliases: ["conch"],
     });
   }

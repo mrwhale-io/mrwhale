@@ -5,6 +5,7 @@ export interface CommandOptions {
   description: string;
   type: CommandTypes;
   usage: string;
+  examples?: string[];
   argSeparator?: string;
   groupOnly?: boolean;
   ownerOnly?: boolean;

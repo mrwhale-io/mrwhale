@@ -9,7 +9,9 @@ export default class extends Command {
       name: "roll",
       description: "Roll one or multiple dice.",
       type: "fun",
+      examples: ["<prefix>roll 5", "<prefix>roll 5 d10"],
       usage: "<prefix>roll [n sides] or [n dice] d[n sides]",
+      aliases: ["dice"],
     });
   }
 

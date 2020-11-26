@@ -12,6 +12,7 @@ export default class extends Command {
       description: "Define a word or phrase.",
       type: "fun",
       usage: "<prefix>define <word>",
+      examples: ["<prefix>define whale"],
       aliases: ["ud", "dictionary"],
     });
   }

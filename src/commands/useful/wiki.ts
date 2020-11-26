@@ -11,6 +11,7 @@ export default class extends Command {
       description: "Search for a Wiki page.",
       type: "useful",
       usage: "<prefix>wiki <query>",
+      examples: ["<prefix>wiki whale"],
     });
   }
 

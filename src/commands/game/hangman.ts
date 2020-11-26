@@ -10,6 +10,11 @@ export default class extends Command {
       name: "hangman",
       description: "Play a classic game of hangman.",
       usage: "<prefix>hangman <start|guess|end>",
+      examples: [
+        "<prefix>hangman start",
+        "<prefix>hangman guess a",
+        "<prefix>hangman end",
+      ],
       type: "game",
       argSeparator: " ",
     });

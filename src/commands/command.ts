@@ -9,6 +9,7 @@ export abstract class Command {
   description: string;
   type: CommandTypes;
   usage: string;
+  examples: string[];
   argSeparator: string;
   commandLocation: string;
   groupOnly: boolean;
@@ -21,6 +22,7 @@ export abstract class Command {
     this.description = options.description;
     this.type = options.type;
     this.usage = options.usage;
+    this.examples = options.examples || [];
     this.argSeparator = options.argSeparator || ",";
     this.groupOnly = options.groupOnly || false;
     this.ownerOnly = options.ownerOnly || false;
