@@ -3,10 +3,11 @@
 
 Mr. Whale is a general purpose chat bot designed for the Game Jolt chat system.
 
-
+Feel free to add a star ⭐ to the repository to promote the project!
 
 ## Table of Contents
 - [Features](#features)
+- [Links](#links)
 - [Maintainers](#maintainers)
 - [Contributing](#contributing)
 - [License](#license)
@@ -21,11 +22,16 @@ Some basic features include:
 
 Mr. Whale has a lot of commands, with 5 main categories:
 
-- 👻 Fun: `ascii`, `choose`, `conchshell`, `ship`, `gameidea` and more!
-- 🎲 Game: `hangman` and `rockpaper`!
-- 🖨️ Useful: `calculator`, `translate`, `hastebin` and `wiki`!
-- 🔧 Utility: `help`, `info`, `langs`, `rank` and more!
-- 👑 Owner: `eval`, `reload` and `cleverbot`!
+- 👻 **Fun**: `ascii`, `choose`, `conchshell`, `ship`, `gameidea` and more!
+- 🎲 **Game**: `hangman` and `rockpaper`!
+- 🖨️ **Useful**: `calculator`, `translate`, `hastebin` and `wiki`!
+- 🔧 **Utility**: `help`, `info`, `langs`, `rank` and more!
+- 👑 **Owner**: `eval`, `reload` and `cleverbot`!
+
+## Links
+*   [Discord](https://discord.gg/wjBnkR4AUZ)
+*   [Github](https://github.com/mrwhale-io/mrwhale/)
+*   [Game Jolt](https://gamejolt.com/@mrwhale)
 
 ## Maintainers
 
