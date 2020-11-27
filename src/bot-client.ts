@@ -26,19 +26,43 @@ import { Policer } from "./managers/policer";
 const { on, once, registerListeners } = ListenerDecorators;
 
 export class BotClient extends Client {
+  /**
+   * Contains all loaded commands.
+   */
   commands: Command[] = [];
+
+  /**
+   * Prefix denoting a command call.
+   */
   prefix: string;
+
+  /**
+   * Contains the time the bot started.
+   */
   startTime: number;
+
+  /**
+   * The user identifier of the bot owner.
+   */
   ownerId: number;
 
+  /**
+   * Returns the chat client uptime.
+   */
   get uptime() {
     return Date.now() - this.chat.startTime;
   }
 
+  /**
+   * Returns the cleverbot on/off status.
+   */
   get cleverbot() {
     return this.cleverbotManager.isEnabled;
   }
 
+  /**
+   * Sets the cleverbot on/off status.
+   */
   set cleverbot(value: boolean) {
     this.cleverbotManager.isEnabled = value;
   }
@@ -237,6 +261,10 @@ export class BotClient extends Client {
     this.intervals.delete(interval);
   }
 
+  /**
+   * Reload a command.
+   * @param command The name of the command to reload.
+   */
   reloadCommand(command: string) {
     if (!command) {
       throw new Error(`A command name or 'all' must be provided.`);

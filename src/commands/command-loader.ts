@@ -36,7 +36,6 @@ export class CommandLoader {
 
       command.register(this.client, commandLocation);
 
-      this.client.commands.push(command);
       this.loadedCommands++;
     }
   }

@@ -4,16 +4,61 @@ import { CommandOptions } from "../types/command-options";
 import { BotClient } from "../bot-client";
 import { CommandTypes } from "../types/command-types";
 
+/**
+ * Command class to extend which users can execute.
+ */
 export abstract class Command {
+  /**
+   * The name of the command, used by the dispatcher
+   * to determine the command being executed.
+   */
   name: string;
+
+  /**
+   * A brief description of the command, displayed
+   * in the commands list via the Help command
+   */
   description: string;
+
+  /**
+   * The command type that the command belongs to.
+   */
   type: CommandTypes;
+
+  /**
+   * An example of command usage. The token `<prefix>` will
+   * be replaced by the prefix defined in BotClient.
+   */
   usage: string;
+
+  /**
+   * Examples of how the command should be used.
+   */
   examples: string[];
+
+  /**
+   * Delimiter for command arguments.
+   */
   argSeparator: string;
+
+  /**
+   * The file location of this command.
+   */
   commandLocation: string;
+
+  /**
+   * Whether or not the command can be used only in group chats.
+   */
   groupOnly: boolean;
+
+  /**
+   * Whether or not the command can be used only by the bot owner.
+   */
   ownerOnly: boolean;
+
+  /**
+   * Aliases the command can be called by other than its name.
+   */
   aliases: string[];
   client: BotClient;
 
@@ -56,5 +101,11 @@ export abstract class Command {
     if (!this.type) {
       throw new Error(`Command must have a type`);
     }
+
+    if (!this.usage) {
+      throw new Error(`Command must have a usage`);
+    }
+
+    this.client.commands.push(this);
   }
 }
