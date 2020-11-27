@@ -1,23 +1,42 @@
-# Mr. Whale
+# Mr. Whale 
+[![](https://img.shields.io/discord/773335253032501278.svg?logo=discord&colorB=7289DA)](https://discord.gg/wjBnkR4AUZ)
 
-Mr. Whale is a bot for the Game Jolt chat system.
+Mr. Whale is a general purpose chat bot designed for the Game Jolt chat system.
 
-## Commands
 
-- `ascii` - Generate ascii.
-- `calculator` - A calculator.
-- `choose` - Choose between one or multiple choices.
-- `chucknorris` - Get a random Chuck Norris joke.
-- `conchshell` - Ask the magic conchshell a question.
-- `dadjoke` - Get a random Dad joke.
-- `define` - Define a word or phrase.
-- `hangman` - Play a classic game of hangman.
-- `help` - Get command help.
-- `langs` - List supported languages for the translate command.
-- `ping` - Sends back a pong response.
-- `rockpaper` - Rock. Paper. Scissors.
-- `roll` - Roll one or multiple dice.
-- `ship` - Find out how compatible two users are.
-- `translate` - Translate to specified language. Use langs command for supported languages.
-- `info` - Get bot information.
-- `wiki` - Search for a Wiki page.
+
+## Table of Contents
+- [Features](#features)
+- [Maintainers](#maintainers)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Features
+
+Some basic features include:
+
+- ✉️ Support for commands in private and group chats.
+- 🤖 Have conversations with cleverbot.
+- 🏆 EXP system for levelling up in group chats.
+
+Mr. Whale has a lot of commands, with 5 main categories:
+
+- 👻 Fun: `ascii`, `choose`, `conchshell`, `ship`, `gameidea` and more!
+- 🎲 Game: `hangman` and `rockpaper`!
+- 🖨️ Useful: `calculator`, `translate`, `hastebin` and `wiki`!
+- 🔧 Utility: `help`, `info`, `langs`, `rank` and more!
+- 👑 Owner: `eval`, `reload` and `cleverbot`!
+
+## Maintainers
+
+[@ttbowen](https://github.com/ttbowen)
+
+## Contributing
+
+Feel free to dive in! [Open an issue](https://github.com/mrwhale-io/mrwhale/issues/new) or submit PRs.
+
+Standard Readme follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
+
+## License
+
+[MIT](LICENSE) © Thomas Bowen
