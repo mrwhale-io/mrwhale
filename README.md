@@ -6,6 +6,8 @@
 
 *Introducing Mr. Whale, the best chat bot on Game Jolt!*  Mr. Whale is an all-purpose chat bot loaded with dozens of awesome commands and features. Mr. Whale has been the source of entertainment in over 500+ group chats and counting.
 
+![Mr. Whale](screenshots/screenshot.gif)
+
 Feel free to add a star ⭐ to the repository to promote the project!
 
 ## Table of Contents
