@@ -1,5 +1,5 @@
 module.exports = {
-  title: "Introducing Mr. Whale",
+  title: "Mr. Whale",
   tagline: "The best chat bot on Game Jolt!",
   url: "https://mrwhale-io.github.io",
   baseUrl: "/",
