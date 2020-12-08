@@ -33,7 +33,10 @@ Mr. Whale has a lot of commands, with 5 main categories:
 - 🔧 **Utility**: `help`, `info`, `langs`, `rank` and more!
 - 👑 **Owner**: `eval`, `reload` and `cleverbot`!
 
+[See the full command list](https://www.mrwhale.io/docs/commands)
+
 ## Links
+*   [Website](https://www.mrwhale.io/)
 *   [Discord](https://discord.gg/wjBnkR4AUZ)
 *   [Github](https://github.com/mrwhale-io/mrwhale/)
 *   [Game Jolt](https://gamejolt.com/@mrwhale)
