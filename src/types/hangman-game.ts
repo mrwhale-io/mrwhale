@@ -1,20 +1,51 @@
 import { hangman } from "../data/hangman";
 
-const availableLetters = "abcdefghijklmnopqrstuvwxyz";
+const AVAILABLE_LETTERS = "abcdefghijklmnopqrstuvwxyz";
 
 export class HangmanGame {
+  /**
+   * The letters already guessed by the players.
+   */
   lettersGuessed: string;
-  lettersMatched: string;
-  numLettersMatched: number;
-  lettersToShow: string[];
-  currentWord: string;
-  lives: number;
-  won: boolean;
-  isGameOver: boolean;
-  difficulty: "easy" | "medium" | "hard";
-  startTime: number;
-  started: boolean;
 
+  /**
+   * Correctly guessed letters.
+   */
+  lettersMatched: string;
+
+  /**
+   * The number of letters correctly guessed.
+   */
+  numLettersMatched: number;
+
+  /**
+   * The current word to guess.
+   */
+  currentWord: string;
+
+  /**
+   * The number of lives the player has left.
+   */
+  lives: number;
+
+  /**
+   * Whether the player has won the game.
+   */
+  won: boolean;
+
+  /**
+   * Whether the game is over.
+   */
+  isGameOver: boolean;
+
+  /**
+   * The time the game started in milliseconds.
+   */
+  startTime: number;
+
+  /**
+   * The id of the user who started the game.s
+   */
   readonly ownerId: number;
 
   /**
@@ -41,7 +72,7 @@ export class HangmanGame {
 
     letter = letter.trim().toLowerCase();
 
-    if (availableLetters.indexOf(letter) > -1) {
+    if (AVAILABLE_LETTERS.indexOf(letter) > -1) {
       if (
         (this.lettersGuessed && this.lettersGuessed.indexOf(letter) > -1) ||
         (this.lettersMatched && this.lettersMatched.indexOf(letter) > -1)
@@ -105,8 +136,8 @@ export class HangmanGame {
   /**
    * Returns the guessed and un-guessed letters.
    */
-  getLettersToShow(): unknown[] {
-    const output = [];
+  getLettersToShow(): string[] {
+    const output: string[] = [];
 
     for (let i = 0; i < this.currentWord.length; i++) {
       output[i] = "_";

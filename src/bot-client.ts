@@ -78,6 +78,10 @@ export class BotClient extends Client {
   private readonly levelManager: LevelManager;
   private readonly policer: Policer;
 
+  /**
+   * @param clientOptions The game jolt client options.
+   * @param botOptions The bot options.
+   */
   constructor(clientOptions: ClientOptions, botOptions: BotOptions) {
     super(clientOptions);
     this.prefix = botOptions.prefix;
