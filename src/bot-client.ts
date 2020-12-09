@@ -49,14 +49,14 @@ export class BotClient extends Client {
   /**
    * Returns the chat client uptime.
    */
-  get uptime() {
+  get uptime(): number {
     return Date.now() - this.chat.startTime;
   }
 
   /**
    * Returns the cleverbot on/off status.
    */
-  get cleverbot() {
+  get cleverbot(): boolean {
     return this.cleverbotManager.isEnabled;
   }
 
@@ -106,7 +106,7 @@ export class BotClient extends Client {
   }
 
   @once("chat_ready")
-  protected async onChatReady() {
+  protected async onChatReady(): Promise<void> {
     this.commandDispatcher.ready = true;
 
     const interval = 0.2;
@@ -125,7 +125,7 @@ export class BotClient extends Client {
   }
 
   @once("client_ready")
-  protected async onClientReady() {
+  protected async onClientReady(): Promise<void> {
     this.startTime = Date.now();
     console.log(
       `Client ready! Connected as @${this.chat.currentUser.username}`
@@ -135,12 +135,12 @@ export class BotClient extends Client {
   }
 
   @on("message")
-  protected onMessage(message: Message) {
+  protected onMessage(message: Message): void {
     this.logMessage(message);
   }
 
   @on("notification")
-  protected onNotification(message: Message) {
+  protected onNotification(message: Message): void {
     if (message && !this.chat.roomChannels[message.room_id]) {
       this.chat.joinRoom(message.room_id).receive("ok", () => {
         this.emit("message", message);
@@ -149,14 +149,14 @@ export class BotClient extends Client {
   }
 
   @on("friend_online")
-  protected onFriendOnline(friend: User) {
+  protected onFriendOnline(friend: User): void {
     if (friend) {
       console.log(`Friend @${friend.username} is online`);
     }
   }
 
   @on("friend_offline")
-  protected onFriendOffline(friend: User) {
+  protected onFriendOffline(friend: User): void {
     if (friend) {
       this.chat.leaveRoom(friend.room_id);
       console.log(`Friend @${friend.username} is offline`);
@@ -164,7 +164,7 @@ export class BotClient extends Client {
   }
 
   @on("friend_add")
-  protected onFriendAdd(friend: User) {
+  protected onFriendAdd(friend: User): void {
     if (friend) {
       console.log(`User @${friend.username} added as friend`);
       this.chat.joinRoom(friend.room_id).receive("ok", () => {
@@ -184,7 +184,7 @@ export class BotClient extends Client {
   }
 
   @on("group_add")
-  protected onGroupAdd(group: Room) {
+  protected onGroupAdd(group: Room): void {
     if (group) {
       console.log(`Added to a group`, group);
       this.chat.joinRoom(group.id).receive("ok", () => {
@@ -204,7 +204,7 @@ export class BotClient extends Client {
   }
 
   @on("member_add")
-  protected onMemberAdd(data: { room_id: number; members: User[] }) {
+  protected onMemberAdd(data: { room_id: number; members: User[] }): void {
     if (data.members) {
       const content = new Content();
       const members = data.members
@@ -234,7 +234,11 @@ export class BotClient extends Client {
     }
   }
 
-  setTimeout(callback: (...args: any[]) => void, ms: number, ...args: any[]) {
+  setTimeout(
+    callback: (...args: unknown[]) => void,
+    ms: number,
+    ...args: unknown[]
+  ): NodeJS.Timeout {
     const timeout = setTimeout(() => {
       callback(...args);
       this.timeouts.delete(timeout);
@@ -244,19 +248,23 @@ export class BotClient extends Client {
     return timeout;
   }
 
-  clearTimeout(timeout: NodeJS.Timer) {
+  clearTimeout(timeout: NodeJS.Timer): void {
     clearTimeout(timeout);
     this.timeouts.delete(timeout);
   }
 
-  setInterval(callback: (...args: any[]) => void, ms: number, ...args: any[]) {
+  setInterval(
+    callback: (...args: unknown[]) => void,
+    ms: number,
+    ...args: unknown[]
+  ): NodeJS.Timeout {
     const interval = setInterval(callback, ms, ...args);
     this.intervals.add(interval);
 
     return interval;
   }
 
-  clearInterval(interval: NodeJS.Timer) {
+  clearInterval(interval: NodeJS.Timer): void {
     clearInterval(interval);
     this.intervals.delete(interval);
   }
@@ -265,7 +273,7 @@ export class BotClient extends Client {
    * Reload a command.
    * @param command The name of the command to reload.
    */
-  reloadCommand(command: string) {
+  reloadCommand(command: string): void {
     if (!command) {
       throw new Error(`A command name or 'all' must be provided.`);
     }

@@ -11,8 +11,15 @@ export class CleverbotManager {
   private client: BotClient;
   private cleverbot: CleverbotPlugin;
 
+  /**
+   * Whether cleverbot is enabled.
+   */
   isEnabled = false;
 
+  /**
+   * @param client The bot client.
+   * @param token The cleverbot api token.
+   */
   constructor(client: BotClient, token: string) {
     this.client = client;
     this.cleverbot = new CleverbotPlugin(client, token);

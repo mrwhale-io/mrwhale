@@ -18,14 +18,14 @@ export class Database {
   /**
    * Get the typeorm connection.
    */
-  static get connection() {
+  static get connection(): Connection {
     return Database.instance().connection;
   }
 
   /**
    * Returns the database instance containing the typeorm connection.
    */
-  static instance() {
+  static instance(): Database {
     if (this._instance) {
       return this._instance;
     }
@@ -35,8 +35,9 @@ export class Database {
 
   /**
    * Initialise the database connection.
+   * @param [connectionOptions] The connection options.
    */
-  async init(connectionOptions?: ConnectionOptions) {
+  async init(connectionOptions?: ConnectionOptions): Promise<void> {
     try {
       if (connectionOptions) {
         this.connection = await createConnection(connectionOptions);

@@ -14,7 +14,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     const content = new Content();
     const fractionalDigits = 2;
     const memUnit = 1024;

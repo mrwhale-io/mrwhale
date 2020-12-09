@@ -79,14 +79,14 @@ export abstract class Command {
    * @param message The message that invoked this command.
    * @param [args] Any arguments passed with this command.
    */
-  abstract action(message: Message, args?: any[]): Promise<any>;
+  abstract action(message: Message, args?: unknown[]): Promise<void>;
 
   /**
    * Register this as an available command.
    * @param client The bot client to register command on.
    * @param commandLocation The path location of this command.
    */
-  register(client: BotClient, commandLocation: string) {
+  register(client: BotClient, commandLocation: string): void {
     this.client = client;
     this.commandLocation = commandLocation;
 

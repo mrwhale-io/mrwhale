@@ -40,7 +40,7 @@ export class UrlManager {
   @on("message")
   private async onMessage(message: Message): Promise<void> {
     const content = new Content();
-    const gameregex = /(http:|https:)?\/\/(www\.)?(gamejolt.com)\/(games)\/[^\/]+\/(\d+)/;
+    const gameregex = /(http:|https:)?\/\/(www\.)?(gamejolt.com)\/(games)\/[^/]+\/(\d+)/;
 
     // Check if this is a Game Jolt game url.
     if (message.toString().match(gameregex)) {

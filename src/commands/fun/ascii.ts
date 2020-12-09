@@ -17,7 +17,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [text]: [string]) {
+  async action(message: Message, [text]: [string]): Promise<void> {
     if (!text) {
       return message.reply("Please provide some text.");
     }

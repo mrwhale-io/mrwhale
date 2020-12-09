@@ -5,21 +5,19 @@ export class TimeUtilities {
    * Convert timestamp in miliseconds to days, hours, minutes and seconds.
    * @param ms Time in milliseconds.
    */
-  static convertMs(ms: number) {
-    let timestamp: Time;
+  static convertMs(ms: number): Time {
+    const timestamp = new Time();
 
-    timestamp = new Time();
+    let h, m, s;
 
-    let d, h, m, s;
     s = Math.floor(ms / 1000);
     m = Math.floor(s / 60);
     s = s % 60;
     h = Math.floor(m / 60);
     m = m % 60;
-    d = Math.floor(h / 24);
     h = h % 24;
 
-    timestamp.days = d;
+    timestamp.days = Math.floor(h / 24);
     timestamp.hours = h;
     timestamp.minutes = m;
     timestamp.seconds = s;
@@ -32,7 +30,7 @@ export class TimeUtilities {
    * @param a The first time.
    * @param b The second time.
    */
-  static difference(a: number, b: number) {
+  static difference(a: number, b: number): Time {
     const ms = a - b;
     const difference = TimeUtilities.convertMs(ms);
 

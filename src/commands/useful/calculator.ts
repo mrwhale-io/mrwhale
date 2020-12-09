@@ -26,13 +26,13 @@ export default class extends Command {
       .replace(/[[÷]/gi, "/");
   }
 
-  async action(message: Message, [expression]: [string]) {
+  async action(message: Message, [expression]: [string]): Promise<void> {
     if (!expression) {
       return message.reply("Please enter a calculation.");
     }
 
     try {
-      let result = math.evaluate(this.replaceOperations(expression));
+      const result = math.evaluate(this.replaceOperations(expression));
 
       return message.reply(result.toString());
     } catch (e) {

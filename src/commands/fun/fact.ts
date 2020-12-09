@@ -13,7 +13,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     try {
       const url = `https://uselessfacts.jsph.pl/random.json?language=en`;
       const result = await axios.get(url);

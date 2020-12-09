@@ -15,7 +15,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, args: string[]) {
+  async action(message: Message, args: string[]): Promise<void> {
     const max = 20;
     let passed = true;
 

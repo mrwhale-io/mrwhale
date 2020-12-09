@@ -13,7 +13,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     try {
       const url = `https://icanhazdadjoke.com/`;
       const result = await axios.get(url, {

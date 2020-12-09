@@ -78,7 +78,7 @@ export class LevelManager {
   }
 
   @on("message")
-  protected async onMessage(message: Message) {
+  protected async onMessage(message: Message): Promise<void> {
     if (
       message.user.id === this.client.userId ||
       this.client.chat.friendsList.getByRoom(message.room_id)

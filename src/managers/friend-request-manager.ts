@@ -21,7 +21,7 @@ export class FriendRequestManager {
   }
 
   @on("friend_requests")
-  protected onFriendRequest(requests: FriendRequest[]) {
+  protected onFriendRequest(requests: FriendRequest[]): void {
     this.friendRequestsQueue = requests;
 
     if (this.timer) {

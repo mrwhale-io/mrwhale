@@ -17,7 +17,7 @@ export default class extends Command {
   async action(
     message: Message,
     [firstName, lastName, category]: [string, string, string]
-  ) {
+  ): Promise<void> {
     let url = `http://api.icndb.com/jokes/random?escape=javascript`;
 
     if (firstName) {

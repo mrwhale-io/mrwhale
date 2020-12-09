@@ -3,16 +3,6 @@ import { hangman } from "../data/hangman";
 const availableLetters = "abcdefghijklmnopqrstuvwxyz";
 
 export class HangmanGame {
-  constructor(ownerId: number) {
-    this.lettersGuessed = "";
-    this.lettersMatched = "";
-    this.numLettersMatched = 0;
-    this.lives = 5;
-    this.isGameOver = false;
-    this.won = false;
-    this.ownerId = ownerId;
-  }
-
   lettersGuessed: string;
   lettersMatched: string;
   numLettersMatched: number;
@@ -24,9 +14,27 @@ export class HangmanGame {
   difficulty: "easy" | "medium" | "hard";
   startTime: number;
   started: boolean;
+
   readonly ownerId: number;
 
-  guess(letter: string) {
+  /**
+   * @param ownerId The id of the user who started the game.
+   */
+  constructor(ownerId: number) {
+    this.lettersGuessed = "";
+    this.lettersMatched = "";
+    this.numLettersMatched = 0;
+    this.lives = 5;
+    this.isGameOver = false;
+    this.won = false;
+    this.ownerId = ownerId;
+  }
+
+  /**
+   * Guess a letter for a word.
+   * @param letter The letter to guess.
+   */
+  guess(letter: string): string {
     if (this.isGameOver) {
       return "Game is over. You cannot make another guess.";
     }
@@ -70,7 +78,7 @@ export class HangmanGame {
 
   private printLetters() {
     let output = "";
-    let lettersLeft = this.getLettersToShow();
+    const lettersLeft = this.getLettersToShow();
 
     for (let i = 0; i < this.currentWord.length; i++) {
       output += lettersLeft[i] + " ";
@@ -79,7 +87,11 @@ export class HangmanGame {
     return output;
   }
 
-  gameOver(won?: boolean) {
+  /**
+   * Ends the hangman game.
+   * @param [won] Whether the player won or not.
+   */
+  gameOver(won?: boolean): string {
     this.won = won;
     this.isGameOver = true;
 
@@ -90,15 +102,18 @@ export class HangmanGame {
     }
   }
 
-  getLettersToShow() {
-    let output = [];
+  /**
+   * Returns the guessed and un-guessed letters.
+   */
+  getLettersToShow(): unknown[] {
+    const output = [];
 
     for (let i = 0; i < this.currentWord.length; i++) {
       output[i] = "_";
     }
 
     for (let i = 0; i < this.lettersMatched.length; i++) {
-      let char = this.lettersMatched.charAt(i);
+      const char = this.lettersMatched.charAt(i);
 
       for (let j = 0; j < this.currentWord.length; j++) {
         if (this.currentWord.charAt(j) === char) {
@@ -110,7 +125,10 @@ export class HangmanGame {
     return output;
   }
 
-  start() {
+  /**
+   * Starts the hangman game.
+   */
+  start(): boolean {
     const word = hangman[Math.floor(Math.random() * hangman.length)];
 
     if (!word) {

@@ -4,7 +4,13 @@ import * as path from "path";
 import { Command } from "./command";
 import { BotClient } from "../bot-client";
 
+/**
+ * Responsible for loading and registering commands.
+ */
 export class CommandLoader {
+  /**
+   * Count of the loaded commands.
+   */
   loadedCommands: number;
 
   readonly client: BotClient;
@@ -14,7 +20,10 @@ export class CommandLoader {
     this.loadedCommands = 0;
   }
 
-  loadCommands() {
+  /**
+   * Loads all commands from the commands directory.
+   */
+  loadCommands(): void {
     if (this.client.commands.length > 0) {
       this.client.commands = [];
       this.loadedCommands = 0;
@@ -31,6 +40,7 @@ export class CommandLoader {
 
     for (const file of files) {
       const commandLocation = file.replace(".ts", "");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const loadedCommand: any = this.loadCommand(commandLocation);
       const command: Command = new loadedCommand();
 
@@ -40,7 +50,11 @@ export class CommandLoader {
     }
   }
 
-  reloadCommand(commandName: string) {
+  /**
+   * Reloads a command.
+   * @param commandName The name of the command to reload.
+   */
+  reloadCommand(commandName: string): boolean {
     const cmdIndex = this.client.commands.findIndex(
       (cmd) => cmd.name === commandName
     );
@@ -49,6 +63,7 @@ export class CommandLoader {
       return false;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const loadedCommandType: any = this.loadCommand(
       this.client.commands[cmdIndex].commandLocation
     );
@@ -63,6 +78,7 @@ export class CommandLoader {
   }
 
   private loadCommand(classLocation: string) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const cmdModule = require(classLocation);
 
     let command: typeof Command;

@@ -5,7 +5,7 @@ type ListenerMetaData = {
   event: string;
   method: string;
   once: boolean;
-  args: any[];
+  args: unknown[];
   attached?: boolean;
 };
 
@@ -15,13 +15,13 @@ export class ListenerDecorators {
    * @param emitter The event listener to register.
    * @param [listenerSrc] Listener source.
    */
-  static registerListeners(emitter: EventEmitter, listenerSrc?: object): void {
-    const listenerTarget: object = listenerSrc ? listenerSrc : emitter;
+  static registerListeners(emitter: EventEmitter, listenerSrc?: unknown): void {
+    const listenerTarget = listenerSrc ? listenerSrc : emitter;
 
     for (const listener of <ListenerMetaData[]>(
       Reflect.getMetadata("listeners", listenerTarget.constructor.prototype)
     )) {
-      if (!(<any>listenerTarget)[listener.method]) {
+      if (!(<unknown>listenerTarget)[listener.method]) {
         continue;
       }
 
@@ -31,8 +31,8 @@ export class ListenerDecorators {
 
       emitter[listener.once ? "once" : "on"](
         listener.event,
-        (...eventArgs: any[]) =>
-          (<any>listenerTarget)[listener.method](...eventArgs, ...listener.args)
+        (...eventArgs: unknown[]) =>
+          listenerTarget[listener.method](...eventArgs, ...listener.args)
       );
     }
   }
@@ -42,7 +42,7 @@ export class ListenerDecorators {
    * @param event The event name.
    * @param args The event arguments.
    */
-  static on(event: string, ...args: any[]): MethodDecorator {
+  static on(event: string, ...args: unknown[]): MethodDecorator {
     return ListenerDecorators._setListenerMetadata(event, false, ...args);
   }
 
@@ -51,14 +51,14 @@ export class ListenerDecorators {
    * @param event The event name.
    * @param args The event arguments.
    */
-  static once(event: string, ...args: any[]): MethodDecorator {
+  static once(event: string, ...args: unknown[]): MethodDecorator {
     return ListenerDecorators._setListenerMetadata(event, true, ...args);
   }
 
   private static _setListenerMetadata(
     event: string,
     once: boolean,
-    ...args: any[]
+    ...args: unknown[]
   ): MethodDecorator {
     return function <T extends EventEmitter>(
       target: T,

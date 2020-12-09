@@ -23,7 +23,7 @@ export default class extends Command {
     this.rng = seedrandom();
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     const genre = genres[Math.floor(this.rng() * genres.length)];
     const item = items[Math.floor(this.rng() * items.length)];
     const environment =

@@ -6,6 +6,10 @@ import { BotClient } from "../bot-client";
 export class CleverbotPlugin {
   private bot: cleverbot;
 
+  /**
+   * @param client The bot client.
+   * @param token The cleverbot api token.
+   */
   constructor(private client: BotClient, token: string) {
     this.bot = new cleverbot();
     this.bot.configure({ botapi: token });
@@ -13,6 +17,7 @@ export class CleverbotPlugin {
 
   /**
    * Send message to cleverbot api and return response.
+   * @param message The chat message to reply to.
    */
   speak(message: Message): Promise<string> {
     return new Promise((resolve) => {

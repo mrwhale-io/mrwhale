@@ -59,7 +59,7 @@ export class Policer {
     }
 
     const content = new Content();
-    const capsregex = /^[A-Z0-9-!$%#@£^¬&*()_+|~=`{}\[\]:";'<>?,.\/\\]*$/;
+    const capsregex = /^[A-Z0-9-!$%#@£^¬&*()_+|~=`{}[\]:";'<>?,./\\]*$/;
     const entry = this.policerMap[message.room_id][message.user.id];
 
     // Check for profanity

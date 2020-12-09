@@ -16,7 +16,10 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [lang, ...text]: [string, string[]]) {
+  async action(
+    message: Message,
+    [lang, ...text]: [string, string[]]
+  ): Promise<void> {
     const toTranslate = text.join();
 
     if (!toTranslate) {
@@ -29,7 +32,7 @@ export default class extends Command {
 
         return message.reply(truncate(max, response));
       })
-      .catch((err) => {
+      .catch(() => {
         return message.reply(
           "Couldn't find specified language. Use lang command for available languages."
         );

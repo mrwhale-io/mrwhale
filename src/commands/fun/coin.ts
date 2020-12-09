@@ -13,7 +13,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     return Math.random() > 0.5
       ? message.reply(`🎲 Heads!`)
       : message.reply(`🎲 Tails!`);

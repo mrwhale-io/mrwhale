@@ -12,7 +12,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     if (message.mentions.length === 0) {
       return message.reply("You must mention a user.");
     }
@@ -21,7 +21,7 @@ export default class extends Command {
     const user = message.mentions[0];
 
     if (user && user.id !== undefined) {
-      let response = `Username: ${user.username}\nDisplay Name: ${
+      const response = `Username: ${user.username}\nDisplay Name: ${
         user.display_name
       }\nWebsite: ${user.web_site}\nDogtag: ${user.dogtag}\nModerator: ${
         user.permission_level > 0 ? "Yes" : "No"

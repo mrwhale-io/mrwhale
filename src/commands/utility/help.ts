@@ -12,7 +12,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [typeOrCmdName]: [string]) {
+  async action(message: Message, [typeOrCmdName]: [string]): Promise<void> {
     const content = new Content();
     const types = ["admin", "fun", "game", "utility", "useful"];
 
@@ -44,8 +44,8 @@ export default class extends Command {
         const commands = this.client.commands.filter(
           (c: Command) => c.type === typeOrCmdName.toLowerCase()
         );
-        let listItemNodes = [];
-        for (let command of commands) {
+        const listItemNodes = [];
+        for (const command of commands) {
           const contentText = content.textNode(
             `${this.client.prefix}${command.name} - ${command.description}`
           );
@@ -62,8 +62,8 @@ export default class extends Command {
       return message.reply("Could not find this command or type.");
     }
 
-    let listItemNodes = [];
-    for (let type of types) {
+    const listItemNodes = [];
+    for (const type of types) {
       const contentText = content.textNode(`${this.client.prefix}help ${type}`);
       const contentNode = content.paragraphNode(contentText);
 

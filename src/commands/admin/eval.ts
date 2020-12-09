@@ -2,7 +2,8 @@ import { Message, Content } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
-const config = require("../../../config.json");
+import * as util from "util";
+import * as config from "../../../config.json";
 
 export default class extends Command {
   constructor() {
@@ -15,7 +16,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, args: string[]) {
+  async action(message: Message, args: string[]): Promise<void> {
     const input = args.join();
     const content = new Content();
 
@@ -26,7 +27,7 @@ export default class extends Command {
     try {
       let output = eval(input);
       if (typeof output !== "string") {
-        output = require("util").inspect(output, { depth: 0 });
+        output = util.inspect(output, { depth: 0 });
       }
 
       if (output.includes(config.frontend)) {
@@ -37,12 +38,9 @@ export default class extends Command {
 
       return message.reply(content);
     } catch (error) {
-      error = error.toString();
-      if (error.includes(config.frontend)) {
-        error = error.replace(config.frontend, "removed");
-      }
-
-      content.insertCodeBlock(error);
+      content.insertCodeBlock(
+        error.toString().replace(config.frontend, "removed")
+      );
 
       return message.reply(content);
     }

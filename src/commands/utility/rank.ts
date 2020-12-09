@@ -33,7 +33,7 @@ export default class extends Command {
     return `Rank for ${info.name}\n${rankTxt}${levelTxt}${expTxt}`;
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     const content = new Content();
     try {
       const score: Score = await Database.connection

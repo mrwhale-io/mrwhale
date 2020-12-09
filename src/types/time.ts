@@ -9,7 +9,7 @@ export class Time {
   seconds: number;
   miliseconds: number;
 
-  toString() {
+  toString(): string {
     let timeStr = "";
 
     if (this.days > 0) {

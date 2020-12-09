@@ -1,6 +1,6 @@
 import { BotClient } from "./bot-client";
 
-const config = require("../config.json");
+import * as config from "../config.json";
 
 try {
   new BotClient(

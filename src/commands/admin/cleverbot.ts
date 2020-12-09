@@ -13,7 +13,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     this.client.cleverbot = !this.client.cleverbot;
 
     if (this.client.cleverbot) {

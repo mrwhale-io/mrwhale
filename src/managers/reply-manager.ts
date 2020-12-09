@@ -11,7 +11,7 @@ export class ReplyManager {
   }
 
   @on("message")
-  protected async onMessage(message: Message) {
+  protected async onMessage(message: Message): Promise<void> {
     if (message.user.id === this.client.chat.currentUser.id) {
       return;
     }

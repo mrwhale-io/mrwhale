@@ -3,6 +3,9 @@ import { Message } from "@mrwhale-io/gamejolt";
 import { BotClient } from "../bot-client";
 import { Command } from "./command";
 
+/**
+ * Responsible for dispatching commands.
+ */
 export class CommandDispatcher {
   ready = false;
 

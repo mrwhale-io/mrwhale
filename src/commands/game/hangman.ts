@@ -23,7 +23,10 @@ export default class extends Command {
 
   private games: Map<number, HangmanGame>;
 
-  async action(message: Message, [commandName, input]: [string, string]) {
+  async action(
+    message: Message,
+    [commandName, input]: [string, string]
+  ): Promise<void> {
     if (!commandName) {
       return message.reply(
         "Please provide a command. Use !help hangman for more info."
@@ -50,12 +53,12 @@ export default class extends Command {
       if (this.games.has(message.room_id)) {
         return message.reply("There is already an active game for this room.");
       } else {
-        let newGame = new HangmanGame(message.user.id);
-        let started = newGame.start();
+        const newGame = new HangmanGame(message.user.id);
+        const started = newGame.start();
 
         if (started) {
           this.games.set(message.room_id, newGame);
-          let letters = newGame.getLettersToShow();
+          const letters = newGame.getLettersToShow();
           let output = `I'm thinking of a ${letters.length} lettered word. Start guessing! `;
 
           for (let i = 0; i < letters.length; i++) {
@@ -75,7 +78,7 @@ export default class extends Command {
         return message.reply("You must be the owner of this game to end it.");
       }
 
-      let output = this.games.get(message.room_id).gameOver(false);
+      const output = this.games.get(message.room_id).gameOver(false);
       this.games.delete(message.room_id);
 
       return message.reply(output);
@@ -89,7 +92,7 @@ export default class extends Command {
       }
 
       // Destroy the game after 5 minutes
-      let diff = TimeUtilities.difference(
+      const diff = TimeUtilities.difference(
         Date.now(),
         this.games.get(message.room_id).startTime
       );

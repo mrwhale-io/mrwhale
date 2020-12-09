@@ -14,7 +14,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     const conchShellResponses = [
       `I don't think so.`,
       `Yes.`,

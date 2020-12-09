@@ -23,7 +23,7 @@ export class Timer {
     this.create();
   }
 
-  create() {
+  create(): void {
     this.timer = this.client.setInterval(async () => {
       if (this.ticks >= this.interval) {
         this.ticks = 0;
@@ -35,7 +35,7 @@ export class Timer {
     }, 1000);
   }
 
-  destroy() {
+  destroy(): void {
     this.client.clearInterval(this.timer);
     this.ticks = 0;
     this.timer = undefined;

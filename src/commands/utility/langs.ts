@@ -13,12 +13,12 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message) {
+  async action(message: Message): Promise<void> {
     const content = new Content();
-    let listItemNodes = [];
+    const listItemNodes = [];
     const languages = translate.languages;
 
-    for (let language in languages) {
+    for (const language in languages) {
       const contentText = content.textNode(language);
       const contentNode = content.paragraphNode(contentText);
 

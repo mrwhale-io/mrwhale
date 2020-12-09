@@ -40,7 +40,7 @@ export default class extends Command {
     return selected;
   }
 
-  async action(message: Message, args: string[]) {
+  async action(message: Message, args: string[]): Promise<void> {
     const choices = args.join();
     if (!choices) {
       return message.reply("No choices have been passed.");

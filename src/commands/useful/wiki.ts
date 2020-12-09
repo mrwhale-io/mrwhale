@@ -15,7 +15,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [query]: [string]) {
+  async action(message: Message, [query]: [string]): Promise<void> {
     if (!query) {
       return message.reply("Please provide a search.");
     }
