@@ -15,6 +15,10 @@ export default class extends Command {
   }
 
   async action(message: Message, [query]: [string]): Promise<void> {
+    if (!config.wolfram) {
+      return message.reply("No API key provided for wolfram.");
+    }
+
     if (!query) {
       return message.reply("Please provide a query.");
     }
