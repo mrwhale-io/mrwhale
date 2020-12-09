@@ -5,7 +5,9 @@
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "license": "MIT",
   "scripts": {
-    "start": "ts-node src/index.ts"
+    "start": "ts-node src/index.ts",
+    "lint": "eslint . --ext .ts",
+    "prettier": "prettier --write *.{js,ts,json}"
   },
   "dependencies": {
     "@mrwhale-io/gamejolt": "git+https://github.com/mrwhale-io/gamejolt.git",
@@ -30,6 +32,11 @@
     "@types/figlet": "^1.2.0",
     "@types/mathjs": "^6.0.5",
     "@types/node": "^14.0.14",
+    "@typescript-eslint/eslint-plugin": "^4.9.1",
+    "@typescript-eslint/parser": "^4.9.1",
+    "eslint": "^7.15.0",
+    "eslint-config-prettier": "^7.0.0",
+    "prettier": "^2.2.1",
     "typescript": "^3.9.6"
   }
 }
