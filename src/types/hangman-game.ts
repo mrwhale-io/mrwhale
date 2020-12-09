@@ -44,7 +44,7 @@ export class HangmanGame {
   startTime: number;
 
   /**
-   * The id of the user who started the game.s
+   * The id of the user who started the game.
    */
   readonly ownerId: number;
 
