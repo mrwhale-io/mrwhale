@@ -4,7 +4,7 @@ title: Commands
 sidebar_label: Commands
 ---
 
-Here's a list of Mr. Whale commands. Mr. Whale **27 commands** in total.
+Here's a list of Mr. Whale commands. Mr. Whale **28 commands** in total.
 
 ### Contents 
 
