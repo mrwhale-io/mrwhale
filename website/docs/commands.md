@@ -47,7 +47,7 @@ Here's a list of Mr. Whale commands. Mr. Whale **27 commands** in total.
 | **rank**  | Get your current rank.                              | rank             |
 | **whois** | Get information about a user.                       | whois [@user]    |
 
-### Useful (5 commands)
+### Useful (6 commands)
 
 | Name          | Description                                                                 | Usage                    |
 | ------------- | --------------------------------------------------------------------------- | ------------------------ |
@@ -56,6 +56,7 @@ Here's a list of Mr. Whale commands. Mr. Whale **27 commands** in total.
 | **hastebin**  | Upload text to hastebin.                                                    | hastebin [paste]         |
 | **translate** | Translate to specified language. Use langs command for supported languages. | translate [lang], [text] |
 | **wiki**      | Search for a Wiki page.                                                     | wiki [search]            |
+| **wolfram**   | Compute answers using Wolfram alpha.                                        | wolfram [query]          |
 
 ### Admin (3 commands)
 

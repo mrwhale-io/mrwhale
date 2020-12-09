@@ -2773,6 +2773,10 @@ wikijs@^6.0.1:
     cross-fetch "^3.0.2"
     infobox-parser "3.3.1"
 
+"wolfram-alpha-api@https://products.wolframalpha.com/api/libraries/javascript/wolfram-alpha-api-1.0.0-rc.1.tgz":
+  version "1.0.0-rc.1"
+  resolved "https://products.wolframalpha.com/api/libraries/javascript/wolfram-alpha-api-1.0.0-rc.1.tgz#ef03c18ee5561c71e79c456ddb7263eca31c03d9"
+
 word-wrap@^1.2.3:
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/word-wrap/-/word-wrap-1.2.3.tgz#610636f6b1f703891bd34771ccb17fb93b47079c"

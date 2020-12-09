@@ -29,7 +29,7 @@ Mr. Whale has a lot of commands, with 5 main categories:
 
 - 👻 **Fun**: `ascii`, `choose`, `conchshell`, `ship`, `gameidea` and more!
 - 🎲 **Game**: `hangman` and `rockpaper`!
-- 🖨️ **Useful**: `calculator`, `translate`, `hastebin` and `wiki`!
+- 🖨️ **Useful**: `calculator`, `translate`, `hastebin`, `wiki`, `wolfram` and more!
 - 🔧 **Utility**: `help`, `info`, `langs`, `rank` and more!
 - 👑 **Owner**: `eval`, `reload` and `cleverbot`!
 
