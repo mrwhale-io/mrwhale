@@ -211,13 +211,58 @@ export class BotClient extends Client {
   protected onMemberAdd(data: { room_id: number; members: User[] }): void {
     if (data.members) {
       const content = new Content();
-      const members = data.members
-        .filter((member) => member.id !== this.userId)
-        .map((member) => member.display_name)
-        .join(", ");
+      const members = data.members.filter(
+        (member) => member.id !== this.userId
+      );
+      const nodes = [content.textNode("👋 ")];
+      for (const member of members) {
+        nodes.push(
+          content.textNode(`@${member.username} `, [
+            content.mention(member.username),
+          ])
+        );
+      }
+      nodes.push(content.textNode(` was just added to the group.`));
 
-      if (members) {
-        content.insertText(`${members} was just added to the group.`);
+      content.insertNewNode(nodes);
+      this.chat.sendMessage(content.contentJson(), data.room_id);
+    }
+  }
+
+  @on("member_leave")
+  protected onMemberLeave(data: { room_id: number; member: User }): void {
+    if (data.member) {
+      const content = new Content();
+      const nodes = [
+        content.textNode(`🚪 `),
+        content.textNode(`@${data.member.username} `, [
+          content.mention(data.member.username),
+        ]),
+        content.textNode(` just left the group.`),
+      ];
+
+      content.insertNewNode(nodes);
+      this.chat.sendMessage(content.contentJson(), data.room_id);
+    }
+  }
+
+  @on("owner_sync")
+  protected onOwnerSync(data: { room_id: number; owner_id: number }): void {
+    const room = this.chat.activeRooms[data.room_id];
+
+    if (room && room.members) {
+      const owner = room.members.find((member) => member.id === data.owner_id);
+
+      if (owner) {
+        const content = new Content();
+        const nodes = [
+          content.textNode(`👑 `),
+          content.textNode(`@${owner.username} `, [
+            content.mention(owner.username),
+          ]),
+          content.textNode(` just became the group owner.`),
+        ];
+        content.insertNewNode(nodes);
         this.chat.sendMessage(content.contentJson(), data.room_id);
       }
     }

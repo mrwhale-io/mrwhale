@@ -9,6 +9,7 @@ try {
       frontend: config.frontend,
       baseApiUrl: config.baseApiUrl,
       baseChatUrl: config.baseChatUrl,
+      rateLimitRequests: 3,
     },
     {
       prefix: "!",
