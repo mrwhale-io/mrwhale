@@ -12,6 +12,7 @@ export default class extends Command {
       type: "useful",
       usage: "<prefix>wiki <query>",
       examples: ["<prefix>wiki whale"],
+      cooldown: 3000,
     });
   }
 

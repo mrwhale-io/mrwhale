@@ -48,4 +48,9 @@ export interface CommandOptions {
    * aliases See: {@link Command#aliases}.
    */
   aliases?: string[];
+
+  /**
+   * Cooldown in milliseconds.
+   */
+  cooldown?: number;
 }

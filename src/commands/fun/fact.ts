@@ -10,6 +10,7 @@ export default class extends Command {
       description: "Get a random useless fact.",
       type: "fun",
       usage: "<prefix>fact",
+      cooldown: 3000,
     });
   }
 

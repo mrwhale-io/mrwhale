@@ -14,6 +14,7 @@ export default class extends Command {
       usage: "<prefix>define <word>",
       examples: ["<prefix>define whale"],
       aliases: ["ud", "dictionary"],
+      cooldown: 3000,
     });
   }
 

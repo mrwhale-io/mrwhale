@@ -13,7 +13,8 @@ export default class extends Command {
       description: "Generate ascii.",
       type: "fun",
       usage: "<prefix>ascii <text>",
-      examples: ["<prefix>ascii Mr. Whale"]
+      examples: ["<prefix>ascii Mr. Whale"],
+      cooldown: 5000,
     });
   }
 

@@ -17,6 +17,7 @@ export default class extends Command {
       ],
       type: "game",
       argSeparator: " ",
+      cooldown: 3000,
     });
     this.games = new Map<number, HangmanGame>();
   }

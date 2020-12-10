@@ -10,6 +10,7 @@ export default class extends Command {
       description: "Get advice.",
       type: "useful",
       usage: "<prefix>advice",
+      cooldown: 3000,
     });
   }
 

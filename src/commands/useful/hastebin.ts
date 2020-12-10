@@ -11,6 +11,7 @@ export default class extends Command {
       type: "useful",
       usage: "<prefix>hastebin <paste>",
       examples: ["<prefix>hastebin Here is some text."],
+      cooldown: 3000,
     });
   }
 

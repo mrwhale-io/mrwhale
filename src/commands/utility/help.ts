@@ -9,6 +9,7 @@ export default class extends Command {
       description: "Get command help.",
       type: "utility",
       usage: "<prefix>help <type|cmd>",
+      cooldown: 5000,
     });
   }
 

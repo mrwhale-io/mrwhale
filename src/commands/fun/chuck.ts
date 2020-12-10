@@ -11,6 +11,7 @@ export default class extends Command {
       type: "fun",
       usage: "<prefix>chucknorris <firstname> <lastname> <category>",
       aliases: ["chuck", "norris"],
+      cooldown: 3000,
     });
   }
 

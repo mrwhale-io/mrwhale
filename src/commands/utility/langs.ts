@@ -10,6 +10,7 @@ export default class extends Command {
       description: "List supported languages for the translate command.",
       type: "utility",
       usage: "<prefix>langs",
+      cooldown: 5000,
     });
   }
 

@@ -9,6 +9,7 @@ export default class extends Command {
       description: "Get information about a user.",
       type: "utility",
       usage: "<prefix>whois @user",
+      cooldown: 3000,
     });
   }
 

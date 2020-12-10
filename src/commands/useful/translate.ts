@@ -13,6 +13,7 @@ export default class extends Command {
       type: "useful",
       usage: "<prefix>translate <lang>, <text>",
       examples: ["<prefix>translate es, Hello", "<prefix>translate auto, Hola"],
+      cooldown: 3000,
     });
   }
 

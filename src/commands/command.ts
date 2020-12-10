@@ -3,6 +3,7 @@ import { Message } from "@mrwhale-io/gamejolt";
 import { CommandOptions } from "../types/command-options";
 import { BotClient } from "../bot-client";
 import { CommandTypes } from "../types/command-types";
+import { CommandRateLimiter } from "./command-rate-limiter";
 
 /**
  * Command class to extend which users can execute.
@@ -60,8 +61,20 @@ export abstract class Command {
    * Aliases the command can be called by other than its name.
    */
   aliases: string[];
+
+  /**
+   * The bot client.
+   */
   client: BotClient;
 
+  /**
+   * Command rate limiter.
+   */
+  readonly rateLimiter: CommandRateLimiter;
+
+  /**
+   * @param options The command options.
+   */
   constructor(options: CommandOptions) {
     this.name = options.name;
     this.description = options.description;
@@ -72,6 +85,7 @@ export abstract class Command {
     this.groupOnly = options.groupOnly || false;
     this.ownerOnly = options.ownerOnly || false;
     this.aliases = options.aliases || [];
+    this.rateLimiter = new CommandRateLimiter(1, options.cooldown || 1000);
   }
 
   /**

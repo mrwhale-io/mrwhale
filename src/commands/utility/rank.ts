@@ -22,6 +22,7 @@ export default class extends Command {
       usage: "<prefix>rank",
       type: "utility",
       groupOnly: true,
+      cooldown: 3000,
     });
   }
 
@@ -47,18 +48,9 @@ export default class extends Command {
       const playerSorted = scores.sort((a, b) => a.exp - b.exp).reverse();
 
       if (!score) {
-        const info: PlayerInfo = {
-          name: message.user.display_name,
-          totalExp: 0,
-          levelExp: 0,
-          remainingExp: 0,
-          level: 0,
-          rank: "n/a",
-        };
-
-        content.insertCodeBlock(this.getRankInfo(info));
-
-        return message.reply(content);
+        return message.reply(
+          "You aren't ranked yet. Send some messages first, then try again."
+        );
       }
 
       const level = LevelManager.getLevelFromExp(score.exp);

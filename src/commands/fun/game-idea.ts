@@ -19,6 +19,7 @@ export default class extends Command {
       description: "Generate a random game idea.",
       type: "fun",
       usage: "<prefix>gameidea",
+      cooldown: 3000,
     });
     this.rng = seedrandom();
   }

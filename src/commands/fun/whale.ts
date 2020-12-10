@@ -11,6 +11,7 @@ export default class extends Command {
       type: "fun",
       usage: "<prefix>whale <length>",
       examples: ["<prefix>whale 10"],
+      cooldown: 3000,
     });
   }
 

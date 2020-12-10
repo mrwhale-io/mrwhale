@@ -11,6 +11,7 @@ export default class extends Command {
       type: "utility",
       usage: "<prefix>info",
       aliases: ["uptime", "stats"],
+      cooldown: 3000,
     });
   }
 

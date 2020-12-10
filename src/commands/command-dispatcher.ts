@@ -2,6 +2,7 @@ import { Message } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { Command } from "./command";
+import { TimeUtilities } from "../util/time";
 
 /**
  * Responsible for dispatching commands.
@@ -50,7 +51,11 @@ export class CommandDispatcher {
     }
 
     if (command.ownerOnly && message.user.id !== this.client.ownerId) {
-      return message.reply("This is an owner only command.");
+      return message.reply("This is a bot owner only command.");
+    }
+
+    if (!this.checkRateLimits(message, command)) {
+      return;
     }
 
     const args: string[] = message.textContent
@@ -62,6 +67,39 @@ export class CommandDispatcher {
       .filter((arg) => arg !== "");
 
     await this.dispatch(command, message, args).catch(console.error);
+  }
+
+  private checkRateLimits(message: Message, command: Command): boolean {
+    const passed = this.checkRateLimiter(message, command);
+
+    if (passed) {
+      command.rateLimiter.get(message).call();
+    }
+
+    return passed;
+  }
+
+  private checkRateLimiter(message: Message, command: Command): boolean {
+    const rateLimiter = command.rateLimiter;
+    const rateLimit = rateLimiter.get(message);
+
+    if (!rateLimit.isRateLimited) {
+      return true;
+    }
+
+    if (!rateLimit.wasNotified) {
+      rateLimit.setNotified();
+      const timeLeft = TimeUtilities.difference(
+        rateLimit.expires,
+        Date.now()
+      ).toString();
+
+      if (timeLeft) {
+        message.reply(`Command cooldown. Try again in ${timeLeft}.`);
+      }
+    }
+
+    return false;
   }
 
   private async dispatch(command: Command, message: Message, args: string[]) {

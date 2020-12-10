@@ -11,6 +11,7 @@ export default class extends Command {
       description: "Compute answers using Wolfram alpha.",
       type: "useful",
       usage: "<prefix>wolfram <query>",
+      cooldown: 3000,
     });
   }
 

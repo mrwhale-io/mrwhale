@@ -10,6 +10,7 @@ export default class extends Command {
       description: "Get a random Dad joke.",
       type: "fun",
       usage: "<prefix>dadjoke",
+      cooldown: 3000,
     });
   }
 
