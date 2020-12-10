@@ -14,7 +14,11 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message, [question]: [string]): Promise<void> {
+    if (!question) {
+      return message.reply(`Ask the magic conch shell a question.`);
+    }
+
     const conchShellResponses = [
       `I don't think so.`,
       `Yes.`,
