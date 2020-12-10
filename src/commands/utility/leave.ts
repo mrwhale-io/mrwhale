@@ -9,6 +9,7 @@ export default class extends Command {
       description: "Make me leave the group chat.",
       type: "utility",
       usage: "<prefix>leave",
+      groupOnly: true,
     });
   }
 
@@ -17,7 +18,7 @@ export default class extends Command {
 
     if (room && message.user.id === room.owner_id) {
       message.reply("Goodbye 👋");
-      this.client.chat.userChannel?.push('group_leave', { room_id: room.id });
+      this.client.chat.userChannel?.push("group_leave", { room_id: room.id });
     } else {
       message.reply("You need to be room owner to use this command.");
     }
