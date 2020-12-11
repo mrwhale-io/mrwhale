@@ -1,9 +1,17 @@
 {
   "name": "@mrwhale/mrwhale",
+  "description": "Mr. Whale is a general purpose chat bot designed for the Game Jolt chat system.",
   "version": "0.1.0",
-  "main": "./dist/index.js",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrwhale-io/mrwhale.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mrwhale-io/mrwhale/issues"
+  },
+  "homepage": "https://github.com/mrwhale-io/mrwhale#readme",
   "scripts": {
     "start": "ts-node src/index.ts",
     "lint": "eslint . --ext .ts",
