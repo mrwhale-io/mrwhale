@@ -47,6 +47,7 @@ export class CommandLoader {
       command.register(this.client, commandLocation);
 
       this.loadedCommands++;
+      this.client.logger.info(`Command ${command.name} loaded`);
     }
   }
 
@@ -73,6 +74,7 @@ export class CommandLoader {
       loadedCommand.commandLocation
     );
     this.client.commands[cmdIndex] = loadedCommand;
+    this.client.logger.info(`Command ${loadedCommand.name} reloaded`);
 
     return true;
   }

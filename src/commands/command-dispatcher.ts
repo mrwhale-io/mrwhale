@@ -66,7 +66,13 @@ export class CommandDispatcher {
       .map((arg) => arg.trim())
       .filter((arg) => arg !== "");
 
-    await this.dispatch(command, message, args).catch(console.error);
+    await this.dispatch(command, message, args).catch((e) =>
+      this.client.logger.error(e)
+    );
+
+    this.client.logger.info(
+      `${message.user.username} (${message.user.id}) ran command ${command.name}`
+    );
   }
 
   private checkRateLimits(message: Message, command: Command): boolean {

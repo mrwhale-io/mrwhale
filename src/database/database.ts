@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { createConnection, Connection, ConnectionOptions } from "typeorm";
+import { BotClient } from "../bot-client";
 
 /**
  * Manages the database connection.
@@ -35,9 +36,13 @@ export class Database {
 
   /**
    * Initialise the database connection.
+   * @param client The bot client.
    * @param [connectionOptions] The connection options.
    */
-  async init(connectionOptions?: ConnectionOptions): Promise<void> {
+  async init(
+    client: BotClient,
+    connectionOptions?: ConnectionOptions
+  ): Promise<void> {
     try {
       if (connectionOptions) {
         this.connection = await createConnection(connectionOptions);
@@ -45,7 +50,7 @@ export class Database {
         this.connection = await createConnection();
       }
     } catch (error) {
-      console.error(`Failed to connect to database. Error: ${error}`);
+      client.logger.error(error);
       process.exit();
     }
   }
