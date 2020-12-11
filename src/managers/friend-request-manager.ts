@@ -1,6 +1,6 @@
 import { FriendRequest } from "@mrwhale-io/gamejolt";
 
-import { Timer } from "../timer";
+import { Timer } from "../util/timer";
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
 

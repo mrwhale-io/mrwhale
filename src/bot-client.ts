@@ -1,5 +1,3 @@
-import * as moment from "moment";
-import * as chalk from "chalk";
 import {
   Client,
   ClientOptions,
@@ -17,11 +15,12 @@ import { ListenerDecorators } from "./util/listener-decorators";
 import { FriendRequestManager } from "./managers/friend-request-manager";
 import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
-import { Timer } from "./timer";
+import { Timer } from "./util/timer";
 import { UrlManager } from "./managers/url-manager";
 import { Database } from "./database/database";
 import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
+import { logger } from "./util/logger";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -45,6 +44,11 @@ export class BotClient extends Client {
    * The user identifier of the bot owner.
    */
   ownerId: number;
+
+  /**
+   * Bot client logging instance.
+   */
+  readonly logger = logger;
 
   /**
    * Returns the chat client uptime.
@@ -118,29 +122,23 @@ export class BotClient extends Client {
     const timer = new Timer(this, "join-groups", interval, async () => {
       if (roomIds.length > 0) {
         const roomId = roomIds.shift();
-        console.log(`Joining group chat: ${roomId}`);
+        this.logger.info(`Joining group chat: ${roomId}`);
         this.chat.joinRoom(roomId);
       } else {
         timer.destroy();
       }
     });
-
     this.emit("client_ready");
   }
 
   @once("client_ready")
   protected async onClientReady(): Promise<void> {
     this.startTime = Date.now();
-    console.log(
+    this.logger.info(
       `Client ready! Connected as @${this.chat.currentUser.username}`
     );
 
-    await Database.instance().init();
-  }
-
-  @on("message")
-  protected onMessage(message: Message): void {
-    this.logMessage(message);
+    await Database.instance().init(this);
   }
 
   @on("notification")
@@ -155,7 +153,7 @@ export class BotClient extends Client {
   @on("friend_online")
   protected onFriendOnline(friend: User): void {
     if (friend) {
-      console.log(`Friend @${friend.username} is online`);
+      this.logger.info(`Friend @${friend.username} (${friend.id}) is online`);
     }
   }
 
@@ -163,14 +161,16 @@ export class BotClient extends Client {
   protected onFriendOffline(friend: User): void {
     if (friend) {
       this.chat.leaveRoom(friend.room_id);
-      console.log(`Friend @${friend.username} is offline`);
+      this.logger.info(`Friend @${friend.username} (${friend.id}) is offline`);
     }
   }
 
   @on("friend_add")
   protected onFriendAdd(friend: User): void {
     if (friend) {
-      console.log(`User @${friend.username} added as friend`);
+      this.logger.info(
+        `User @${friend.username} (${friend.id}) added as friend`
+      );
       this.chat.joinRoom(friend.room_id).receive("ok", () => {
         const content = new Content();
         const nodes = [
@@ -190,7 +190,6 @@ export class BotClient extends Client {
   @on("group_add")
   protected onGroupAdd(group: Room): void {
     if (group) {
-      console.log(`Added to a group`, group);
       this.chat.joinRoom(group.id).receive("ok", () => {
         const content = new Content();
         const nodes = [
@@ -204,6 +203,7 @@ export class BotClient extends Client {
 
         this.chat.sendMessage(content.contentJson(), group.id);
       });
+      this.logger.info(`Added to a group chat with id: ${group.id}`);
     }
   }
 
@@ -211,21 +211,20 @@ export class BotClient extends Client {
   protected onMemberAdd(data: { room_id: number; members: User[] }): void {
     if (data.members) {
       const content = new Content();
-      const members = data.members.filter(
-        (member) => member.id !== this.userId
-      );
+      const members = data.members
+        .filter((member) => member.id !== this.userId)
+        .map((member) => member.username);
       const nodes = [content.textNode("👋 ")];
       for (const member of members) {
-        nodes.push(
-          content.textNode(`@${member.username} `, [
-            content.mention(member.username),
-          ])
-        );
+        nodes.push(content.textNode(`@${member} `, [content.mention(member)]));
       }
-      nodes.push(content.textNode(` was just added to the group.`));
+      nodes.push(content.textNode(`was just added to the group.`));
 
       content.insertNewNode(nodes);
       this.chat.sendMessage(content.contentJson(), data.room_id);
+      this.logger.info(
+        `${members.join(",")} were added to group chat with id: ${data.room_id}`
+      );
     }
   }
 
@@ -238,11 +237,14 @@ export class BotClient extends Client {
         content.textNode(`@${data.member.username} `, [
           content.mention(data.member.username),
         ]),
-        content.textNode(` just left the group.`),
+        content.textNode(`just left the group.`),
       ];
 
       content.insertNewNode(nodes);
       this.chat.sendMessage(content.contentJson(), data.room_id);
+      this.logger.info(
+        `${data.member.username} (${data.member.id}) left group chat with id: ${data.room_id}`
+      );
     }
   }
 
@@ -260,26 +262,14 @@ export class BotClient extends Client {
           content.textNode(`@${owner.username} `, [
             content.mention(owner.username),
           ]),
-          content.textNode(` just became the group owner.`),
+          content.textNode(`just became the group owner.`),
         ];
         content.insertNewNode(nodes);
         this.chat.sendMessage(content.contentJson(), data.room_id);
+        this.logger.info(
+          `${owner.username} (${owner.id}) became owner of group chat with id: ${data.room_id}`
+        );
       }
-    }
-  }
-
-  private logMessage(msg: Message) {
-    const timestamp = moment().format("hh:mm");
-    const user = msg.user;
-    const room = `Room ${msg.room_id}`;
-    const message = msg.textContent;
-
-    if (message !== "") {
-      console.log(
-        `${chalk.yellow(room)} | ${timestamp} ${chalk.green(
-          user.display_name
-        )} - ${message}`
-      );
     }
   }
 

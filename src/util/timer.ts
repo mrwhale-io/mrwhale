@@ -1,4 +1,4 @@
-import { BotClient } from "./bot-client";
+import { BotClient } from "../bot-client";
 
 export class Timer {
   name: string;
@@ -30,7 +30,7 @@ export class Timer {
       }
 
       if (this.ticks++ === 0) {
-        this.callback().catch(console.error);
+        this.callback().catch((e) => this.client.logger.error(e));
       }
     }, 1000);
   }
