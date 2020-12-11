@@ -7,8 +7,8 @@ import { CommandRateLimit } from "./command-rate-limit";
  */
 export class CommandRateLimiter {
   private readonly rateLimits: Map<number, Map<number, CommandRateLimit>>;
-  private limit: number;
-  private duration: number;
+  readonly limit: number;
+  readonly duration: number;
 
   /**
    * @param limit The number of requests before rate limiting.

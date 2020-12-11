@@ -1,4 +1,5 @@
 import { Content, Message } from "@mrwhale-io/gamejolt";
+import { TimeUtilities } from "../../util/time";
 
 import { Command } from "../command";
 
@@ -25,7 +26,13 @@ export default class extends Command {
       );
 
       if (cmd) {
-        let response = `Name: ${cmd.name}\nDescription: ${cmd.description}\nType: ${cmd.type}\nUsage: ${cmd.usage}`;
+        let response = `Name: ${cmd.name}\nDescription: ${
+          cmd.description
+        }\nType: ${cmd.type}\nUsage: ${
+          cmd.usage
+        }\nCooldown: ${TimeUtilities.convertMs(
+          cmd.rateLimiter.duration
+        ).toString()}`;
 
         if (cmd.examples.length > 0) {
           response += `\nExamples: ${cmd.examples.join(", ")}`;
