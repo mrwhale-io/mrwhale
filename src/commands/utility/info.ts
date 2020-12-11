@@ -2,6 +2,7 @@ import { Message, Content } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 import { TimeUtilities } from "../../util/time";
+import { version } from "../../../package.json";
 
 export default class extends Command {
   constructor() {
@@ -10,7 +11,7 @@ export default class extends Command {
       description: "Get bot information.",
       type: "utility",
       usage: "<prefix>info",
-      aliases: ["uptime", "stats"],
+      aliases: ["uptime", "stats", "version"],
       cooldown: 3000,
     });
   }
@@ -24,7 +25,9 @@ export default class extends Command {
     const cleverbot = this.client.cleverbot ? "on" : "off";
 
     content.insertCodeBlock(
-      `Group chats: ${this.client.chat.groupChats.length}\nFriends: ${
+      `Version: ${version}\nGroup chats: ${
+        this.client.chat.groupChats.length
+      }\nFriends: ${
         this.client.chat.friendsList.collection.length
       }\nMemory usage: ${memoryUsage.toFixed(
         fractionalDigits
