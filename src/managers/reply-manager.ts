@@ -1,9 +1,18 @@
-import { Message } from "@mrwhale-io/gamejolt";
+import {
+  Message,
+  Notification,
+  Content,
+  User,
+  FiresidePost,
+  Comment,
+} from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
 
 const { on, registerListeners } = ListenerDecorators;
+
+const WHALE_REGEX = /O_{1,5}O/gi;
 
 export class ReplyManager {
   constructor(private client: BotClient) {
@@ -16,9 +25,30 @@ export class ReplyManager {
       return;
     }
 
-    const regex = /O_{1,5}O/i;
-    if (message.textContent.match(regex)) {
-      return message.reply(message.toString().match(regex)[0]);
+    if (message.textContent.match(WHALE_REGEX)) {
+      return message.reply(message.toString().match(WHALE_REGEX)[0]);
+    }
+  }
+
+  @on("user_notification")
+  protected async onUserNotification(
+    notification: Notification
+  ): Promise<void> {
+    if (
+      notification.type === "post-add" &&
+      notification.from_model instanceof User &&
+      notification.action_model instanceof FiresidePost &&
+      notification.action_model.leadStr.match(WHALE_REGEX)
+    ) {
+      const content = new Content("fireside-post-comment").insertText(
+        notification.action_model.leadStr.match(WHALE_REGEX)[0]
+      );
+
+      this.client.api.comment(
+        notification.action_resource_id,
+        notification.action_resource,
+        content.contentJson()
+      );
     }
   }
 }
