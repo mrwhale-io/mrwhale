@@ -7,6 +7,7 @@ const client = new BotClient(
     frontend: config.frontend,
     baseApiUrl: config.baseApiUrl,
     baseChatUrl: config.baseChatUrl,
+    baseGridUrl: config.baseGridUrl,
     rateLimitRequests: 3,
   },
   {
