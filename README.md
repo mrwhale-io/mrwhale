@@ -1,4 +1,4 @@
-# Mr. Whale
+![Mr. Whale](images/logo.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![](https://img.shields.io/discord/773335253032501278.svg?logo=discord&colorB=7289DA)](https://discord.gg/wjBnkR4AUZ)
@@ -6,7 +6,7 @@
 
 *Introducing Mr. Whale, the best chat bot on Game Jolt!*  Mr. Whale is an all-purpose chat bot loaded with dozens of awesome commands and features. Mr. Whale has been the source of entertainment in over 500+ group chats and counting.
 
-![Mr. Whale](screenshots/screenshot.gif)
+![Mr. Whale](images/screenshot.gif)
 
 Feel free to add a star ⭐ to the repository to promote the project!
 
@@ -27,10 +27,10 @@ Some basic features include:
 
 Mr. Whale has a lot of commands, with 5 main categories:
 
-- 👻 **Fun**: `ascii`, `choose`, `conchshell`, `ship`, `gameidea` and more!
-- 🎲 **Game**: `hangman` and `rockpaper`!
-- 🖨️ **Useful**: `calculator`, `translate`, `hastebin`, `wiki`, `wolfram` and more!
-- 🔧 **Utility**: `help`, `info`, `langs`, `rank` and more!
+- 👻 **Fun**: `ascii`, `choose`, `conchshell`, `ship`, `gameidea` and **7** more!
+- 🎲 **Game**: `hangman`, `rockpaper` and `guess`!
+- 🖨️ **Useful**: `calculator`, `translate`, `hastebin`, `wiki`, `wolfram` and `advice`!
+- 🔧 **Utility**: `help`, `info`, `langs`, `rank`, `whois` and **3** more!
 - 👑 **Owner**: `eval`, `reload` and `cleverbot`!
 
 [See the full command list](https://www.mrwhale.io/docs/commands)
