@@ -114,7 +114,10 @@ export class LevelManager {
       ];
       content.insertNewNode(nodes);
 
-      return message.reply(content);
+      return this.client.chat.sendMessage(
+        content.contentJson(),
+        message.room_id
+      );
     }
   }
 }
