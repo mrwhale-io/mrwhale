@@ -49,7 +49,7 @@ Mr. Whale has a lot of commands, with 5 main categories:
 
 Feel free to dive in! [Open an issue](https://github.com/mrwhale-io/mrwhale/issues/new) or submit PRs.
 
-Standard Readme follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
+This project follows the [Contributor Covenant](http://contributor-covenant.org/version/1/3/0/) Code of Conduct.
 
 ## License
 
