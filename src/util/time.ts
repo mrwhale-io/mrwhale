@@ -15,9 +15,12 @@ export class TimeUtilities {
     s = s % 60;
     h = Math.floor(m / 60);
     m = m % 60;
+
+    const d = Math.floor(h / 24);
+
     h = h % 24;
 
-    timestamp.days = Math.floor(h / 24);
+    timestamp.days = d;
     timestamp.hours = h;
     timestamp.minutes = m;
     timestamp.seconds = s;
