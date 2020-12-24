@@ -15,18 +15,18 @@ export default class extends Command {
   }
 
   async action(message: Message): Promise<void> {
-    const today = new Date();
-    let deadline = "January 1 " + (today.getFullYear() + 1) + " 00:00:00";
-    if (today.getMonth() === 0 && today.getDate() === 1) {
-      deadline = "January 1 " + today.getFullYear() + " 00:00:00";
-    }
-    const ms = Date.parse(deadline) - Date.now();
+    const now = new Date();
+    const next = new Date(now);
+    next.setFullYear(now.getFullYear() + 1);
+    next.setHours(0, 0, 0, 0);
+    next.setMonth(0, 1);
+    const ms = next.valueOf() - now.valueOf();
     const time = TimeUtilities.convertMs(ms);
 
     if (ms <= 0) {
       return message.reply(`Happy new year! 🎉🎆`);
     }
 
-    return message.reply(`${time.toString()} until the new year!`);
+    return message.reply(`${time}until ${next.getFullYear()}!`);
   }
 }
