@@ -40,9 +40,14 @@ export interface CommandOptions {
   groupOnly?: boolean;
 
   /**
-   * ownerOnly See: {@link Command#ownerOnly}.
+   * admin See: {@link Command#admin}.
    */
-  ownerOnly?: boolean;
+  admin?: boolean;
+
+  /**
+   * owner See: {@link Command#owner}.
+   */
+  owner?: boolean;
 
   /**
    * aliases See: {@link Command#aliases}.

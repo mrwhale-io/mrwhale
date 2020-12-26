@@ -9,7 +9,7 @@ export default class extends Command {
       description: "Toggle cleverbot on/off.",
       type: "admin",
       usage: "<prefix>cleverbot",
-      ownerOnly: true,
+      admin: true,
     });
   }
 

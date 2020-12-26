@@ -9,7 +9,7 @@ export default class extends Command {
       description: "Reload a command.",
       type: "admin",
       usage: "<prefix>reload <command>",
-      ownerOnly: true,
+      admin: true,
     });
   }
 

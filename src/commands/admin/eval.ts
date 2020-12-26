@@ -12,7 +12,7 @@ export default class extends Command {
       description: "Evaluate JavaScript code and execute it.",
       type: "admin",
       usage: "<prefix>eval <code>",
-      ownerOnly: true,
+      admin: true,
     });
   }
 

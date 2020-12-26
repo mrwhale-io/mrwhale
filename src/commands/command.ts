@@ -55,7 +55,12 @@ export abstract class Command {
   /**
    * Whether or not the command can be used only by the bot owner.
    */
-  ownerOnly: boolean;
+  admin: boolean;
+
+  /**
+   * Whether or not the command can be used only by the room owner.
+   */
+  owner: boolean;
 
   /**
    * Aliases the command can be called by other than its name.
@@ -83,7 +88,8 @@ export abstract class Command {
     this.examples = options.examples || [];
     this.argSeparator = options.argSeparator || ",";
     this.groupOnly = options.groupOnly || false;
-    this.ownerOnly = options.ownerOnly || false;
+    this.admin = options.admin || false;
+    this.owner = options.owner || false;
     this.aliases = options.aliases || [];
     this.rateLimiter = new CommandRateLimiter(1, options.cooldown || 1000);
   }

@@ -50,8 +50,12 @@ export class CommandDispatcher {
       return message.reply("This is a group only command.");
     }
 
-    if (command.ownerOnly && message.user.id !== this.client.ownerId) {
-      return message.reply("This is a bot owner only command.");
+    if (command.admin && message.user.id !== this.client.ownerId) {
+      return message.reply("This is an admin only command.");
+    }
+
+    if (command.owner && !message.isRoomOwner) {
+      return message.reply("You need to be room owner to use this command.");
     }
 
     if (!this.checkRateLimits(message, command)) {
