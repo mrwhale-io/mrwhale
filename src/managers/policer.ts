@@ -9,14 +9,21 @@ const { on, registerListeners } = ListenerDecorators;
 
 export const rageResponses = [
   "Calm down!",
+  "Silence!",
+  "Quiet you.",
+  "Take your caps lock off.",
   "Use your indoor voice.",
-  "Pipe down, we can hear you fine.",
+  "Pipe down son, we can hear you just fine.",
   "Why are you shouting?",
 ];
 
 export const profanityResponses = [
   "Do you kiss your mother with that mouth?",
   "Nice potty mouth.",
+  "Stop swearing.",
+  "Stop cussing.",
+  "Go wash your mouth out with soap.",
+  "Watch your language.",
 ];
 
 interface PolicerMap {
