@@ -3,6 +3,11 @@ import { Message, Content, MediaItem } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
+interface Post {
+  id: string;
+  url: string;
+}
+
 export default class extends Command {
   constructor() {
     super({
@@ -16,8 +21,9 @@ export default class extends Command {
     setInterval(() => this.fetchMemes(), 60 * 60 * 1000);
   }
 
-  private memes: string[] = [];
+  private memes: Post[] = [];
   private cachedMediaItems: { [id: string]: MediaItem } = {};
+  private previous: MediaItem;
 
   private async fetchMemes() {
     const { data } = await axios.get(
@@ -25,44 +31,42 @@ export default class extends Command {
     );
     this.memes = data.data.children
       .filter((post) => !post.data.over_18)
-      .map((post) => post.data.url);
+      .map((post) => post.data);
   }
 
   async action(message: Message): Promise<void> {
-    try {
-      if (!this.memes.length)
-        return message.reply(
-          "It seems we are out of fresh memes!, Try again later."
-        );
-      const index = Math.floor(Math.random() * this.memes.length);
-      const meme = this.memes[index];
-      const content = new Content();
+    if (!this.memes.length) {
+      return message.reply(
+        "It seems we are out of fresh memes!, Try again later."
+      );
+    }
+    const content = new Content();
+    const meme = this.memes[Math.floor(Math.random() * this.memes.length)];
+    const mediaItem = this.cachedMediaItems[meme.id];
 
-      const regex = /https:\/\/i.redd.it\/([a-zA-Z0-9]+)\.[a-zA-Z0-9]+/;
-      const cachedItemId = meme.match(regex)[1];
-      const cachedMediaItem = this.cachedMediaItems[cachedItemId];
+    if (!mediaItem) {
+      const file = await axios.get(meme.url, {
+        responseType: "stream",
+      });
 
-      if (!cachedMediaItem) {
-        const file = await axios.get(meme, {
-          responseType: "stream",
-        });
+      const mediaItem = await this.client.chat.uploadFile(
+        file.data,
+        message.room_id
+      );
 
-        const mediaItem = await this.client.chat.uploadFile(
-          file.data,
-          message.room_id
-        );
-
-        const id = mediaItem.filename.split("-")[0];
-        this.cachedMediaItems[id] = mediaItem;
+      if (mediaItem && mediaItem.id) {
+        this.cachedMediaItems[meme.id] = mediaItem;
+        this.previous = mediaItem;
         await content.insertImage(mediaItem);
       } else {
-        await content.insertImage(this.cachedMediaItems[cachedItemId]);
+        this.previous
+          ? content.insertImage(this.previous)
+          : content.insertText("Could not fetch meme.");
       }
-
-      return message.reply(content);
-    } catch (e) {
-      console.log(e);
-      return message.reply("Could not fetch meme.");
+    } else {
+      await content.insertImage(mediaItem);
     }
+
+    return message.reply(content);
   }
 }
