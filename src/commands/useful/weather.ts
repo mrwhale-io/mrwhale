@@ -23,10 +23,11 @@ export default class extends Command {
       const content = new Content();
       const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
         city
-      )}&appid=${config.openWeather}&units=imperial`;
+      )}&appid=${config.openWeather}&units=metric`;
+                                   
       const result = await axios.get(url);
 
-      let response = `☁ Weather: ${result.data.weather[0].description}\n🌡️ Temperature: ${result.data.main.temp}C°\n💧 Humidity: ${result.data.main.humidity}\n`;
+      let response = `☁️ Weather: ${result.data.weather[0].description}\n🌡️ Temperature: ${result.data.main.temp}°C\n💧 Humidity: ${result.data.main.humidity}\n`;
 
       if (result.data.clouds) {
         response += `☁️ Clouds: ${result.data.clouds.all}% cloudiness\n`;
