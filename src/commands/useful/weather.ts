@@ -10,7 +10,7 @@ export default class extends Command {
       name: "weather",
       description: "Get the weather.",
       type: "useful",
-      usage: "<prefix>weather",
+      usage: "<prefix>weather <city>",
       cooldown: 3000,
     });
   }
