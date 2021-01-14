@@ -2,6 +2,9 @@
   "frontend": "",
   "userId": 1,
   "ownerId": 1,
+  "discordOwnerId": "278305350804045834",
+  "discordToken": "",
   "cleverbot": "",
-  "wolfram": ""
+  "wolfram": "",
+  "supportServer": "https://discord.com/invite/wjBnkR4AUZ"
 }
