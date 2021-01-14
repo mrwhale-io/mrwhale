@@ -1,9 +1,9 @@
 import { Message } from "@mrwhale-io/gamejolt";
 
-import { CommandOptions } from "../types/command-options";
-import { BotClient } from "../bot-client";
-import { CommandTypes } from "../types/command-types";
 import { CommandRateLimiter } from "./command-rate-limiter";
+import { CommandTypes } from "../../gamejolt/types/command-types";
+import { CommandOptions } from "../../gamejolt/types/command-options";
+import { BotClient } from "../../gamejolt/bot-client";
 
 /**
  * Command class to extend which users can execute.

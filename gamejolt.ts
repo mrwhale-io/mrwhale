@@ -1,4 +1,4 @@
-import { BotClient } from "./src/bot-client";
+import { BotClient } from "./gamejolt/bot-client";
 import * as config from "./config.json";
 
 const client = new BotClient(

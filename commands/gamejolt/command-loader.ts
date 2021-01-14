@@ -2,8 +2,7 @@ import * as glob from "glob";
 import * as path from "path";
 
 import { Command } from "./command";
-import { BotClient } from "../bot-client";
-
+import { BotClient } from '../../gamejolt/bot-client';
 /**
  * Responsible for loading and registering commands.
  */

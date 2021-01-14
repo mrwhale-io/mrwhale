@@ -4,7 +4,6 @@ import {
   Content,
   User,
   FiresidePost,
-  Comment,
 } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";

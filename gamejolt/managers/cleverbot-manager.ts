@@ -2,7 +2,7 @@ import { Content, Message } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
-import { Command } from "../commands/command";
+import { Command } from "../../commands/gamejolt/command";
 import { CleverbotPlugin } from "../plugins/cleverbot";
 
 const { on, registerListeners } = ListenerDecorators;

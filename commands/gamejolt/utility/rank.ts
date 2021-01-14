@@ -1,9 +1,9 @@
 import { Content, Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
-import { Score } from "../../database/entity/score";
-import { Database } from "../../database/database";
-import { LevelManager } from "../../managers/level-manager";
+import { Database } from "../../../core/database/database";
+import { Score } from "../../../core/database/entity/score";
+import { LevelManager } from "../../../gamejolt/managers/level-manager";
 
 interface PlayerInfo {
   name: string;

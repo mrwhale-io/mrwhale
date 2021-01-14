@@ -1,7 +1,7 @@
 import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
-import { TimeUtilities } from "../../util/time";
+import { TimeUtilities } from '../../../gamejolt/util/time';
 
 export default class extends Command {
   constructor() {

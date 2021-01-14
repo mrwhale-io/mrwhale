@@ -1,7 +1,7 @@
 import { Message, Content } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
-import { GuessingGame } from "../../types/guessing-game";
+import { GuessingGame } from '../../../core/types/guessing-game';
 
 export default class extends Command {
   private games: Map<string, GuessingGame>;

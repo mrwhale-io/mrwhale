@@ -13,7 +13,7 @@
   },
   "homepage": "https://github.com/mrwhale-io/mrwhale#readme",
   "scripts": {
-    "start": "ts-node index.ts",
+    "start:gamejolt": "ts-node gamejolt.ts",
     "lint": "eslint . --ext .ts",
     "prettier": "prettier --write *.{js,ts,json}"
   },

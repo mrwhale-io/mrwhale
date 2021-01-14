@@ -8,7 +8,7 @@ import {
   goals,
   items,
   rules,
-} from "../../data/game-idea";
+} from "../../../core/data/game-idea";
 
 export default class extends Command {
   private rng: seedrandom.prng;

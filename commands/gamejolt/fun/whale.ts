@@ -1,7 +1,7 @@
 import { Message } from "@mrwhale-io/gamejolt";
+import { eyes } from "../../../core/data/eyes";
 
 import { Command } from "../command";
-import { eyes } from "../../data/eyes";
 
 export default class extends Command {
   constructor() {

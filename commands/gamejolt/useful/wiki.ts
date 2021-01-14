@@ -2,7 +2,7 @@ import wiki from "wikijs";
 import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
-import { truncate } from "../../util/truncate";
+import { truncate } from '../../../gamejolt/util/truncate';
 
 export default class extends Command {
   constructor() {

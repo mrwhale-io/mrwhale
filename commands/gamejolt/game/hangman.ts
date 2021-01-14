@@ -1,8 +1,8 @@
 import { Message } from "@mrwhale-io/gamejolt";
 
-import { HangmanGame } from "../../types/hangman-game";
 import { Command } from "../command";
-import { TimeUtilities } from "../../util/time";
+import { HangmanGame } from "../../../core/types/hangman-game";
+import { TimeUtilities } from "../../../gamejolt/util/time";
 
 export default class extends Command {
   constructor() {

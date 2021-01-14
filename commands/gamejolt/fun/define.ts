@@ -3,7 +3,7 @@ import { Message } from "@mrwhale-io/gamejolt";
 import * as profanity from "profanity-util";
 
 import { Command } from "../command";
-import { truncate } from "../../util/truncate";
+import { truncate } from '../../../gamejolt/util/truncate';
 
 export default class extends Command {
   constructor() {

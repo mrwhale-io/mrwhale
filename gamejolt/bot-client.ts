@@ -8,16 +8,16 @@ import {
 } from "@mrwhale-io/gamejolt";
 
 import { BotOptions } from "./types/bot-options";
-import { Command } from "./commands/command";
-import { CommandDispatcher } from "./commands/command-dispatcher";
-import { CommandLoader } from "./commands/command-loader";
+import { Command } from "../commands/gamejolt/command";
+import { CommandDispatcher } from "../commands/gamejolt/command-dispatcher";
+import { CommandLoader } from "../commands/gamejolt/command-loader";
 import { ListenerDecorators } from "./util/listener-decorators";
 import { FriendRequestManager } from "./managers/friend-request-manager";
 import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
 import { Timer } from "./util/timer";
 import { UrlManager } from "./managers/url-manager";
-import { Database } from "./database/database";
+import { Database } from "../core/database/database";
 import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
 import { logger } from "./util/logger";
@@ -138,7 +138,7 @@ export class BotClient extends Client {
       `Client ready! Connected as @${this.chat.currentUser.username}`
     );
 
-    await Database.instance().init(this);
+    await Database.instance().init();
   }
 
   @on("notification")

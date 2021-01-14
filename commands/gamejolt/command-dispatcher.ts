@@ -1,8 +1,8 @@
 import { Message } from "@mrwhale-io/gamejolt";
 
-import { BotClient } from "../bot-client";
+import { BotClient } from "../../gamejolt/bot-client";
 import { Command } from "./command";
-import { TimeUtilities } from "../util/time";
+import { TimeUtilities } from '../../gamejolt/util/time';
 
 /**
  * Responsible for dispatching commands.

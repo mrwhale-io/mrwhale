@@ -2,8 +2,8 @@ import { Message, Content } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
-import { Database } from "../database/database";
-import { Score } from "../database/entity/score";
+import { Score } from "../../core/database/entity/score";
+import { Database } from "../../core/database/database";
 
 const { on, registerListeners } = ListenerDecorators;
 
