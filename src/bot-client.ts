@@ -138,7 +138,7 @@ export class BotClient extends Client {
       `Client ready! Connected as @${this.chat.currentUser.username}`
     );
 
-    await Database.instance().init(this);
+    await Database.instance().init();
   }
 
   @on("notification")
