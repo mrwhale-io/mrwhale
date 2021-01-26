@@ -40,7 +40,9 @@ export class CommandDispatcher {
     );
 
     if (!command) {
-      return message.reply("Could not find this command.");
+      return message.reply(
+        `Unknown command. Use ${this.client.prefix}help to view the command list.`
+      );
     }
 
     if (
