@@ -7,6 +7,11 @@ import { Score } from "../database/entity/score";
 
 const { on, registerListeners } = ListenerDecorators;
 
+const TIME_FOR_EXP = 6e4;
+const LEVEL_BASE = 100;
+const LEVEL_MULTIPLIER = 5;
+const INCREASE_PER_LEVEL = 50;
+
 interface MessageMap {
   [roomId: number]: { [user: number]: number };
 }
@@ -23,11 +28,11 @@ export class LevelManager {
    * @param level The level to calculate from.
    */
   static levelToExp(level: number): number {
-    const base = 100;
-    const multiplier = 5;
-    const increasePerLevel = 50;
-
-    return multiplier * Math.pow(level, 2) + increasePerLevel * level + base;
+    return (
+      LEVEL_MULTIPLIER * Math.pow(level, 2) +
+      INCREASE_PER_LEVEL * level +
+      LEVEL_BASE
+    );
   }
 
   /**
@@ -51,15 +56,13 @@ export class LevelManager {
   }
 
   private isTimeForExp(roomId: number, userId: number) {
-    const timeForExp = 6e4;
-
     if (!this.lastMessages[roomId]) {
       this.lastMessages[roomId] = {};
     }
 
     const lastMessageTimestamp = this.lastMessages[roomId][userId] || -Infinity;
 
-    return Date.now() - lastMessageTimestamp >= timeForExp;
+    return Date.now() - lastMessageTimestamp >= TIME_FOR_EXP;
   }
 
   private async getScore(userId: number, roomId: number) {
