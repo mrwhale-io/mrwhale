@@ -11,17 +11,17 @@ const client = new CommandoClient({
 
 client.registry
   .registerDefaultTypes()
-  .registerGroups([
-    ["fun", "Fun bot commands."],
-    ["useful", "Useful bot commands."],
-  ])
   .registerDefaultGroups()
   .registerDefaultCommands()
-  .registerCommandsIn(path.join(__dirname, "commands", "discord"));
+  .registerGroups([["fun", "Fun"]])
+  .registerCommandsIn({
+    filter: /^([^.].*)\.(js|ts)$/,
+    dirname: path.join(__dirname, "commands", "discord"),
+  });
 
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}! (${client.user.id})`);
-  client.user.setActivity("with Commando");
+  client.user.setActivity("in the ocean");
 });
 
 client.on("error", console.error);
