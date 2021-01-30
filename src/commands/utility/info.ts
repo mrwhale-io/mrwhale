@@ -26,7 +26,7 @@ export default class extends Command {
 
     content.insertCodeBlock(
       `Version: ${version}\nGroup chats: ${
-        this.client.chat.groupChats.length
+        this.client.chat.groupIds.length
       }\nFriends: ${
         this.client.chat.friendsList.collection.length
       }\nMemory usage: ${memoryUsage.toFixed(

@@ -117,8 +117,8 @@ export class BotClient extends Client {
   protected async onChatReady(): Promise<void> {
     this.commandDispatcher.ready = true;
 
-    const interval = 0.2;
-    const roomIds = this.chat.groupChats.map((group) => group.id);
+    const interval = 0.5;
+    const roomIds = this.chat.groupIds;
     const timer = new Timer(this, "join-groups", interval, async () => {
       if (roomIds.length > 0) {
         const roomId = roomIds.shift();
