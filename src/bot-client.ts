@@ -117,11 +117,13 @@ export class BotClient extends Client {
   protected async onChatReady(): Promise<void> {
     this.commandDispatcher.ready = true;
 
-    const interval = 0.5;
+    let index = 0;
+    const interval = 0.3;
     const roomIds = this.chat.groupIds;
+
     const timer = new Timer(this, "join-groups", interval, async () => {
-      if (roomIds.length > 0) {
-        const roomId = roomIds.shift();
+      if (index < roomIds.length) {
+        const roomId = roomIds[index++];
         this.logger.info(`Joining group chat: ${roomId}`);
         this.chat.joinRoom(roomId);
       } else {
@@ -147,21 +149,6 @@ export class BotClient extends Client {
       this.chat.joinRoom(message.room_id).receive("ok", () => {
         this.emit("message", message);
       });
-    }
-  }
-
-  @on("friend_online")
-  protected onFriendOnline(friend: User): void {
-    if (friend) {
-      this.logger.info(`Friend @${friend.username} (${friend.id}) is online`);
-    }
-  }
-
-  @on("friend_offline")
-  protected onFriendOffline(friend: User): void {
-    if (friend) {
-      this.chat.leaveRoom(friend.room_id);
-      this.logger.info(`Friend @${friend.username} (${friend.id}) is offline`);
     }
   }
 
