@@ -17,7 +17,6 @@ import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
 import { Timer } from "./util/timer";
 import { UrlManager } from "./managers/url-manager";
-import { Database } from "./database/database";
 import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
 import { logger } from "./util/logger";
@@ -139,8 +138,6 @@ export class BotClient extends Client {
     this.logger.info(
       `Client ready! Connected as @${this.chat.currentUser.username}`
     );
-
-    await Database.instance().init();
   }
 
   @on("notification")

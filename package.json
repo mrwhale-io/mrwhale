@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@mrwhale-io/gamejolt": "git+https://github.com/mrwhale-io/gamejolt.git",
+    "@prisma/client": "^2.15.0",
     "axios": "^0.19.2",
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
@@ -33,12 +34,12 @@
     "seedrandom": "^3.0.5",
     "sqlite3": "^5.0.0",
     "translate-google": "^1.4.2",
-    "typeorm": "^0.2.28",
     "wikijs": "^6.0.1",
     "winston": "^3.3.3",
     "wolfram-alpha-api": "https://products.wolframalpha.com/api/libraries/javascript/wolfram-alpha-api-1.0.0-rc.1.tgz"
   },
   "devDependencies": {
+    "@prisma/cli": "^2.15.0",
     "@types/figlet": "^1.2.0",
     "@types/mathjs": "^6.0.5",
     "@types/node": "^14.0.14",

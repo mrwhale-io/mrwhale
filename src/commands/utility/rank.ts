@@ -1,9 +1,10 @@
 import { Content, Message } from "@mrwhale-io/gamejolt";
+import { PrismaClient } from "@prisma/client";
 
 import { Command } from "../command";
-import { Score } from "../../database/entity/score";
-import { Database } from "../../database/database";
 import { LevelManager } from "../../managers/level-manager";
+
+const prisma = new PrismaClient();
 
 interface PlayerInfo {
   name: string;
@@ -37,13 +38,19 @@ export default class extends Command {
   async action(message: Message): Promise<void> {
     const content = new Content();
     try {
-      const score: Score = await Database.connection
-        .getRepository(Score)
-        .findOne({ roomId: message.room_id, userId: message.user.id });
-
-      const scores: Score[] = await Database.connection
-        .getRepository(Score)
-        .find({ roomId: message.room_id });
+      const score = await prisma.score.findUnique({
+        where: {
+          userId_roomId: {
+            roomId: message.room_id,
+            userId: message.user.id,
+          },
+        },
+      });
+      const scores = await prisma.score.findMany({
+        where: {
+          roomId: message.room_id,
+        },
+      });
 
       const playerSorted = scores.sort((a, b) => a.exp - b.exp).reverse();
 

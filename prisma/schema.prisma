@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Score {
+  userId Int
+  roomId Int
+  exp    Int
+
+  @@id([userId, roomId])
+  @@map("score")
+}
