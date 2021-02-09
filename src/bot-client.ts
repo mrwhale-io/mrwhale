@@ -218,19 +218,15 @@ export class BotClient extends Client {
   protected onOwnerSync(data: { room_id: number; owner_id: number }): void {
     const room = this.chat.activeRooms[data.room_id];
 
-    if (room && room.members) {
-      const owner = room.members.find((member) => member.id === data.owner_id);
+    if (room && room.owner) {
+      const content = new Content().insertText(
+        `👑 @${room.owner.username} just became the group owner.`
+      );
 
-      if (owner) {
-        const content = new Content().insertText(
-          `👑 @${owner.username} just became the group owner.`
-        );
-
-        this.chat.sendMessage(content, data.room_id);
-        this.logger.info(
-          `${owner.username} (${owner.id}) became owner of group chat with id: ${data.room_id}`
-        );
-      }
+      this.chat.sendMessage(content, data.room_id);
+      this.logger.info(
+        `${room.owner.username} (${room.owner.id}) became owner of group chat with id: ${data.room_id}`
+      );
     }
   }
 
