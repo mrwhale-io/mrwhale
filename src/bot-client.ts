@@ -197,17 +197,13 @@ export class BotClient extends Client {
   @on("member_add")
   protected onMemberAdd(data: { room_id: number; members: User[] }): void {
     if (data.members) {
-      const content = new Content();
       const members = data.members
         .filter((member) => member.id !== this.userId)
-        .map((member) => member.username);
-      const nodes = [content.textNode("👋 ")];
-      for (const member of members) {
-        nodes.push(content.textNode(`@${member} `, [content.mention(member)]));
-      }
-      nodes.push(content.textNode(`was just added to the group.`));
+        .map((member) => `@${member.username}`);
 
-      content.insertNewNode(nodes);
+      const content = new Content().insertText(
+        `👋 ${members.join(" ")} was just added to the group.`
+      );
       this.chat.sendMessage(content.contentJson(), data.room_id);
       this.logger.info(
         `${members.join(",")} were added to group chat with id: ${data.room_id}`
@@ -218,16 +214,10 @@ export class BotClient extends Client {
   @on("member_leave")
   protected onMemberLeave(data: { room_id: number; member: User }): void {
     if (data.member) {
-      const content = new Content();
-      const nodes = [
-        content.textNode(`🚪 `),
-        content.textNode(`@${data.member.username} `, [
-          content.mention(data.member.username),
-        ]),
-        content.textNode(`just left the group.`),
-      ];
+      const content = new Content().insertText(
+        `@${data.member.username} just left the group.`
+      );
 
-      content.insertNewNode(nodes);
       this.chat.sendMessage(content.contentJson(), data.room_id);
       this.logger.info(
         `${data.member.username} (${data.member.id}) left group chat with id: ${data.room_id}`
@@ -243,15 +233,10 @@ export class BotClient extends Client {
       const owner = room.members.find((member) => member.id === data.owner_id);
 
       if (owner) {
-        const content = new Content();
-        const nodes = [
-          content.textNode(`👑 `),
-          content.textNode(`@${owner.username} `, [
-            content.mention(owner.username),
-          ]),
-          content.textNode(`just became the group owner.`),
-        ];
-        content.insertNewNode(nodes);
+        const content = new Content().insertText(
+          `👑 @${owner.username} just became the group owner.`
+        );
+
         this.chat.sendMessage(content.contentJson(), data.room_id);
         this.logger.info(
           `${owner.username} (${owner.id}) became owner of group chat with id: ${data.room_id}`

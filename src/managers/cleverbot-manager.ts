@@ -56,14 +56,9 @@ export class CleverbotManager {
 
     if (this.isEnabled && !this.hasCommand(message) && message.isMentioned) {
       const response = await this.cleverbot.speak(message);
-      const content = new Content();
-      const nodes = [
-        content.textNode(`@${message.user.username} `, [
-          content.mention(message.user.username),
-        ]),
-        content.textNode(` ${response}`),
-      ];
-      content.insertNewNode(nodes);
+      const content = new Content().insertText(
+        `@${message.user.username} ${response}`
+      );
 
       return message.reply(content);
     }

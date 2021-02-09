@@ -79,19 +79,14 @@ export class Policer {
       if (entry.profanityLevel >= 2.0) {
         entry.profanityLevel -= 2.0;
 
-        const nodes = [
-          content.textNode(`@${message.user.username}`, [
-            content.mention(message.user.username),
-          ]),
-          content.textNode(
-            ` ${
-              profanityResponses[
-                Math.floor(Math.random() * profanityResponses.length)
-              ]
-            }`
-          ),
-        ];
-        content.insertNewNode(nodes);
+        content.insertText(
+          `@${message.user.username} ${
+            profanityResponses[
+              Math.floor(Math.random() * profanityResponses.length)
+            ]
+          }`
+        );
+
         return message.reply(content);
       }
     }
@@ -108,17 +103,13 @@ export class Policer {
 
       if (entry.capsLevel >= 2.0) {
         entry.capsLevel -= 2.0;
-        const nodes = [
-          content.textNode(`@${message.user.username}`, [
-            content.mention(message.user.username),
-          ]),
-          content.textNode(
-            ` ${
-              rageResponses[Math.floor(Math.random() * rageResponses.length)]
-            }`
-          ),
-        ];
-        content.insertNewNode(nodes);
+
+        content.insertText(
+          `@${message.user.username} ${
+            rageResponses[Math.floor(Math.random() * rageResponses.length)]
+          }`
+        );
+
         return message.reply(content);
       }
     }

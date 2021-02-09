@@ -107,15 +107,9 @@ export class LevelManager {
     const newLevel = LevelManager.getLevelFromExp(score.exp);
 
     if (newLevel > level) {
-      const content = new Content();
-      const nodes = [
-        content.textNode(`Congrats `),
-        content.textNode(`@${message.user.username}`, [
-          content.mention(message.user.username),
-        ]),
-        content.textNode(`, you just advanced to level ${newLevel}!`),
-      ];
-      content.insertNewNode(nodes);
+      const content = new Content().insertText(
+        `Congrats @${message.user.username}, you just advanced to level ${newLevel}!`
+      );
 
       return this.client.chat.sendMessage(
         content.contentJson(),

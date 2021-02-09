@@ -19,14 +19,7 @@ export default class extends Command {
   }
 
   private constructAnswer(username: string, answer: string) {
-    const content = new Content();
-    const nodes = [
-      content.textNode(`@${username} `, [content.mention(username)]),
-      content.textNode(answer),
-    ];
-    content.insertNewNode(nodes);
-
-    return content;
+    return new Content().insertText(`@${username} ${answer}`);
   }
 
   async action(message: Message, [guess]: [string]): Promise<void> {
