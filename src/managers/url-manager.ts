@@ -1,4 +1,4 @@
-import { Message, Content, Game, GameOverview } from "@mrwhale-io/gamejolt";
+import { Message, Game, GameOverview } from "@mrwhale-io/gamejolt";
 
 import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
@@ -39,7 +39,6 @@ export class UrlManager {
 
   @on("message")
   private async onMessage(message: Message): Promise<void> {
-    const content = new Content();
     const gameregex = /(http:|https:)?\/\/(www\.)?(gamejolt.com)\/(games)\/[^/]+\/(\d+)/;
 
     // Check if this is a Game Jolt game url.
@@ -54,9 +53,7 @@ export class UrlManager {
           new GameOverview(overviewResult)
         );
         if (gameResponse) {
-          content.insertText(gameResponse);
-
-          this.client.chat.sendMessage(content.contentJson(), message.room_id);
+          this.client.chat.sendMessage(gameResponse, message.room_id);
         }
       }
     }

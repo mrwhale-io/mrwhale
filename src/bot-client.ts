@@ -21,6 +21,7 @@ import { Database } from "./database/database";
 import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
 import { logger } from "./util/logger";
+import { code } from "./util/markdown-helpers";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -159,17 +160,11 @@ export class BotClient extends Client {
         `User @${friend.username} (${friend.id}) added as friend`
       );
       this.chat.joinRoom(friend.room_id).receive("ok", () => {
-        const content = new Content();
-        const nodes = [
-          content.textNode(`Thank you for adding me as a friend! Use `),
-          content.textNode(`${this.prefix}help`, [
-            content.code(`${this.prefix}help`),
-          ]),
-          content.textNode(` for a list of commands.`),
-        ];
-        content.insertNewNode(nodes);
+        const message = `Thank you for adding me as a friend! Use ${code(
+          `${this.prefix}help`
+        )} for a list of commands.`;
 
-        this.chat.sendMessage(content.contentJson(), friend.room_id);
+        this.chat.sendMessage(message, friend.room_id);
       });
     }
   }
@@ -178,17 +173,11 @@ export class BotClient extends Client {
   protected onGroupAdd(group: Room): void {
     if (group) {
       this.chat.joinRoom(group.id).receive("ok", () => {
-        const content = new Content();
-        const nodes = [
-          content.textNode(`Thank you for adding me to your group! Use `),
-          content.textNode(`${this.prefix}help`, [
-            content.code(`${this.prefix}help`),
-          ]),
-          content.textNode(` for a list of commands.`),
-        ];
-        content.insertNewNode(nodes);
+        const message = `Thank you for adding me to your group! Use ${code(
+          `${this.prefix}help`
+        )} for a list of commands.`;
 
-        this.chat.sendMessage(content.contentJson(), group.id);
+        this.chat.sendMessage(message, group.id);
       });
       this.logger.info(`Added to a group chat with id: ${group.id}`);
     }
@@ -204,7 +193,7 @@ export class BotClient extends Client {
       const content = new Content().insertText(
         `👋 ${members.join(" ")} was just added to the group.`
       );
-      this.chat.sendMessage(content.contentJson(), data.room_id);
+      this.chat.sendMessage(content, data.room_id);
       this.logger.info(
         `${members.join(",")} were added to group chat with id: ${data.room_id}`
       );
@@ -218,7 +207,7 @@ export class BotClient extends Client {
         `@${data.member.username} just left the group.`
       );
 
-      this.chat.sendMessage(content.contentJson(), data.room_id);
+      this.chat.sendMessage(content, data.room_id);
       this.logger.info(
         `${data.member.username} (${data.member.id}) left group chat with id: ${data.room_id}`
       );
@@ -237,7 +226,7 @@ export class BotClient extends Client {
           `👑 @${owner.username} just became the group owner.`
         );
 
-        this.chat.sendMessage(content.contentJson(), data.room_id);
+        this.chat.sendMessage(content, data.room_id);
         this.logger.info(
           `${owner.username} (${owner.id}) became owner of group chat with id: ${data.room_id}`
         );
