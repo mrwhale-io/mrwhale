@@ -16,17 +16,16 @@ export default class extends Command {
   }
 
   async action(message: Message): Promise<void> {
-    const listItemNodes = [];
-    const languages = translate.languages;
+    const languages = [];
 
-    for (const language in languages) {
-      listItemNodes.push(language);
+    for (const language in translate.languages) {
+      languages.push(language);
 
       if (language === "zu") {
         break;
       }
     }
 
-    return message.reply(unorderedList(listItemNodes));
+    return message.reply(unorderedList(languages));
   }
 }
