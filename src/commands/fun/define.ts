@@ -1,5 +1,5 @@
 import axios from "axios";
-import { Message } from "@mrwhale-io/gamejolt";
+import { Content, Message } from "@mrwhale-io/gamejolt";
 import * as profanity from "profanity-util";
 
 import { Command } from "../command";
@@ -30,12 +30,13 @@ export default class extends Command {
       if (!data.list || !data.list[0]) {
         return message.reply("Could not define this.");
       }
-      const definition = profanity.purify(data.list[0].definition)[0];
+      const definition = data.list[0].definition;
       const maxLength = 997;
-
-      return message.reply(
-        truncate(maxLength, `${profanity.purify(phrase)} - ${definition}`)
+      const content = new Content().insertText(
+        truncate(maxLength, profanity.purify(`${phrase} - ${definition}`)[0])
       );
+
+      return message.reply(content);
     } catch {
       return message.reply("Could not fetch this definition.");
     }
