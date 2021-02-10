@@ -1,7 +1,8 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 import axios from "axios";
 
 import { Command } from "../command";
+import { link } from "../../util/markdown-helpers";
 
 export default class extends Command {
   constructor() {
@@ -33,12 +34,9 @@ export default class extends Command {
       if (!result.data.key) {
         return message.reply("Could not upload text.");
       }
+      const href = `https://hasteb.in/${result.data.key}`;
 
-      const content = new Content();
-      const link = `https://hasteb.in/${result.data.key}`;
-      content.insertText(link, [content.autoLink(link, link)]);
-
-      return message.reply(content);
+      return message.reply(link(href, href));
     } catch {
       return message.reply("Could not upload text.");
     }

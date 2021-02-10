@@ -1,8 +1,9 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 import * as WolframAlphaAPI from "wolfram-alpha-api";
 
 import { Command } from "../command";
 import * as config from "../../../config.json";
+import { codeBlock } from "../../util/markdown-helpers";
 
 export default class extends Command {
   constructor() {
@@ -25,13 +26,11 @@ export default class extends Command {
     }
 
     const waApi = WolframAlphaAPI(config.wolfram);
-    const content = new Content();
 
     try {
       const result = await waApi.getShort(query);
-      content.insertCodeBlock(result);
 
-      return message.reply(content);
+      return message.reply(codeBlock(result));
     } catch {
       return message.reply("Could not fetch result.");
     }

@@ -1,7 +1,9 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 import { TimeUtilities } from "../../util/time";
 
 import { Command } from "../command";
+import { unorderedList } from "../../util/markdown-helpers";
+import { InfoBuilder } from "../../util/info-builder";
 
 export default class extends Command {
   constructor() {
@@ -15,7 +17,6 @@ export default class extends Command {
   }
 
   async action(message: Message, [typeOrCmdName]: [string]): Promise<void> {
-    const content = new Content();
     const types = ["admin", "fun", "game", "utility", "useful"];
 
     if (typeOrCmdName) {
@@ -26,60 +27,48 @@ export default class extends Command {
       );
 
       if (cmd) {
-        let response = `Name: ${cmd.name}\nDescription: ${
-          cmd.description
-        }\nType: ${cmd.type}\nUsage: ${
-          cmd.usage
-        }\nCooldown: ${TimeUtilities.convertMs(
-          cmd.rateLimiter.duration
-        ).toString()}`;
+        const info = new InfoBuilder()
+          .addField("Name", cmd.name)
+          .addField("Description", cmd.description)
+          .addField("Type", cmd.type)
+          .addField(
+            "Cooldown",
+            `${TimeUtilities.convertMs(cmd.rateLimiter.duration)}`
+          );
 
         if (cmd.examples.length > 0) {
-          response += `\nExamples: ${cmd.examples.join(", ")}`;
+          info.addField("Examples", `${cmd.examples.join(", ")}`);
         }
 
         if (cmd.aliases.length > 0) {
-          response += `\nAliases: ${cmd.aliases.join(", ")}`;
+          info.addField("Aliases", `${cmd.aliases.join(", ")}`);
         }
 
-        response = response.replace(/<prefix>/g, this.client.prefix);
-
-        content.insertCodeBlock(response);
-        return message.reply(content);
+        return message.reply(
+          `${info.build().replace(/<prefix>/g, this.client.prefix)}`
+        );
       }
 
       if (types.includes(typeOrCmdName.toLowerCase())) {
         const commands = this.client.commands.filter(
           (c: Command) => c.type === typeOrCmdName.toLowerCase()
         );
-        const listItemNodes = [];
-        for (const command of commands) {
-          const contentText = content.textNode(
-            `${this.client.prefix}${command.name} - ${command.description}`
-          );
-          const contentNode = content.paragraphNode(contentText);
 
-          listItemNodes.push(content.listItemNode(contentNode));
-        }
-
-        content.insertBulletList(listItemNodes);
-
-        return message.reply(content);
+        return message.reply(
+          unorderedList(
+            commands.map(
+              (command) =>
+                `${this.client.prefix}${command.name} - ${command.description}`
+            )
+          )
+        );
       }
 
       return message.reply("Could not find this command or type.");
     }
 
-    const listItemNodes = [];
-    for (const type of types) {
-      const contentText = content.textNode(`${this.client.prefix}help ${type}`);
-      const contentNode = content.paragraphNode(contentText);
-
-      listItemNodes.push(content.listItemNode(contentNode));
-    }
-
-    content.insertBulletList(listItemNodes);
-
-    return message.reply(content);
+    return message.reply(
+      unorderedList(types.map((type) => `${this.client.prefix}help ${type}`))
+    );
   }
 }

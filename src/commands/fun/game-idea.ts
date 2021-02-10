@@ -1,7 +1,8 @@
-import { Message, Content } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 import * as seedrandom from "seedrandom";
 
 import { Command } from "../command";
+import { InfoBuilder } from "../../util/info-builder";
 import {
   environments,
   genres,
@@ -32,10 +33,13 @@ export default class extends Command {
     const goal = goals[Math.floor(this.rng() * goals.length)];
     const rule = rules[Math.floor(this.rng() * goals.length)];
 
-    const content = new Content().insertCodeBlock(
-      `Genre: ${genre}\nLocation: ${environment}\nObjective: ${goal} ${item}\nRules/Mechanics: ${rule}`
-    );
+    const info = new InfoBuilder()
+      .addField("Genre", genre)
+      .addField("Location", environment)
+      .addField("Objective", `${goal} ${item}`)
+      .addField("Rules/Mechanics", rule)
+      .build();
 
-    return message.reply(content);
+    return message.reply(info);
   }
 }

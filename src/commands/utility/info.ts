@@ -1,9 +1,12 @@
-import { Message, Content } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 import { TimeUtilities } from "../../util/time";
 import { version } from "../../../package.json";
+import { InfoBuilder } from "../../util/info-builder";
 
+const FRACTIONAL_DIGITS = 2;
+const MEM_UNIT = 1024;
 export default class extends Command {
   constructor() {
     super({
@@ -17,23 +20,16 @@ export default class extends Command {
   }
 
   async action(message: Message): Promise<void> {
-    const content = new Content();
-    const fractionalDigits = 2;
-    const memUnit = 1024;
-    const memoryUsage = process.memoryUsage().heapUsed / memUnit / memUnit;
-    const uptime = TimeUtilities.convertMs(this.client.uptime).toString();
-    const cleverbot = this.client.cleverbot ? "on" : "off";
+    const memoryUsage = process.memoryUsage().heapUsed / MEM_UNIT / MEM_UNIT;
+    const response = new InfoBuilder()
+      .addField("Version", version)
+      .addField("Group chats", `${this.client.chat.groupIds.length}`)
+      .addField("Friends", `${this.client.chat.friendsList.collection.length}`)
+      .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)}`)
+      .addField("Uptime", `${TimeUtilities.convertMs(this.client.uptime)}`)
+      .addField("Cleverbot", this.client.cleverbot ? "on" : "off")
+      .build();
 
-    content.insertCodeBlock(
-      `Version: ${version}\nGroup chats: ${
-        this.client.chat.groupIds.length
-      }\nFriends: ${
-        this.client.chat.friendsList.collection.length
-      }\nMemory usage: ${memoryUsage.toFixed(
-        fractionalDigits
-      )} MB\nUptime: ${uptime}\nCleverbot: ${cleverbot}`
-    );
-
-    return message.reply(content);
+    return message.reply(response);
   }
 }

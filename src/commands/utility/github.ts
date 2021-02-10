@@ -1,7 +1,8 @@
 import axios from "axios";
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
+import { InfoBuilder } from "../../util/info-builder";
 
 export default class extends Command {
   constructor() {
@@ -19,11 +20,13 @@ export default class extends Command {
     try {
       const url = `mrwhale-io/mrwhale`;
       const result = await axios.get(`https://api.github.com/repos/${url}`);
-      const content = new Content().insertCodeBlock(
-        `Repo: https://github.com/${url}\nStars: ${result.data.stargazers_count}\nForks: ${result.data.forks_count}\nOwner: ${result.data.owner.login}`
-      );
+      const info = new InfoBuilder()
+        .addField("Repo", `https://github.com/${url}`)
+        .addField("Stars", `${result.data.stargazers_count}`)
+        .addField("Forks", `${result.data.forks_count}`)
+        .addField("Owner", `${result.data.owner.login}`);
 
-      return message.reply(content);
+      return message.reply(`${info}`);
     } catch {
       return message.reply("Could not fetch repository info.");
     }

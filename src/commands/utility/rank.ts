@@ -1,9 +1,10 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 import { Score } from "../../database/entity/score";
 import { Database } from "../../database/database";
 import { LevelManager } from "../../managers/level-manager";
+import { InfoBuilder } from "../../util/info-builder";
 
 interface PlayerInfo {
   name: string;
@@ -26,16 +27,7 @@ export default class extends Command {
     });
   }
 
-  private getRankInfo(info: PlayerInfo) {
-    const rankTxt = `Rank: ${info.rank}\n`;
-    const levelTxt = `Level: ${info.level}\n`;
-    const expTxt = `Level Exp: ${info.remainingExp}/${info.levelExp}\nTotal Exp: ${info.totalExp}`;
-
-    return `Rank for ${info.name}\n${rankTxt}${levelTxt}${expTxt}`;
-  }
-
   async action(message: Message): Promise<void> {
-    const content = new Content();
     try {
       const score: Score = await Database.connection
         .getRepository(Score)
@@ -71,9 +63,15 @@ export default class extends Command {
         rank: `${rank}/${scores.length}`,
       };
 
-      content.insertCodeBlock(this.getRankInfo(info));
+      const response = new InfoBuilder()
+        .addField("Rank For", `${info.name}`)
+        .addField("Rank", info.rank)
+        .addField("Level", `${info.level}`)
+        .addField("Level Exp", `${info.remainingExp}/${info.levelExp}`)
+        .addField("Total Exp", `${info.totalExp}`)
+        .build();
 
-      return message.reply(content);
+      return message.reply(response);
     } catch {
       return message.reply(`An error occured while fetching rank.`);
     }

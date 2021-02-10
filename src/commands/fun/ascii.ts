@@ -1,8 +1,9 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 import * as figlet from "figlet";
 import * as util from "util";
 
 import { Command } from "../command";
+import { codeBlock } from '../../util/markdown-helpers';
 
 const figletAsync = util.promisify(figlet);
 
@@ -24,8 +25,7 @@ export default class extends Command {
     }
 
     const rendered = await figletAsync(text);
-    const content = new Content().insertCodeBlock(`${rendered}`);
 
-    return message.reply(content);
+    return message.reply(codeBlock(`${rendered}`));
   }
 }

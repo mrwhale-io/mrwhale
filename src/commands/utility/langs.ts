@@ -1,7 +1,8 @@
 import * as translate from "translate-google";
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
+import { unorderedList } from "../../util/markdown-helpers";
 
 export default class extends Command {
   constructor() {
@@ -15,23 +16,17 @@ export default class extends Command {
   }
 
   async action(message: Message): Promise<void> {
-    const content = new Content();
     const listItemNodes = [];
     const languages = translate.languages;
 
     for (const language in languages) {
-      const contentText = content.textNode(language);
-      const contentNode = content.paragraphNode(contentText);
-
-      listItemNodes.push(content.listItemNode(contentNode));
+      listItemNodes.push(language);
 
       if (language === "zu") {
         break;
       }
     }
 
-    content.insertBulletList(listItemNodes);
-
-    return message.reply(content);
+    return message.reply(unorderedList(listItemNodes));
   }
 }

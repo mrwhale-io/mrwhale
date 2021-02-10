@@ -1,6 +1,7 @@
-import { Content, Message } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
+import { InfoBuilder } from "../../util/info-builder";
 
 export default class extends Command {
   constructor() {
@@ -18,21 +19,19 @@ export default class extends Command {
       return message.reply("You must mention a user.");
     }
 
-    const content = new Content();
     const user = message.mentions[0];
 
     if (user && user.id !== undefined) {
-      const response = `Username: ${user.username}\nDisplay Name: ${
-        user.display_name
-      }\nWebsite: ${user.web_site}\nDogtag: ${user.dogtag}\nModerator: ${
-        user.permission_level > 0 ? "Yes" : "No"
-      }\nFollower Count: ${user.follower_count}\nFollowing Count: ${
-        user.following_count
-      }\nJoined: ${user.created_on}`;
+      const info = new InfoBuilder()
+        .addField("Username", user.username)
+        .addField("Display Name", user.display_name)
+        .addField("Website", user.web_site)
+        .addField("Dogtag", user.dogtag)
+        .addField("Moderator", user.permission_level > 0 ? "Yes" : "No")
+        .addField("Follower Count", `${user.follower_count}`)
+        .addField("Joined", `${user.created_on}`);
 
-      content.insertCodeBlock(response);
-
-      return message.reply(content);
+      return message.reply(`${info}`);
     }
 
     return message.reply("Could not find this user.");

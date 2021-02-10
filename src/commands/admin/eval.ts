@@ -1,9 +1,10 @@
-import { Message, Content } from "@mrwhale-io/gamejolt";
+import { Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
 import * as util from "util";
 import * as config from "../../../config.json";
+import { codeBlock } from '../../util/markdown-helpers';
 
 export default class extends Command {
   constructor() {
@@ -18,7 +19,6 @@ export default class extends Command {
 
   async action(message: Message, args: string[]): Promise<void> {
     const input = args.join();
-    const content = new Content();
 
     if (!input) {
       return message.reply("Please pass code to eval.");
@@ -34,15 +34,11 @@ export default class extends Command {
         output = output.replace(config.frontend, "removed");
       }
 
-      content.insertCodeBlock(output);
-
-      return message.reply(content);
+      return message.reply(codeBlock(output));
     } catch (error) {
-      content.insertCodeBlock(
-        error.toString().replace(config.frontend, "removed")
+      return message.reply(
+        codeBlock(error.toString().replace(config.frontend, "removed"))
       );
-
-      return message.reply(content);
     }
   }
 }
