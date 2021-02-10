@@ -22,7 +22,7 @@ export class CleverbotManager {
    */
   constructor(client: BotClient, token: string) {
     this.client = client;
-    this.cleverbot = new CleverbotPlugin(client, token);
+    this.cleverbot = new CleverbotPlugin(token);
 
     registerListeners(this.client, this);
   }
@@ -54,10 +54,22 @@ export class CleverbotManager {
       return;
     }
 
-    if (this.isEnabled && !this.hasCommand(message) && message.isMentioned) {
-      const response = await this.cleverbot.speak(message);
+    const pm = this.client.chat.friendsList.getByRoom(message.room_id);
+    const hasCommand = this.hasCommand(message);
+    const canChat =
+      this.isEnabled && !hasCommand && (pm || message.isMentioned);
+
+    if (canChat) {
+      const user = this.client.chat.currentUser;
+      const userRegex = new RegExp(
+        `((@)*${user?.username}|${user?.display_name})`,
+        "i"
+      );
+      const response = await this.cleverbot.speak(
+        message.textContent.replace(userRegex, "")
+      );
       const content = new Content().insertText(
-        `@${message.user.username} ${response}`
+        pm ? response : `@${message.user.username} ${response}`
       );
 
       return message.reply(content);
