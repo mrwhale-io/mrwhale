@@ -1,5 +1,5 @@
 import crypto = require("crypto");
-import { Message } from "@mrwhale-io/gamejolt";
+import { Content, Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
 
@@ -42,9 +42,10 @@ export default class extends Command {
       .join("");
 
     const percent = parseInt(result.substr(0, 2), 10);
-
-    return message.reply(
+    const content = new Content().insertText(
       `💘 There's a ${percent}% match between ${firstUser} and ${secondUser} 💘`
     );
+
+    return message.reply(content);
   }
 }
