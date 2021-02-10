@@ -33,7 +33,9 @@ export default class extends Command {
       const definition = profanity.purify(data.list[0].definition)[0];
       const maxLength = 997;
 
-      return message.reply(truncate(maxLength, `${phrase} - ${definition}`));
+      return message.reply(
+        truncate(maxLength, `${profanity.purify(phrase)} - ${definition}`)
+      );
     } catch {
       return message.reply("Could not fetch this definition.");
     }
