@@ -30,7 +30,7 @@ export class CommandLoader {
     }
 
     const files: string[] = [];
-    const directories = ["admin", "fun", "game", "utility", "useful"];
+    const directories = ["admin", "fun", "game", "utility", "useful", "image"];
 
     for (const directory of directories) {
       files.push(
