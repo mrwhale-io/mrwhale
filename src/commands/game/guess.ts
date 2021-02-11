@@ -22,7 +22,7 @@ export default class extends Command {
     return new Content().insertText(`@${username} ${answer}`);
   }
 
-  async action(message: Message, [guess]: [string]): Promise<void> {
+  async action(message: Message, [guess]: [string]): Promise<Message> {
     const id = `${message.room_id}:${message.user.id}`;
 
     if (this.games.has(id)) {

@@ -19,7 +19,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message): Promise<Message> {
     const memoryUsage = process.memoryUsage().heapUsed / MEM_UNIT / MEM_UNIT;
     const response = new InfoBuilder()
       .addField("Version", version)

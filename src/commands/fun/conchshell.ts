@@ -14,7 +14,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [question]: [string]): Promise<void> {
+  async action(message: Message, [question]: [string]): Promise<Message> {
     if (!question) {
       return message.reply(`Ask the magic conch shell a question.`);
     }

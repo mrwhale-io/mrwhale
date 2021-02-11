@@ -16,7 +16,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [text]: [string]): Promise<void> {
+  async action(message: Message, [text]: [string]): Promise<Message> {
     if (!text || text === "") {
       return message.reply("Please provide text to upload.");
     }

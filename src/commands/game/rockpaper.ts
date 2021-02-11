@@ -29,7 +29,7 @@ export default class extends Command {
     }
   }
 
-  async action(message: Message, [choice]: [string]): Promise<void> {
+  async action(message: Message, [choice]: [string]): Promise<Message> {
     if (!choice || choice === "") {
       return message.reply("Please pass a choice.");
     }

@@ -18,7 +18,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [phrase]: [string]): Promise<void> {
+  async action(message: Message, [phrase]: [string]): Promise<Message> {
     const url = `https://api.urbandictionary.com/v0/define?page=1&term=${phrase}`;
 
     if (!phrase) {

@@ -17,7 +17,7 @@ export default class extends Command {
   async action(
     message: Message,
     [firstUser, secondUser]: [string, string]
-  ): Promise<void> {
+  ): Promise<Message> {
     if (!firstUser) {
       return message.reply("First user is missing.");
     }

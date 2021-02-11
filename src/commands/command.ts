@@ -99,7 +99,7 @@ export abstract class Command {
    * @param message The message that invoked this command.
    * @param [args] Any arguments passed with this command.
    */
-  abstract action(message: Message, args?: unknown[]): Promise<void>;
+  abstract action(message: Message, args?: unknown[]): Promise<unknown>;
 
   /**
    * Register this as an available command.

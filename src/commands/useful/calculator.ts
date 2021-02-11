@@ -26,7 +26,7 @@ export default class extends Command {
       .replace(/[[÷]/gi, "/");
   }
 
-  async action(message: Message, [expression]: [string]): Promise<void> {
+  async action(message: Message, [expression]: [string]): Promise<Message> {
     if (!expression) {
       return message.reply("Please enter a calculation.");
     }

@@ -16,7 +16,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [query]: [string]): Promise<void> {
+  async action(message: Message, [query]: [string]): Promise<Message> {
     if (!config.wolfram) {
       return message.reply("No API key provided for wolfram.");
     }

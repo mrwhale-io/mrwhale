@@ -27,7 +27,7 @@ export default class extends Command {
   async action(
     message: Message,
     [commandName, input]: [string, string]
-  ): Promise<void> {
+  ): Promise<Message> {
     if (!commandName) {
       return message.reply(
         "Please provide a command. Use !help hangman for more info."

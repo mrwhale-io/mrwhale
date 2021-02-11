@@ -16,7 +16,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [typeOrCmdName]: [string]): Promise<void> {
+  async action(message: Message, [typeOrCmdName]: [string]): Promise<Message> {
     const types = ["admin", "fun", "game", "utility", "useful"];
 
     if (typeOrCmdName) {

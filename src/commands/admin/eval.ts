@@ -17,7 +17,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, args: string[]): Promise<void> {
+  async action(message: Message, args: string[]): Promise<Message> {
     const input = args.join();
 
     if (!input) {

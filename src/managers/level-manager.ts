@@ -111,7 +111,7 @@ export class LevelManager {
         `Congrats @${message.user.username}, you just advanced to level ${newLevel}!`
       );
 
-      return this.client.chat.sendMessage(content, message.room_id);
+      this.client.chat.sendMessage(content, message.room_id);
     }
   }
 }

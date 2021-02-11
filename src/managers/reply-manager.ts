@@ -26,7 +26,7 @@ export class ReplyManager {
     }
 
     if (message.textContent.match(WHALE_REGEX)) {
-      return message.reply(message.toString().match(WHALE_REGEX)[0]);
+      message.reply(message.toString().match(WHALE_REGEX)[0]);
     }
   }
 

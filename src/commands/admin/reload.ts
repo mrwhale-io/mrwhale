@@ -13,7 +13,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [commandName]: [string]): Promise<void> {
+  async action(message: Message, [commandName]: [string]): Promise<Message> {
     const start = process.hrtime();
     const command = this.client.commands.find(
       (cmd) => cmd.name === commandName

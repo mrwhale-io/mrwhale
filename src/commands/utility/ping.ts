@@ -12,7 +12,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message): Promise<Message> {
     const start = process.hrtime();
     const end = process.hrtime(start);
 

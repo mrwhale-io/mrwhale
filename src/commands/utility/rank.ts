@@ -27,7 +27,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message): Promise<Message> {
     try {
       const score: Score = await Database.connection
         .getRepository(Score)

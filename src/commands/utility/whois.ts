@@ -14,7 +14,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message): Promise<Message> {
     if (message.mentions.length === 0) {
       return message.reply("You must mention a user.");
     }

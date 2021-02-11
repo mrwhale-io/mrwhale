@@ -14,7 +14,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message): Promise<Message> {
     try {
       const url = `https://uselessfacts.jsph.pl/random.json?language=en`;
       const result = await axios.get(url);

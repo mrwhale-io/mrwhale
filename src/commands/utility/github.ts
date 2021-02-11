@@ -16,7 +16,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message): Promise<Message> {
     try {
       const url = `mrwhale-io/mrwhale`;
       const result = await axios.get(`https://api.github.com/repos/${url}`);

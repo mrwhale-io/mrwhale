@@ -15,7 +15,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message): Promise<Message> {
     const languages = [];
 
     for (const language in translate.languages) {

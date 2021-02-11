@@ -16,7 +16,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [city]: [string]): Promise<void> {
+  async action(message: Message, [city]: [string]): Promise<Message> {
     try {
       if (!city) {
         return message.reply("You must provide a city name.");

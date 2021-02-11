@@ -14,7 +14,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<void> {
+  async action(message: Message): Promise<Message> {
     try {
       const url = `https://api.adviceslip.com/advice`;
       const result = await axios.get(url);

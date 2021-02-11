@@ -15,7 +15,7 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message, [size]: [string]): Promise<void> {
+  async action(message: Message, [size]: [string]): Promise<Message> {
     const min = 5;
     const max = 50;
 

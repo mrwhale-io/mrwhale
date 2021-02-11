@@ -20,7 +20,7 @@ export default class extends Command {
   async action(
     message: Message,
     [lang, ...text]: [string, string[]]
-  ): Promise<void> {
+  ): Promise<Message> {
     const toTranslate = text.join();
 
     if (!toTranslate) {
