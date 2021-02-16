@@ -22,7 +22,10 @@ export function whalify(str: string): string {
   }
 
   for (const replacement of whaleReplacements) {
-    str = str.replace(new RegExp(replacement, "gi"), "whale");
+    str = str.replace(
+      new RegExp(`\\w*(?<!mr\\.*\\s*)${replacement}`, "gi"),
+      "whale"
+    );
   }
 
   str = str.replace(new RegExp("ual", "gi"), "uwhale");
