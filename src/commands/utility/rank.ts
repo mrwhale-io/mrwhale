@@ -23,7 +23,7 @@ const applyText = (canvas, text) => {
   const ctx = canvas.getContext("2d");
 
   // Declare a base size of the font
-  let fontSize = 62;
+  let fontSize = 48;
 
   do {
     // Assign the font to the context and decrement it so it can be measured again
@@ -55,14 +55,10 @@ export default class extends Command {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw player username.
-    ctx.font = "28px sans-serif";
-    ctx.fillStyle = "#ffffff";
-    ctx.fillText("Rank for,", canvas.width / 3.5, canvas.height / 3.5);
-
-    ctx.font = applyText(canvas, `${player.user.username}!`);
+    ctx.font = applyText(canvas, `@${player.user.username}`);
     ctx.fillStyle = "#ffffff";
     ctx.fillText(
-      `${player.user.username}!`,
+      `@${player.user.username}`,
       canvas.width / 3.5,
       canvas.height / 1.8
     );
