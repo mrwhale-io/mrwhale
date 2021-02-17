@@ -23,12 +23,12 @@ const applyText = (canvas, text) => {
   const ctx = canvas.getContext("2d");
 
   // Declare a base size of the font
-  let fontSize = 48;
+  let fontSize = 36;
 
   do {
     // Assign the font to the context and decrement it so it can be measured again
-    ctx.font = `${(fontSize -= 10)}px sans-serif`;
-  } while (ctx.measureText(text).width > canvas.width - 600);
+    ctx.font = `${(fontSize -= 2)}px sans-serif`;
+  } while (ctx.measureText(text).width > canvas.width - 528);
 
   // Return the result to use in the actual canvas
   return ctx.font;
@@ -59,7 +59,7 @@ export default class extends Command {
     ctx.fillText(
       `@${player.user.username}`,
       canvas.width / 3.5,
-      canvas.height / 1.8
+      canvas.height / 1.7
     );
 
     // Draw player rank
@@ -67,7 +67,7 @@ export default class extends Command {
     ctx.fillStyle = "#ffffff";
     ctx.fillText(
       `RANK #${player.rank}`,
-      canvas.width / 1.7,
+      canvas.width / 1.8,
       canvas.height / 3.5
     );
 
@@ -118,10 +118,15 @@ export default class extends Command {
 
   async action(message: Message): Promise<Message> {
     try {
+      let user = message.mentions[0];
+      if (!user) {
+        user = message.user;
+      }
+
       const content = new Content();
       const score: Score = await Database.connection
         .getRepository(Score)
-        .findOne({ roomId: message.room_id, userId: message.user.id });
+        .findOne({ roomId: message.room_id, userId: user.id });
 
       const scores: Score[] = await Database.connection
         .getRepository(Score)
@@ -131,7 +136,9 @@ export default class extends Command {
 
       if (!score) {
         return message.reply(
-          "You aren't ranked yet. Send some messages first, then try again."
+          user.id === message.user.id
+            ? "You aren't ranked yet. Send some messages first, then try again."
+            : "This user is not ranked."
         );
       }
 
@@ -142,10 +149,9 @@ export default class extends Command {
         xp += LevelManager.levelToExp(i);
       }
 
-      const rank =
-        playerSorted.findIndex((p) => p.userId === message.user.id) + 1;
+      const rank = playerSorted.findIndex((p) => p.userId === user.id) + 1;
       const info: PlayerInfo = {
-        user: message.user,
+        user,
         totalExp: score.exp,
         levelExp: LevelManager.levelToExp(level),
         remainingExp: score.exp - xp,
