@@ -54,15 +54,15 @@ export default class extends Command {
     ctx.fillStyle = "#111015";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw player display name.
+    // Draw player username.
     ctx.font = "28px sans-serif";
     ctx.fillStyle = "#ffffff";
     ctx.fillText("Rank for,", canvas.width / 3.5, canvas.height / 3.5);
 
-    ctx.font = applyText(canvas, `${player.user.display_name}!`);
+    ctx.font = applyText(canvas, `${player.user.username}!`);
     ctx.fillStyle = "#ffffff";
     ctx.fillText(
-      `${player.user.display_name}!`,
+      `${player.user.username}!`,
       canvas.width / 3.5,
       canvas.height / 1.8
     );
