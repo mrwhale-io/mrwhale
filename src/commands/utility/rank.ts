@@ -1,19 +1,39 @@
-import { Message } from "@mrwhale-io/gamejolt";
+import { Message, User, Content } from "@mrwhale-io/gamejolt";
+import axios from "axios";
+import { createCanvas, loadImage } from "canvas";
+import * as fs from "fs";
+import { file } from "tmp-promise";
 
 import { Command } from "../command";
 import { Score } from "../../database/entity/score";
 import { Database } from "../../database/database";
 import { LevelManager } from "../../managers/level-manager";
-import { InfoBuilder } from "../../util/info-builder";
+import { ProgressBar } from "../../image/progress-bar";
 
 interface PlayerInfo {
-  name: string;
+  user: User;
   totalExp: number;
   levelExp: number;
   remainingExp: number;
   level: number;
-  rank: string;
+  rank: number;
 }
+
+const applyText = (canvas, text) => {
+  const ctx = canvas.getContext("2d");
+
+  // Declare a base size of the font
+  let fontSize = 62;
+
+  do {
+    // Assign the font to the context and decrement it so it can be measured again
+    ctx.font = `${(fontSize -= 10)}px sans-serif`;
+    // Compare pixel width of the text to the canvas minus the approximate avatar size
+  } while (ctx.measureText(text).width > canvas.width - 300);
+
+  // Return the result to use in the actual canvas
+  return ctx.font;
+};
 
 export default class extends Command {
   constructor() {
@@ -27,8 +47,83 @@ export default class extends Command {
     });
   }
 
+  private async createCard(player: PlayerInfo) {
+    const canvas = createCanvas(920, 250);
+    const ctx = canvas.getContext("2d");
+
+    ctx.fillStyle = "#111015";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Draw player display name.
+    ctx.font = "28px sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("Rank for,", canvas.width / 3.5, canvas.height / 3.5);
+
+    ctx.font = applyText(canvas, `${player.user.display_name}!`);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(
+      `${player.user.display_name}!`,
+      canvas.width / 3.5,
+      canvas.height / 1.8
+    );
+
+    // Draw player rank
+    ctx.font = "34px sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(
+      `RANK #${player.rank}`,
+      canvas.width / 1.7,
+      canvas.height / 3.5
+    );
+
+    // Draw player level
+    ctx.font = "34px sans-serif";
+    ctx.fillStyle = "#ccff00";
+    ctx.fillText(
+      `LEVEL ${player.level}`,
+      canvas.width / 1.3,
+      canvas.height / 3.5
+    );
+
+    // Draw EXP progress bar
+    const progressBar = new ProgressBar({
+      x: canvas.width / 3.5,
+      y: canvas.height / 1.5,
+      width: canvas.width - 300,
+      height: 50,
+      canvas,
+      percentage: Math.floor((player.remainingExp / player.levelExp) * 100),
+      color: "#ff3fac",
+    });
+    progressBar.draw();
+
+    // Draw player rank
+    ctx.font = "34px sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(
+      `${player.remainingExp}/${player.levelExp} EXP`,
+      canvas.width / 1.4,
+      canvas.height / 1.7
+    );
+
+    // Draw user avatar.
+    ctx.beginPath();
+    ctx.arc(125, 125, 100, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.clip();
+
+    const avatarFile = await axios.get(player.user.img_avatar, {
+      responseType: "arraybuffer",
+    });
+    const avatar = await loadImage(avatarFile.data);
+    ctx.drawImage(avatar, 25, 25, 200, 200);
+
+    return canvas;
+  }
+
   async action(message: Message): Promise<Message> {
     try {
+      const content = new Content();
       const score: Score = await Database.connection
         .getRepository(Score)
         .findOne({ roomId: message.room_id, userId: message.user.id });
@@ -55,23 +150,31 @@ export default class extends Command {
       const rank =
         playerSorted.findIndex((p) => p.userId === message.user.id) + 1;
       const info: PlayerInfo = {
-        name: message.user.display_name,
+        user: message.user,
         totalExp: score.exp,
         levelExp: LevelManager.levelToExp(level),
         remainingExp: score.exp - xp,
         level,
-        rank: `${rank}/${scores.length}`,
+        rank,
       };
 
-      const response = new InfoBuilder()
-        .addField("Rank For", `${info.name}`)
-        .addField("Rank", info.rank)
-        .addField("Level", `${info.level}`)
-        .addField("Level Exp", `${info.remainingExp}/${info.levelExp}`)
-        .addField("Total Exp", `${info.totalExp}`)
-        .build();
+      const canvas = await this.createCard(info);
+      const { path, cleanup } = await file({ postfix: ".png" });
+      const out = fs.createWriteStream(path);
+      const stream = canvas.createPNGStream();
+      stream.pipe(out);
 
-      return message.reply(response);
+      out.on("finish", async () => {
+        const mediaItem = await this.client.chat.uploadFile(
+          fs.createReadStream(path),
+          message.room_id
+        );
+
+        await content.insertImage(mediaItem);
+        message.reply(content);
+
+        cleanup();
+      });
     } catch {
       return message.reply(`An error occured while fetching rank.`);
     }
