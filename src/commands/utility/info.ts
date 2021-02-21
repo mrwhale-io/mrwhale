@@ -7,6 +7,7 @@ import { InfoBuilder } from "../../util/info-builder";
 
 const FRACTIONAL_DIGITS = 2;
 const MEM_UNIT = 1024;
+
 export default class extends Command {
   constructor() {
     super({
@@ -25,6 +26,7 @@ export default class extends Command {
       .addField("Version", version)
       .addField("Group chats", `${this.client.chat.groupIds.length}`)
       .addField("Friends", `${this.client.chat.friendsList.collection.length}`)
+      .addField("Loaded commands", `${this.client.commands.length}`)
       .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)}`)
       .addField("Uptime", `${TimeUtilities.convertMs(this.client.uptime)}`)
       .addField("Cleverbot", this.client.cleverbot ? "on" : "off")
