@@ -27,8 +27,8 @@ export default class extends Command {
       } else {
         return message.reply("Already friends with this user.");
       }
-    } catch (error) {
-      return message.reply(error.message);
+    } catch {
+      return message.reply("Could not send friend request.");
     }
   }
 }
