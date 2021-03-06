@@ -9,7 +9,7 @@ export default class extends Command {
       name: "gayrate",
       description: "Find out how gay you are.",
       type: "fun",
-      usage: "<prefix>gaterate @user",
+      usage: "<prefix>gayrate @user",
     });
   }
 
