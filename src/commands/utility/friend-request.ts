@@ -21,9 +21,12 @@ export default class extends Command {
         user = message.user;
       }
 
-      await this.client.api.friendRequest(user.id);
-
-      return message.reply("Friend request successfully sent.");
+      if (!this.client.chat.friendsList.has(user.id)) {
+        await this.client.api.friendRequest(user.id);
+        return message.reply("Friend request successfully sent.");
+      } else {
+        return message.reply("Already friends with this user.");
+      }
     } catch (error) {
       return message.reply(error.message);
     }
