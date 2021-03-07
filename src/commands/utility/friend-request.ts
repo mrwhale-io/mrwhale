@@ -6,9 +6,9 @@ export default class extends Command {
   constructor() {
     super({
       name: "friendrequest",
-      description: "Sends a friend request to the specified user.",
+      description: "Sends you a friend request.",
       type: "utility",
-      usage: "<prefix>friendrequest @user",
+      usage: "<prefix>friendrequest",
       aliases: ["fr", "friend"],
       cooldown: 3000,
     });
@@ -16,16 +16,11 @@ export default class extends Command {
 
   async action(message: Message): Promise<Message> {
     try {
-      let user = message.mentions[0];
-      if (!user) {
-        user = message.user;
-      }
-
-      if (!this.client.chat.friendsList.has(user.id)) {
-        await this.client.api.friendRequest(user.id);
+      if (!this.client.chat.friendsList.has(message.user.id)) {
+        await this.client.api.friendRequest(message.user.id);
         return message.reply("Friend request successfully sent.");
       } else {
-        return message.reply("Already friends with this user.");
+        return message.reply("We're already friends.");
       }
     } catch {
       return message.reply("Could not send friend request.");
