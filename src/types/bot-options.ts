@@ -16,4 +16,14 @@ export interface BotOptions {
    * The user identifier of the bot owner.
    */
   ownerId: number;
+
+  /**
+   * The game api private key.
+   */
+  privateKey: string;
+
+  /**
+   * The game id.
+   */
+  gameId: number;
 }

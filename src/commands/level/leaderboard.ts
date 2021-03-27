@@ -1,16 +1,27 @@
 import { Message, User } from "@mrwhale-io/gamejolt";
 import * as AsciiTable from "ascii-table";
+import { User as GameUser } from "joltite.js";
 
 import { Command } from "../command";
 import { Score } from "../../database/entity/score";
 import { Database } from "../../database/database";
 import { codeBlock } from "../../util/markdown-helpers";
 import { LevelManager } from "../../managers/level-manager";
+import { createQueryBuilder } from "typeorm";
 
 interface MappedScores {
   exp: number;
-  user: User;
+  user: User | GameUser;
   level: number;
+}
+
+function mapUsers(members: User[] | GameUser[]) {
+  const mappedMembers = {};
+  for (const member of members) {
+    mappedMembers[member.id] = member;
+  }
+
+  return mappedMembers;
 }
 
 export default class extends Command {
@@ -19,7 +30,7 @@ export default class extends Command {
       name: "leaderboard",
       description: "List the top players in the room.",
       type: "level",
-      usage: "<prefix>leaderboard <text>",
+      usage: "<prefix>leaderboard",
       examples: ["<prefix>leaderboard"],
       groupOnly: true,
       cooldown: 3000,
@@ -42,12 +53,22 @@ export default class extends Command {
     return table;
   }
 
-  private getMappedScores(scores: Score[], roomId: number) {
+  private async getRoomScores(roomId: number) {
+    const scores: Score[] = await Database.connection
+      .getRepository(Score)
+      .find({
+        where: {
+          roomId,
+        },
+        order: {
+          exp: "DESC",
+        },
+        skip: 0,
+        take: 10,
+      });
+
     const room = this.client.chat.activeRooms[roomId];
-    const mappedMembers = {};
-    for (const member of room.members) {
-      mappedMembers[member.id] = member;
-    }
+    const mappedMembers = mapUsers(room.members);
 
     const filteredScores = scores.filter(({ userId }) =>
       Object.keys(mappedMembers).includes(userId.toString())
@@ -62,26 +83,44 @@ export default class extends Command {
     return mappedScores;
   }
 
-  async action(message: Message): Promise<Message> {
-    try {
-      const scores: Score[] = await Database.connection
-        .getRepository(Score)
-        .find({
-          where: {
-            roomId: message.room_id,
-          },
-          order: {
-            exp: "DESC",
-          },
-          skip: 0,
-          take: 10,
-        });
+  private async getGlobalScores() {
+    const scores: Score[] = await createQueryBuilder("score")
+      .select("score.userId, SUM(score.exp)", "exp")
+      .orderBy("exp", "DESC")
+      .groupBy("score.userId")
+      .skip(0)
+      .take(10)
+      .execute();
+    const memberIds = scores.map((score) => score.userId);
+    const members = await this.client.gameApi.users.fetch(memberIds);
+    const mappedMembers = mapUsers(members.users);
 
-      if (scores.length < 1) {
-        return message.reply("No one is ranked in this room.");
+    const mappedScores: MappedScores[] = scores.map((score) => ({
+      exp: score.exp,
+      user: mappedMembers[score.userId],
+      level: LevelManager.getLevelFromExp(score.exp),
+    }));
+
+    return mappedScores;
+  }
+
+  async action(message: Message, [command]: [string]): Promise<Message> {
+    try {
+      let mappedScores: MappedScores[] = [];
+      if (command && command.toLowerCase().trim() === "global") {
+        mappedScores = await this.getGlobalScores();
+
+        if (mappedScores.length < 1) {
+          return message.reply("No one is ranked.");
+        }
+      } else {
+        mappedScores = await this.getRoomScores(message.room_id);
+
+        if (mappedScores.length < 1) {
+          return message.reply("No one is ranked in this room.");
+        }
       }
 
-      const mappedScores = this.getMappedScores(scores, message.room_id);
       const table = this.createTable(mappedScores);
 
       return message.reply(codeBlock(table.toString()));

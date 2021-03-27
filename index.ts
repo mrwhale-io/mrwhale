@@ -14,6 +14,8 @@ const client = new BotClient(
     prefix: "!",
     cleverbotToken: config.cleverbot,
     ownerId: config.ownerId,
+    privateKey: config.privateKey,
+    gameId: config.gameId,
   }
 );
 

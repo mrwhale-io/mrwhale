@@ -6,6 +6,7 @@ import {
   Content,
   Room,
 } from "@mrwhale-io/gamejolt";
+import { GameJolt } from "joltite.js";
 
 import { BotOptions } from "./types/bot-options";
 import { Command } from "./commands/command";
@@ -50,6 +51,11 @@ export class BotClient extends Client {
    * Bot client logging instance.
    */
   readonly logger = logger;
+
+  /**
+   * The game api client.
+   */
+  readonly gameApi: GameJolt;
 
   /**
    * Returns the chat client uptime.
@@ -103,6 +109,10 @@ export class BotClient extends Client {
     this.urlManager = new UrlManager(this);
     this.levelManager = new LevelManager(this);
     this.policer = new Policer(this);
+    this.gameApi = new GameJolt({
+      privateKey: botOptions.privateKey,
+      gameId: botOptions.gameId,
+    });
 
     if (botOptions.cleverbotToken) {
       this.cleverbotManager = new CleverbotManager(
