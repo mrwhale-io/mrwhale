@@ -20,7 +20,7 @@
   "dependencies": {
     "@mrwhale-io/gamejolt": "git+https://github.com/mrwhale-io/gamejolt.git",
     "ascii-table": "^0.0.9",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "canvas": "^2.6.1",
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
