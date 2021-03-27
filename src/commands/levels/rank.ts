@@ -40,7 +40,7 @@ export default class extends Command {
       name: "rank",
       description: "Get your current rank.",
       usage: "<prefix>rank",
-      type: "utility",
+      type: "level",
       groupOnly: true,
       cooldown: 3000,
     });

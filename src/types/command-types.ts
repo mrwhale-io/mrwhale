@@ -7,4 +7,5 @@ export type CommandTypes =
   | "fun"
   | "utility"
   | "game"
-  | "image";
+  | "image"
+  | "level";
