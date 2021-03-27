@@ -4,6 +4,7 @@ import { BotClient } from "../bot-client";
 import { ListenerDecorators } from "../util/listener-decorators";
 import { Database } from "../database/database";
 import { Score } from "../database/entity/score";
+import { getRandomInt } from "../util/get-random-int";
 
 const { on, registerListeners } = ListenerDecorators;
 
@@ -51,10 +52,6 @@ export class LevelManager {
     return level;
   }
 
-  private getRandomExp(min: number, max: number) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
   private isTimeForExp(roomId: number, userId: number) {
     if (!this.lastMessages[roomId]) {
       this.lastMessages[roomId] = {};
@@ -97,7 +94,7 @@ export class LevelManager {
 
     this.lastMessages[message.room_id][message.user.id] = Date.now();
 
-    const expGained = this.getRandomExp(15, 25);
+    const expGained = getRandomInt(15, 25);
     const score = await this.getScore(message.user.id, message.room_id);
     const level = LevelManager.getLevelFromExp(score.exp);
 
