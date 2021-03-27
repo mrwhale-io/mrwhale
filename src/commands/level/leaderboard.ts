@@ -76,6 +76,11 @@ export default class extends Command {
           skip: 0,
           take: 10,
         });
+
+      if (scores.length < 1) {
+        return message.reply("No one is ranked in this room.");
+      }
+
       const mappedScores = this.getMappedScores(scores, message.room_id);
       const table = this.createTable(mappedScores);
 
