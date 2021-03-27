@@ -22,7 +22,7 @@ export default class extends Command {
       usage: "<prefix>leaderboard <text>",
       examples: ["<prefix>leaderboard"],
       groupOnly: true,
-      cooldown: 5000,
+      cooldown: 3000,
     });
   }
 
