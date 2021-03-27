@@ -73,6 +73,8 @@ export default class extends Command {
           order: {
             exp: "DESC",
           },
+          skip: 0,
+          take: 10,
         });
       const mappedScores = this.getMappedScores(scores, message.room_id);
       const table = this.createTable(mappedScores);
