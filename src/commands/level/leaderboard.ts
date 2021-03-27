@@ -21,6 +21,7 @@ export default class extends Command {
       type: "level",
       usage: "<prefix>leaderboard <text>",
       examples: ["<prefix>leaderboard"],
+      groupOnly: true,
       cooldown: 5000,
     });
   }
