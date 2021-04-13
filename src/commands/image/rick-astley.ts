@@ -31,7 +31,7 @@ export default class extends Command {
       responseType: "arraybuffer",
     });
     const rick = await loadImage(
-      path.join(__dirname, "..", "..", "..", "images", "Rick-Astley.png")
+      path.join(__dirname, "..", "..", "..", "images", "Rick-astley.png")
     );
     const avatar = await loadImage(avatarFile.data);
     const canvas = createCanvas(rick.width, rick.height);
