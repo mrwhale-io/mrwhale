@@ -61,7 +61,7 @@ export default class extends Command {
         cleanup();
       });
     } catch (e) {
-      message.edit("Could not create image.");
+      responseMsg.edit("Could not create image.");
     }
   }
 }

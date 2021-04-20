@@ -1,11 +1,10 @@
+import { Message } from "@mrwhale-io/gamejolt";
 import axios from "axios";
 import { createCanvas, loadImage } from "canvas";
-import * as fs from "fs";
 import * as path from "path";
-import { file } from "tmp-promise";
-import { Content, Message } from "@mrwhale-io/gamejolt";
 
 import { Command } from "../command";
+import { uploadImage } from "../../image/upload-image";
 
 export default class extends Command {
   constructor() {
@@ -21,7 +20,6 @@ export default class extends Command {
 
   async action(message: Message): Promise<void> {
     const responseMsg = await message.reply("Processing please wait...");
-    const content = new Content();
     const avatarFile = await axios.get(message.user.img_avatar, {
       responseType: "arraybuffer",
     });
@@ -42,25 +40,6 @@ export default class extends Command {
       avatar.height / 2
     );
 
-    try {
-      const { path, cleanup } = await file({ postfix: ".png" });
-      const out = fs.createWriteStream(path);
-      const stream = canvas.createPNGStream();
-      stream.pipe(out);
-
-      out.on("finish", async () => {
-        const mediaItem = await this.client.chat.uploadFile(
-          fs.createReadStream(path),
-          message.room_id
-        );
-
-        await content.insertImage(mediaItem);
-        responseMsg.edit(content);
-
-        cleanup();
-      });
-    } catch (e) {
-      return message.edit("Could not create image.");
-    }
+    return uploadImage(canvas, responseMsg);
   }
 }
