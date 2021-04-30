@@ -22,7 +22,12 @@ export class CommandDispatcher {
       return;
     }
 
-    const prefix = this.client.prefix;
+    const prefix = this.client.settings.get(
+      message.room_id,
+      "prefix",
+      this.client.prefix
+    ) as string;
+
     if (!message.textContent.trim().startsWith(prefix)) {
       return;
     }
@@ -56,7 +61,11 @@ export class CommandDispatcher {
       return message.reply("This is an admin only command.");
     }
 
-    if (command.owner && !message.isRoomOwner) {
+    if (
+      command.owner &&
+      !message.isRoomOwner &&
+      !this.client.chat.friendsList.getByRoom(message.room_id)
+    ) {
       return message.reply("You need to be room owner to use this command.");
     }
 
