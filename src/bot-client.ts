@@ -23,6 +23,7 @@ import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
 import { logger } from "./util/logger";
 import { code } from "./util/markdown-helpers";
+import { settingsManager } from './managers/settings-manager';
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -56,6 +57,11 @@ export class BotClient extends Client {
    * The game api client.
    */
   readonly gameApi: GameJolt;
+
+  /**
+   * The settings manager.
+   */
+  readonly settings: settingsManager;
 
   /**
    * Returns the chat client uptime.
@@ -102,6 +108,7 @@ export class BotClient extends Client {
     this.commandLoader = new CommandLoader(this);
     this.timeouts = new Set();
     this.intervals = new Set();
+    this.settings = new settingsManager();
 
     this.commandLoader.loadCommands();
     this.friendRequestManager = new FriendRequestManager(this);
@@ -152,6 +159,7 @@ export class BotClient extends Client {
     );
 
     await Database.instance().init();
+    this.settings.init();
   }
 
   @on("notification")
