@@ -81,7 +81,8 @@ export class LevelManager {
   protected async onMessage(message: Message): Promise<void> {
     if (
       message.user.id === this.client.userId ||
-      this.client.chat.friendsList.getByRoom(message.room_id)
+      this.client.chat.friendsList.getByRoom(message.room_id) ||
+      !this.client.settings.get(message.room_id, "levels", true)
     ) {
       return;
     }
