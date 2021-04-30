@@ -28,7 +28,7 @@ export class CleverbotManager {
   }
 
   private hasCommand(message: Message) {
-    const prefix = this.client.prefix;
+    const prefix = this.client.getPrefix(message.room_id);
     const commandName: string = message.textContent
       .trim()
       .slice(prefix.length)

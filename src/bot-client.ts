@@ -23,7 +23,7 @@ import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
 import { logger } from "./util/logger";
 import { code } from "./util/markdown-helpers";
-import { settingsManager } from './managers/settings-manager';
+import { settingsManager } from "./managers/settings-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -34,9 +34,9 @@ export class BotClient extends Client {
   commands: Command[] = [];
 
   /**
-   * Prefix denoting a command call.
+   * Default prefix denoting a command call.
    */
-  prefix: string;
+  defaultPrefix: string;
 
   /**
    * Contains the time the bot started.
@@ -101,7 +101,7 @@ export class BotClient extends Client {
    */
   constructor(clientOptions: ClientOptions, botOptions: BotOptions) {
     super(clientOptions);
-    this.prefix = botOptions.prefix;
+    this.defaultPrefix = botOptions.prefix;
     this.ownerId = botOptions.ownerId;
 
     this.commandDispatcher = new CommandDispatcher(this);
@@ -179,7 +179,7 @@ export class BotClient extends Client {
       );
       this.chat.joinRoom(friend.room_id).receive("ok", () => {
         const message = `Thank you for adding me as a friend! Use ${code(
-          `${this.prefix}help`
+          `${this.getPrefix(friend.room_id)}help`
         )} for a list of commands.`;
 
         this.chat.sendMessage(message, friend.room_id);
@@ -192,7 +192,7 @@ export class BotClient extends Client {
     if (group) {
       this.chat.joinRoom(group.id).receive("ok", () => {
         const message = `Thank you for adding me to your group! Use ${code(
-          `${this.prefix}help`
+          `${this.getPrefix(group.id)}help`
         )} for a list of commands.`;
 
         this.chat.sendMessage(message, group.id);
@@ -246,6 +246,14 @@ export class BotClient extends Client {
         `${room.owner.username} (${room.owner.id}) became owner of group chat with id: ${data.room_id}`
       );
     }
+  }
+
+  /**
+   * Gets the room prefix.
+   * @param roomId The room prefix.
+   */
+  getPrefix(roomId: number): string {
+    return this.settings.get(roomId, "prefix", this.defaultPrefix) as string;
   }
 
   setTimeout(

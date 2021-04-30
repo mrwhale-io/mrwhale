@@ -22,11 +22,7 @@ export class CommandDispatcher {
       return;
     }
 
-    const prefix = this.client.settings.get(
-      message.room_id,
-      "prefix",
-      this.client.prefix
-    ) as string;
+    const prefix = this.client.getPrefix(message.room_id);
 
     if (!message.textContent.trim().startsWith(prefix)) {
       return;
@@ -46,7 +42,9 @@ export class CommandDispatcher {
 
     if (!command) {
       return message.reply(
-        `Unknown command. Use ${this.client.prefix}help to view the command list.`
+        `Unknown command. Use ${this.client.getPrefix(
+          message.room_id
+        )}help to view the command list.`
       );
     }
 

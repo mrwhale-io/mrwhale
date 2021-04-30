@@ -53,7 +53,9 @@ export default class extends Command {
         }
 
         return message.reply(
-          `${info.build().replace(/<prefix>/g, this.client.prefix)}`
+          `${info
+            .build()
+            .replace(/<prefix>/g, this.client.getPrefix(message.room_id))}`
         );
       }
 
@@ -66,7 +68,9 @@ export default class extends Command {
           unorderedList(
             commands.map(
               (command) =>
-                `${this.client.prefix}${command.name} - ${command.description}`
+                `${this.client.getPrefix(message.room_id)}${command.name} - ${
+                  command.description
+                }`
             )
           )
         );
@@ -76,7 +80,11 @@ export default class extends Command {
     }
 
     return message.reply(
-      unorderedList(types.map((type) => `${this.client.prefix}help ${type}`))
+      unorderedList(
+        types.map(
+          (type) => `${this.client.getPrefix(message.room_id)}help ${type}`
+        )
+      )
     );
   }
 }
