@@ -59,9 +59,13 @@ export class CommandDispatcher {
       return message.reply("This is an admin only command.");
     }
 
+    const room = this.client.chat.activeRooms[message.room_id];
+
     if (
       command.owner &&
       !message.isRoomOwner &&
+      room &&
+      this.client.userId !== room.owner_id &&
       !this.client.chat.friendsList.getByRoom(message.room_id)
     ) {
       return message.reply("You need to be room owner to use this command.");
