@@ -28,16 +28,16 @@ export default class extends Command {
     const avatarFile = await axios.get(user.img_avatar, {
       responseType: "arraybuffer",
     });
-    const rick = await loadImage(
+    const keith = await loadImage(
       path.join(__dirname, "..", "..", "..", "images", "keith.png")
     );
     const avatar = await loadImage(avatarFile.data);
-    const canvas = createCanvas(rick.width, rick.height);
+    const canvas = createCanvas(keith.width, keith.height);
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(rick, 0, 0);
-    const ratio = rick.height / 3 / avatar.height;
+    ctx.drawImage(keith, 0, 0);
+    const ratio = keith.height / 3 / avatar.height;
     const width = avatar.width * ratio;
-    ctx.drawImage(avatar, width, avatar.height / 4, width, rick.height / 3);
+    ctx.drawImage(avatar, width, avatar.height / 4, width, keith.height / 3);
 
     return uploadImage(canvas, responseMsg);
   }
