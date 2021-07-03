@@ -5,6 +5,7 @@ import {
   User,
   Content,
   Room,
+  RoomType,
 } from "@mrwhale-io/gamejolt";
 import { GameJolt } from "joltite.js";
 
@@ -203,7 +204,9 @@ export class BotClient extends Client {
 
   @on("member_add")
   protected onMemberAdd(data: { room_id: number; members: User[] }): void {
-    if (data.members) {
+    const room = this.chat.activeRooms[data.room_id];
+
+    if (data.members && room && room.type === RoomType.ClosedGroup) {
       const members = data.members
         .filter((member) => member.id !== this.userId)
         .map((member) => `@${member.username}`);
@@ -220,7 +223,9 @@ export class BotClient extends Client {
 
   @on("member_leave")
   protected onMemberLeave(data: { room_id: number; member: User }): void {
-    if (data.member) {
+    const room = this.chat.activeRooms[data.room_id];
+
+    if (data.member && room && room.type === RoomType.ClosedGroup) {
       const content = new Content().insertText(
         `@${data.member.username} just left the group.`
       );
