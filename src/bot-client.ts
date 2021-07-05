@@ -27,7 +27,6 @@ import { Policer } from "./managers/policer";
 import { logger } from "./util/logger";
 import { code } from "./util/markdown-helpers";
 import { settingsManager } from "./managers/settings-manager";
-import { Push } from "phoenix-channels";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
