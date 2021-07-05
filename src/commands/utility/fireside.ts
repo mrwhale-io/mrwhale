@@ -14,17 +14,25 @@ export default class extends Command {
   }
 
   async action(message: Message, [id]: [string]): Promise<void> {
-    try {
-      const fireside = await this.client.api.getFireside(id);
+    const fireside = await this.client.api.getFireside(id);
 
-      if (fireside) {
-        const msg = await message.reply("Joining fireside.");
-        this.client.chat.joinRoom(fireside.chat_room_id);
-
-        msg.edit("Joined fireside.");
-      }
-    } catch {
-      message.reply("Could not join fireside.");
+    if (fireside) {
+      const msg = await message.reply(
+        `Attempting to Join the fireside *${fireside.title}*...`
+      );
+      const push = this.client.chat.joinRoom(fireside.chat_room_id);
+      if (push)
+        push
+          .receive("ok", () => {
+            msg.edit(
+              `I have successfully joined the fireside **${fireside.title}**. See you there!`
+            );
+          })
+          .receive("error", () => {
+            msg.edit(`I could not join *${fireside.title}*`);
+          });
+    } else {
+      message.reply("Invalid fireside.");
     }
   }
 }

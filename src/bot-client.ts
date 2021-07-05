@@ -6,6 +6,8 @@ import {
   Content,
   Room,
   RoomType,
+  Notification,
+  FiresidePost,
 } from "@mrwhale-io/gamejolt";
 import { GameJolt } from "joltite.js";
 
@@ -25,8 +27,11 @@ import { Policer } from "./managers/policer";
 import { logger } from "./util/logger";
 import { code } from "./util/markdown-helpers";
 import { settingsManager } from "./managers/settings-manager";
+import { Push } from "phoenix-channels";
 
 const { on, once, registerListeners } = ListenerDecorators;
+
+const FIRESIDE_REGEX = /(http:|https:)?\/\/(www\.)?(gamejolt.com)\/fireside\/([a-zA-Z0-9]+)/;
 
 export class BotClient extends Client {
   /**
@@ -169,6 +174,64 @@ export class BotClient extends Client {
       this.chat.joinRoom(message.room_id).receive("ok", () => {
         this.emit("message", message);
       });
+    }
+  }
+
+  @on("user_notification")
+  protected async onUserNotification(
+    notification: Notification
+  ): Promise<void> {
+    if (
+      notification.type === "post-add" &&
+      notification.from_model instanceof User &&
+      notification.action_model instanceof FiresidePost
+    ) {
+      const content = new Content("fireside-post-comment");
+
+      if (notification.action_model.leadStr.match(FIRESIDE_REGEX)) {
+        const matches: RegExpMatchArray = notification.action_model.leadStr.match(
+          FIRESIDE_REGEX
+        );
+        if (matches) {
+          const firesideId = matches[matches.length - 1];
+          const fireside = await this.api.getFireside(firesideId);
+
+          if (fireside) {
+            const push = this.chat.joinRoom(fireside.chat_room_id);
+            if (push) {
+              push.receive("ok", () => {
+                content.insertText("Nice fireside. See you there! O__O");
+                this.api.comment(
+                  notification.action_resource_id,
+                  notification.action_resource,
+                  content.contentJson()
+                );
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @on("message")
+  protected async onMessage(message: Message): Promise<void> {
+    if (message.user.id === this.userId) {
+      return;
+    }
+
+    if (message.textContent.match(FIRESIDE_REGEX)) {
+      const matches: RegExpMatchArray = message.textContent.match(
+        FIRESIDE_REGEX
+      );
+      if (matches) {
+        const firesideId = matches[matches.length - 1];
+        const command = this.commands.find((cmd) => cmd.name === "fireside");
+
+        if (command) {
+          command.action(message, [firesideId]);
+        }
+      }
     }
   }
 
