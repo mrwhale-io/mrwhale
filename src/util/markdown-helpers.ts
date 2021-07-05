@@ -14,8 +14,13 @@ export const code: (text: string) => string = (text: string) => `\`${text}\``;
  * Return codeblock markdown text.
  * @param text The text to add to codeblock.
  */
-export const codeBlock: (text: string) => string = (text: string) =>
-  `\`\`\`\n${text}\n\`\`\``;
+export const codeBlock: (text: string, language?: string) => string = (
+  text: string,
+  language?: string
+) =>
+  language
+    ? `\`\`\`\n#${language}\n${text}\n\`\`\``
+    : `\`\`\`\n${text}\n\`\`\``;
 
 /**
  * Return italic markdown text.

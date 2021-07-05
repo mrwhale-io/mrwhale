@@ -34,7 +34,7 @@ export default class extends Command {
         output = output.replace(config.frontend, "removed");
       }
 
-      return message.reply(codeBlock(output));
+      return message.reply(codeBlock(output, 'js'));
     } catch (error) {
       return message.reply(
         codeBlock(error.toString().replace(config.frontend, "removed"))
