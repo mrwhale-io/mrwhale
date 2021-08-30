@@ -3,12 +3,10 @@
     "lib": ["es2020", "DOM"],
     "module": "commonjs",
     "target": "es2019",
-    "outDir": "dist",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["./src/**/*.ts", "index.ts"],
   "exclude": ["node_modules"]
 }

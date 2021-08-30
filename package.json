@@ -1,7 +1,7 @@
 {
-  "name": "@mrwhale/mrwhale",
+  "name": "@mrwhale-io/mrwhale",
   "description": "Mr. Whale is a general purpose chat bot designed for the Game Jolt chat system.",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "license": "MIT",
   "repository": {
@@ -17,6 +17,10 @@
     "lint": "eslint . --ext .ts",
     "prettier": "prettier --write *.{js,ts,json}"
   },
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "dependencies": {
     "@mrwhale-io/gamejolt": "git+https://github.com/mrwhale-io/gamejolt.git",
     "ascii-table": "^0.0.9",
@@ -50,6 +54,7 @@
     "@typescript-eslint/parser": "^4.9.1",
     "eslint": "^7.15.0",
     "eslint-config-prettier": "^7.0.0",
+    "lerna": "^4.0.0",
     "prettier": "^2.2.1",
     "typescript": "^3.9.6"
   }
