@@ -6,7 +6,9 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "declaration": true,
+    "typeRoots": ["./node_modules/@types", "./@types"]
   },
   "exclude": ["node_modules"]
 }

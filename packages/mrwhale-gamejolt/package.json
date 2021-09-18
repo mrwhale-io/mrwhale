@@ -5,7 +5,7 @@
   "author": "Thomas Bowen <6600748+ttbowen@users.noreply.github.com>",
   "homepage": "https://github.com/mrwhale-io/mrwhale/tree/main/packages/mrwhale-gamejolt#readme",
   "license": "ISC",
-  "main": "lib/mrwhale-gamejolt.js",
+  "main": "lib/index.js",
   "directories": {
     "lib": "lib",
     "test": "__tests__"
@@ -22,5 +22,23 @@
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
+  },
+  "dependencies": {
+    "form-data": "^3.0.0",
+    "markdown-it": "^12.0.4",
+    "phoenix-channels": "^1.0.0",
+    "prosemirror-markdown": "^1.5.1",
+    "prosemirror-model": "^1.11.0",
+    "prosemirror-schema-basic": "^1.1.2",
+    "prosemirror-view": "^1.15.2",
+    "twitter-text": "^3.1.0",
+    "websocket": "^1.0.31"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^12.0.1",
+    "@types/prosemirror-markdown": "^1.5.1",
+    "@types/prosemirror-model": "^1.7.2",
+    "@types/prosemirror-view": "^1.15.0",
+    "@types/websocket": "^1.0.0"
   }
 }
