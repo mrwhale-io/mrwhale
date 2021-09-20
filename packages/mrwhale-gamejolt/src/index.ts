@@ -1,14 +1,22 @@
-export { ClientOptions } from "./types/client-options";
-export { FriendRequest } from "./structures/friend-request";
-export { Message } from "./structures/message";
-export { Room, RoomType } from "./structures/room";
-export { User } from "./structures/user";
-export { Game } from "./structures/game";
-export { MediaItem } from "./structures/media-item";
-export { Comment } from "./structures/comment";
-export { Notification } from "./structures/notification";
-export { FiresidePost } from "./structures/fireside-post";
-export { GameOverview } from "./structures/game-overview";
-export { UserCollection } from "./structures/user-collection";
-export { Client } from "./client/client";
-export { Content } from "./content/content";
+import { BotClient } from "./bot-client";
+import * as config from "../config.json";
+
+const client = new BotClient(
+  {
+    userId: config.userId,
+    frontend: config.frontend,
+    baseApiUrl: config.baseApiUrl,
+    baseChatUrl: config.baseChatUrl,
+    baseGridUrl: config.baseGridUrl,
+    rateLimitRequests: 3,
+  },
+  {
+    prefix: "!",
+    cleverbotToken: config.cleverbot,
+    ownerId: config.ownerId,
+    privateKey: config.privateKey,
+    gameId: config.gameId,
+  }
+);
+
+process.on("unhandledRejection", (err) => client.logger.error(err));

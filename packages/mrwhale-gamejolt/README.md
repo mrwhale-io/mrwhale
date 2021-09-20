@@ -1,11 +1,7 @@
-# `mrwhale-gamejolt`
+# `@mrwhale-io/gamejolt`
 
-> TODO: description
+Mr. Whale Game Jolt chat bot integration.
 
-## Usage
+## License
 
-```
-const mrwhaleGamejolt = require('mrwhale-gamejolt');
-
-// TODO: DEMONSTRATE API
-```
+[MIT](https://tldrlegal.com/license/mit-license)
