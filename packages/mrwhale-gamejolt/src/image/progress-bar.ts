@@ -7,6 +7,7 @@ interface ProgressBarOptions {
   height: number;
   percentage: number;
   color: string;
+  backgroundColor: string;
   canvas: Canvas;
 }
 
@@ -16,6 +17,7 @@ export class ProgressBar {
   width: number;
   height: number;
   color: string;
+  backgroundColor: string;
 
   get percentage(): number {
     return this._percentage * 100;
@@ -37,6 +39,7 @@ export class ProgressBar {
     this.color = options.color;
     this._percentage = options.percentage / 100;
     this.canvas = options.canvas;
+    this.backgroundColor = options.backgroundColor;
   }
 
   draw(): void {
@@ -106,7 +109,7 @@ export class ProgressBar {
       Math.PI / 2
     );
     ctx.lineTo(this.height / 2 + this.x, this.height + this.y);
-    ctx.fillStyle = "#201d27";
+    ctx.fillStyle = this.backgroundColor;
     ctx.fill();
     ctx.closePath();
   }

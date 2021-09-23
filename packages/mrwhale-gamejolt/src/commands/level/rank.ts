@@ -6,8 +6,9 @@ import { Command } from "../command";
 import { Score } from "../../database/entity/score";
 import { Database } from "../../database/database";
 import { LevelManager } from "../../managers/level-manager";
-import { PlayerInfo } from '../../types/player-info';
+import { PlayerInfo } from "../../types/player-info";
 import { createPlayerCard } from "../../image/create-player-card";
+import { CardTheme } from "../../types/card-theme";
 
 export default class extends Command {
   constructor() {
@@ -63,8 +64,16 @@ export default class extends Command {
         level,
         rank,
       };
+      const theme: CardTheme = {
+        fillColor: "#111015",
+        primaryTextColor: "#ffffff",
+        secondaryTextColor: "#ccff00",
+        progressFillColor: "#201d27",
+        progressColor: "#ff3fac",
+        font: "34px sans-serif",
+      };
 
-      const canvas = await createPlayerCard(info);
+      const canvas = await createPlayerCard(info, theme);
       const { path, cleanup } = await file({ postfix: ".png" });
       const out = fs.createWriteStream(path);
       const stream = canvas.createPNGStream();

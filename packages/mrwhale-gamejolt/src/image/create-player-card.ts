@@ -1,24 +1,26 @@
 import axios from "axios";
-import { createCanvas, Canvas, loadImage } from 'canvas';
+import { createCanvas, Canvas, loadImage } from "canvas";
 
 import { PlayerInfo } from "../types/player-info";
 import { applyText } from "../util/apply-text";
 import { ProgressBar } from "./progress-bar";
+import { CardTheme } from '../types/card-theme';
 
 /**
  * Draws a user ranking card.
  * @param player The player info.
+ * @param theme The card theme.
  */
-export async function createPlayerCard(player: PlayerInfo): Promise<Canvas> {
+export async function createPlayerCard(player: PlayerInfo, theme: CardTheme): Promise<Canvas> {
   const canvas = createCanvas(920, 250);
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = "#111015";
+  ctx.fillStyle = theme.fillColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw player username.
   ctx.font = applyText(canvas, `@${player.user.username}`);
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = theme.primaryTextColor;
   ctx.fillText(
     `@${player.user.username}`,
     canvas.width / 3.5,
@@ -26,13 +28,13 @@ export async function createPlayerCard(player: PlayerInfo): Promise<Canvas> {
   );
 
   // Draw player rank
-  ctx.font = "34px sans-serif";
-  ctx.fillStyle = "#ffffff";
+  ctx.font = theme.font;
+  ctx.fillStyle = theme.primaryTextColor;
   ctx.fillText(`RANK #${player.rank}`, canvas.width / 1.8, canvas.height / 3.5);
 
   // Draw player level
-  ctx.font = "34px sans-serif";
-  ctx.fillStyle = "#ccff00";
+  ctx.font = theme.font;
+  ctx.fillStyle = theme.secondaryTextColor;
   ctx.fillText(
     `LEVEL ${player.level}`,
     canvas.width / 1.3,
@@ -47,13 +49,14 @@ export async function createPlayerCard(player: PlayerInfo): Promise<Canvas> {
     height: 50,
     canvas,
     percentage: Math.floor((player.remainingExp / player.levelExp) * 100),
-    color: "#ff3fac",
+    color: theme.progressColor,
+    backgroundColor: theme.progressFillColor,
   });
   progressBar.draw();
 
-  // Draw player rank
-  ctx.font = "34px sans-serif";
-  ctx.fillStyle = "#ffffff";
+  // Draw player exp
+  ctx.font = theme.font;
+  ctx.fillStyle = theme.primaryTextColor;
   ctx.fillText(
     `${player.remainingExp}/${player.levelExp} EXP`,
     canvas.width / 1.4,
