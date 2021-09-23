@@ -4,7 +4,7 @@
 [![](https://img.shields.io/discord/773335253032501278.svg?logo=discord&colorB=7289DA)](https://discord.gg/wjBnkR4AUZ)
 
 
-*Introducing Mr. Whale, the best chat bot on [Game Jolt](https://gamejolt.com)!*  Mr. Whale is an all-purpose chat bot loaded with dozens of awesome commands and features. Mr. Whale has been the source of entertainment in over 3000 group chats and counting.
+> Mr. Whale is an all-purpose chat bot loaded with dozens of awesome commands and features.
 
 ![Mr. Whale](images/screenshot.gif)
 
@@ -23,6 +23,7 @@ Some basic features include:
 
 - ✉️ Support for commands in private and group chats.
 - 🤖 Have conversations with cleverbot.
+- 📣 Announce when users enter and leave chat.
 - 🏆 EXP system for levelling up in group chats.
 
 Mr. Whale has a lot of commands, with 6 main categories:
