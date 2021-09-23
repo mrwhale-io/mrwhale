@@ -22,9 +22,12 @@ export default class extends Command {
 
   async action(message: Message): Promise<Message> {
     const memoryUsage = process.memoryUsage().heapUsed / MEM_UNIT / MEM_UNIT;
+    const groupIds =
+      this.client.chat.groupIds ||
+      this.client.chat.groups.map((group) => group.id);
     const response = new InfoBuilder()
       .addField("Version", version)
-      .addField("Group chats", `${this.client.chat.groupIds.length}`)
+      .addField("Group chats", `${groupIds.length}`)
       .addField("Friends", `${this.client.chat.friendsList.collection.length}`)
       .addField("Loaded commands", `${this.client.commands.length}`)
       .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)}`)
