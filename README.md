@@ -6,12 +6,11 @@
 
 > Mr. Whale is an all-purpose chat bot loaded with dozens of awesome commands and features.
 
-![Mr. Whale](images/screenshot.gif)
-
 Feel free to add a star ⭐ to the repository to promote the project!
 
 ## Table of Contents
 - [Features](#features)
+- [Screenshots](#screenshots)
 - [Links](#links)
 - [Maintainers](#maintainers)
 - [Contributing](#contributing)
@@ -37,6 +36,14 @@ Mr. Whale has a lot of commands, with 6 main categories:
 - 🏆 **Level**: `rank`, `leaderboard`
 
 [See the full command list](https://www.mrwhale.io/docs/commands)
+
+## Screenshots
+
+Below are some screenshots of the bot in action
+
+![Mr. Whale](images/screenshot.gif)
+
+![Mr. Whale](images/screenshot2.png)
 
 ## Links
 *   [Website](https://www.mrwhale.io/)
