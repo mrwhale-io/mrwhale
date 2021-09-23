@@ -51,6 +51,15 @@ export class Message {
     );
   }
 
+  get firstMentionOrAuthor(): User {
+    let user = this.mentions[0];
+    if (!user) {
+      user = this.user;
+    }
+
+    return user;
+  }
+
   constructor(public client: Client, data: Partial<Message> = {}) {
     Object.assign(this, data);
 

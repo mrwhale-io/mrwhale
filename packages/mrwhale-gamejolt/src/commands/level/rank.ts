@@ -1,14 +1,11 @@
-import { Message, Content } from "@mrwhale-io/gamejolt-client";
-import * as fs from "fs";
-import { file } from "tmp-promise";
+import { Message } from "@mrwhale-io/gamejolt-client";
 
 import { Command } from "../command";
-import { Score } from "../../database/entity/score";
-import { Database } from "../../database/database";
 import { LevelManager } from "../../managers/level-manager";
 import { PlayerInfo } from "../../types/player-info";
 import { createPlayerCard } from "../../image/create-player-card";
 import { CardTheme } from "../../types/card-theme";
+import { uploadImage } from "../../image/upload-image";
 
 export default class extends Command {
   constructor() {
@@ -22,22 +19,12 @@ export default class extends Command {
     });
   }
 
-  async action(message: Message): Promise<Message> {
+  async action(message: Message): Promise<void | Message> {
     try {
-      let user = message.mentions[0];
-      if (!user) {
-        user = message.user;
-      }
-
-      const content = new Content();
-      const score: Score = await Database.connection
-        .getRepository(Score)
-        .findOne({ roomId: message.room_id, userId: user.id });
-
-      const scores: Score[] = await Database.connection
-        .getRepository(Score)
-        .find({ roomId: message.room_id });
-
+      const user = message.firstMentionOrAuthor;
+      const responseMsg = await message.reply("Processing please wait...");
+      const score = await LevelManager.getUserScore(message.room_id, user.id);
+      const scores = await LevelManager.getScores(message.room_id);
       const playerSorted = scores.sort((a, b) => a.exp - b.exp).reverse();
 
       if (!score) {
@@ -49,18 +36,12 @@ export default class extends Command {
       }
 
       const level = LevelManager.getLevelFromExp(score.exp);
-
-      let xp = 0;
-      for (let i = 0; i < level; i++) {
-        xp += LevelManager.levelToExp(i);
-      }
-
       const rank = playerSorted.findIndex((p) => p.userId === user.id) + 1;
       const info: PlayerInfo = {
         user,
         totalExp: score.exp,
         levelExp: LevelManager.levelToExp(level),
-        remainingExp: score.exp - xp,
+        remainingExp: LevelManager.getRemainingExp(score.exp),
         level,
         rank,
       };
@@ -74,22 +55,7 @@ export default class extends Command {
       };
 
       const canvas = await createPlayerCard(info, theme);
-      const { path, cleanup } = await file({ postfix: ".png" });
-      const out = fs.createWriteStream(path);
-      const stream = canvas.createPNGStream();
-      stream.pipe(out);
-
-      out.on("finish", async () => {
-        const mediaItem = await this.client.chat.uploadFile(
-          fs.createReadStream(path),
-          message.room_id
-        );
-
-        await content.insertImage(mediaItem);
-        message.reply(content);
-
-        cleanup();
-      });
+      return uploadImage(canvas, responseMsg);
     } catch {
       return message.reply(`An error occured while fetching rank.`);
     }

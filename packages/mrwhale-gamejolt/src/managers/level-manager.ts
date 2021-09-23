@@ -52,6 +52,39 @@ export class LevelManager {
     return level;
   }
 
+  /**
+   * Calculate remaining exp before level up.
+   * @param exp The experience to calculate level from.
+   */
+  static getRemainingExp(exp: number): number {
+    const level = LevelManager.getLevelFromExp(exp);
+
+    let xp = 0;
+    for (let i = 0; i < level; i++) {
+      xp += LevelManager.levelToExp(i);
+    }
+    return exp - xp;
+  }
+
+  /**
+   * Get room scores.
+   * @param roomId The room id to get scores for.
+   */
+  static async getScores(roomId: number): Promise<Score[]> {
+    return await Database.connection.getRepository(Score).find({ roomId });
+  }
+
+  /**
+   * Get user score in a room.
+   * @param roomId The room id to get scores for.
+   * @param userId The user id to get scores for.
+   */
+  static async getUserScore(roomId: number, userId: number): Promise<Score> {
+    return await Database.connection
+      .getRepository(Score)
+      .findOne({ roomId, userId });
+  }
+
   private isTimeForExp(roomId: number, userId: number) {
     if (!this.lastMessages[roomId]) {
       this.lastMessages[roomId] = {};

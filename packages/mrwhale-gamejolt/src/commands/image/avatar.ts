@@ -15,13 +15,9 @@ export default class extends Command {
   }
 
   async action(message: Message): Promise<Message> {
-    const content = new Content();
     try {
-      let user = message.mentions[0];
-      if (!user) {
-        user = message.user;
-      }
-
+      const content = new Content();
+      const user = message.firstMentionOrAuthor;
       const avatarFile = await axios.get(user.img_avatar, {
         responseType: "stream",
       });
@@ -31,7 +27,7 @@ export default class extends Command {
         message.room_id
       );
 
-      await content.insertImage(mediaItem);
+      content.insertImage(mediaItem);
 
       return message.reply(content);
     } catch {

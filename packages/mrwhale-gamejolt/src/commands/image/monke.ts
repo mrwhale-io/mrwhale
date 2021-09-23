@@ -18,11 +18,7 @@ export default class extends Command {
   }
 
   async action(message: Message): Promise<void> {
-    let user = message.mentions[0];
-    if (!user) {
-      user = message.user;
-    }
-
+    const user = message.firstMentionOrAuthor;
     const responseMsg = await message.reply("Processing please wait...");
     const avatarFile = await axios.get(user.img_avatar, {
       responseType: "arraybuffer",
