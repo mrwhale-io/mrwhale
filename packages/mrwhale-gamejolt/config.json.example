@@ -1,11 +1,11 @@
 {
   "frontend": "",
   "userId": 1,
+  "prefix": "!",
   "ownerId": 1,
   "baseApiUrl": "https://gamejolt.com/site-api",
   "baseChatUrl": "https://chatex.gamejolt.com/chatex",
   "baseGridUrl": "",
-  "cleverbot": "",
   "youtube": "",
   "wolfram": "",
   "pastebin": "",

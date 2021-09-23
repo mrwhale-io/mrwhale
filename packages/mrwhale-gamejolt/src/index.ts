@@ -11,8 +11,8 @@ const client = new BotClient(
     rateLimitRequests: 3,
   },
   {
-    prefix: "!",
     cleverbotToken: config.cleverbot,
+    prefix: config.prefix,
     ownerId: config.ownerId,
     privateKey: config.privateKey,
     gameId: config.gameId,
