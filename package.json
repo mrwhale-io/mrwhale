@@ -7,7 +7,9 @@
   "scripts": {
     "lint": "eslint . --ext .ts",
     "prettier": "prettier --write *.{js,ts,json}",
-    "test": "lerna run test --parallel"
+    "boot": "yarn global add lerna && lerna bootstrap",
+    "test": "lerna run test --parallel",
+    "start": "lerna run start --parallel"
   },
   "devDependencies": {
     "@types/node": "^14.0.14",
