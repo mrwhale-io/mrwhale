@@ -6,7 +6,8 @@
   ],
   "scripts": {
     "lint": "eslint . --ext .ts",
-    "prettier": "prettier --write *.{js,ts,json}"
+    "prettier": "prettier --write *.{js,ts,json}",
+    "test": "lerna run test --parallel"
   },
   "devDependencies": {
     "@types/node": "^14.0.14",

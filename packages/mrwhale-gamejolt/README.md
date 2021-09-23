@@ -46,4 +46,4 @@ This project follows the [Contributor Covenant](http://contributor-covenant.org/
 
 ## License
 
-[MIT](LICENSE) © Thomas Bowen
+[MIT](https://tldrlegal.com/license/mit-license)

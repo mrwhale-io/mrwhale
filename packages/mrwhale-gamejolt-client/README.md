@@ -1,4 +1,4 @@
-# @mrwhale-io/gamejolt-client
+# `@mrwhale-io/gamejolt-client`
 
 Client that allows you to connect and interact with the [Game Jolt](https://gamejolt.com) chat server and site API.
 

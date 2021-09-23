@@ -8,6 +8,7 @@ import { CardTheme } from '../types/card-theme';
 
 /**
  * Draws a user ranking card.
+ * 
  * @param player The player info.
  * @param theme The card theme.
  */

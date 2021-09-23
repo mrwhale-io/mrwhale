@@ -6,13 +6,14 @@ import { ListenerDecorators } from "../util/listener-decorators";
 
 const { on, registerListeners } = ListenerDecorators;
 
+const INTERVAL = 5;
+
 export class FriendRequestManager {
   private friendRequestsQueue: FriendRequest[];
   private timer: Timer;
 
   constructor(private client: BotClient) {
-    const interval = 5;
-    this.timer = new Timer(this.client, "friend-accept", interval, async () =>
+    this.timer = new Timer(this.client, "friend-accept", INTERVAL, async () =>
       this.accept()
     );
     this.friendRequestsQueue = [];

@@ -26,7 +26,7 @@ export async function uploadImage(
         responseMsg.room_id
       );
 
-      await content.insertImage(mediaItem);
+      content.insertImage(mediaItem);
       responseMsg.edit(content);
 
       cleanup();
