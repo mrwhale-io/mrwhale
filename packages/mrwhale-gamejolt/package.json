@@ -16,6 +16,7 @@
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
   },
   "dependencies": {
+    "@mrwhale-io/commands": "^0.1.0",
     "@mrwhale-io/gamejolt-client": "^1.0.0",
     "ascii-table": "^0.0.9",
     "axios": "^0.21.1",

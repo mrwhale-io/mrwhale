@@ -47,7 +47,7 @@ export class BotClient extends Client {
   /**
    * The user identifier of the bot owner.
    */
-  ownerId: number;
+  ownerId: number | string;
 
   /**
    * Bot client logging instance.
