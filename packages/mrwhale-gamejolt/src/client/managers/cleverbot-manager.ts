@@ -1,14 +1,13 @@
+import { getCommandName, ListenerDecorators } from "@mrwhale-io/core";
 import { Content, Message } from "@mrwhale-io/gamejolt-client";
 
-import { BotClient } from "../bot-client";
-import { ListenerDecorators } from "../util/listener-decorators";
-import { Command } from "../commands/command";
-import { CleverbotPlugin } from "../plugins/cleverbot";
+import { GameJoltBotClient } from "../gamejolt-bot-client";
+import { CleverbotPlugin } from "../../plugins/cleverbot";
 
 const { on, registerListeners } = ListenerDecorators;
 
 export class CleverbotManager {
-  private client: BotClient;
+  private bot: GameJoltBotClient;
   private cleverbot: CleverbotPlugin;
 
   /**
@@ -17,29 +16,20 @@ export class CleverbotManager {
   isEnabled = false;
 
   /**
-   * @param client The bot client.
+   * @param bot The bot client.
    * @param token The cleverbot api token.
    */
-  constructor(client: BotClient, token: string) {
-    this.client = client;
+  constructor(bot: GameJoltBotClient, token: string) {
+    this.bot = bot;
     this.cleverbot = new CleverbotPlugin(token);
 
-    registerListeners(this.client, this);
+    registerListeners(this.bot.client, this);
   }
 
   private hasCommand(message: Message) {
-    const prefix = this.client.getPrefix(message.room_id);
-    const commandName: string = message.textContent
-      .trim()
-      .slice(prefix.length)
-      .trim()
-      .split(" ")[0];
-
-    const command: Command = this.client.commands.find(
-      (cmd) =>
-        cmd.name.toLowerCase() === commandName.toLowerCase() ||
-        cmd.aliases.map((alias) => alias.toLowerCase()).includes(commandName)
-    );
+    const prefix = this.bot.getPrefix(message.room_id);
+    const commandName = getCommandName(message.textContent, prefix);
+    const command = this.bot.commands.findByNameOrAlias(commandName);
 
     if (!command) {
       return false;
@@ -50,17 +40,17 @@ export class CleverbotManager {
 
   @on("message")
   private async onMessage(message: Message) {
-    if (message.user.id === this.client.chat.currentUser.id) {
+    if (message.user.id === this.bot.client.chat.currentUser.id) {
       return;
     }
 
-    const pm = this.client.chat.friendsList.getByRoom(message.room_id);
+    const pm = this.bot.client.chat.friendsList.getByRoom(message.room_id);
     const hasCommand = this.hasCommand(message);
     const canChat =
       this.isEnabled && !hasCommand && (pm || message.isMentioned);
 
     if (canChat) {
-      const user = this.client.chat.currentUser;
+      const user = this.bot.client.chat.currentUser;
       const userRegex = new RegExp(
         `((@)*${user?.username}|${user?.display_name})`,
         "i"

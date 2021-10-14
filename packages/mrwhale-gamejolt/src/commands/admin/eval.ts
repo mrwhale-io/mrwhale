@@ -1,12 +1,12 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 import * as util from "util";
 import * as config from "../../../config.json";
-import { codeBlock } from '../../util/markdown-helpers';
+import { codeBlock } from "../../util/markdown-helpers";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "eval",
@@ -34,7 +34,7 @@ export default class extends Command {
         output = output.replace(config.frontend, "removed");
       }
 
-      return message.reply(codeBlock(output, 'js'));
+      return message.reply(codeBlock(output, "js"));
     } catch (error) {
       return message.reply(
         codeBlock(error.toString().replace(config.frontend, "removed"))

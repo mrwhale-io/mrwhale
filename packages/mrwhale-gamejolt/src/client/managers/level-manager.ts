@@ -1,17 +1,13 @@
+import { getLevelFromExp, getRandomInt, ListenerDecorators } from "@mrwhale-io/core";
 import { Message, Content } from "@mrwhale-io/gamejolt-client";
 
-import { BotClient } from "../bot-client";
-import { ListenerDecorators } from "../util/listener-decorators";
-import { Database } from "../database/database";
-import { Score } from "../database/entity/score";
-import { getRandomInt } from "../util/get-random-int";
+import { GameJoltBotClient } from "../gamejolt-bot-client";
+import { Database } from "../../database/database";
+import { Score } from "../../database/entity/score";
 
 const { on, registerListeners } = ListenerDecorators;
 
 const TIME_FOR_EXP = 6e4;
-const LEVEL_BASE = 100;
-const LEVEL_MULTIPLIER = 5;
-const INCREASE_PER_LEVEL = 50;
 
 interface MessageMap {
   [roomId: number]: { [user: number]: number };
@@ -19,51 +15,10 @@ interface MessageMap {
 
 export class LevelManager {
   private lastMessages: MessageMap;
-  constructor(private client: BotClient) {
+
+  constructor(private bot: GameJoltBotClient) {
     this.lastMessages = {};
-    registerListeners(this.client, this);
-  }
-
-  /**
-   * Convert level to experience.
-   * @param level The level to calculate from.
-   */
-  static levelToExp(level: number): number {
-    return (
-      LEVEL_MULTIPLIER * Math.pow(level, 2) +
-      INCREASE_PER_LEVEL * level +
-      LEVEL_BASE
-    );
-  }
-
-  /**
-   * Calculate level from experience.
-   * @param exp The experience to calculate level from.
-   */
-  static getLevelFromExp(exp: number): number {
-    let level = 0;
-    let remainingExp = exp;
-
-    while (remainingExp >= LevelManager.levelToExp(level)) {
-      remainingExp -= LevelManager.levelToExp(level);
-      level++;
-    }
-
-    return level;
-  }
-
-  /**
-   * Calculate remaining exp before level up.
-   * @param exp The experience to calculate level from.
-   */
-  static getRemainingExp(exp: number): number {
-    const level = LevelManager.getLevelFromExp(exp);
-
-    let xp = 0;
-    for (let i = 0; i < level; i++) {
-      xp += LevelManager.levelToExp(i);
-    }
-    return exp - xp;
+    registerListeners(this.bot.client, this);
   }
 
   /**
@@ -113,9 +68,9 @@ export class LevelManager {
   @on("message")
   protected async onMessage(message: Message): Promise<void> {
     if (
-      message.user.id === this.client.userId ||
-      this.client.chat.friendsList.getByRoom(message.room_id) ||
-      !this.client.settings.get(message.room_id, "levels", true)
+      message.user.id === this.bot.client.userId ||
+      this.bot.client.chat.friendsList.getByRoom(message.room_id) ||
+      !this.bot.settings.get(message.room_id, "levels", true)
     ) {
       return;
     }
@@ -130,19 +85,19 @@ export class LevelManager {
 
     const expGained = getRandomInt(15, 25);
     const score = await this.getScore(message.user.id, message.room_id);
-    const level = LevelManager.getLevelFromExp(score.exp);
+    const level = getLevelFromExp(score.exp);
 
     score.exp += expGained;
     Database.connection.getRepository(Score).save(score);
 
-    const newLevel = LevelManager.getLevelFromExp(score.exp);
+    const newLevel = getLevelFromExp(score.exp);
 
     if (newLevel > level) {
       const content = new Content().insertText(
         `Congrats @${message.user.username}, you just advanced to level ${newLevel}!`
       );
 
-      this.client.chat.sendMessage(content, message.room_id);
+      this.bot.client.chat.sendMessage(content, message.room_id);
     }
   }
 }

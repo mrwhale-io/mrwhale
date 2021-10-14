@@ -1,8 +1,8 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "friendrequest",
@@ -16,8 +16,8 @@ export default class extends Command {
 
   async action(message: Message): Promise<Message> {
     try {
-      if (!this.client.chat.friendsList.has(message.user.id)) {
-        await this.client.api.friendRequest(message.user.id);
+      if (!this.botClient.client.chat.friendsList.has(message.user.id)) {
+        await this.botClient.client.api.friendRequest(message.user.id);
         return message.reply("Friend request successfully sent.");
       } else {
         return message.reply("We're already friends.");

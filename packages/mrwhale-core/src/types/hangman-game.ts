@@ -46,7 +46,7 @@ export class HangmanGame {
   /**
    * The id of the user who started the game.
    */
-  readonly ownerId: number;
+  readonly ownerId: number | string;
 
   /**
    * @param ownerId The id of the user who started the game.

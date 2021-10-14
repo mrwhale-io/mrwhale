@@ -1,23 +1,14 @@
+import { ping } from "@mrwhale-io/commands";
 import { Message } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
-    super({
-      name: "ping",
-      description: "Sends back a pong response.",
-      type: "utility",
-      usage: "<prefix>ping",
-    });
+    super(ping.data);
   }
 
   async action(message: Message): Promise<Message> {
-    const start = process.hrtime();
-    const end = process.hrtime(start);
-
-    return message.reply(
-      `Pong! Execution time ${end[0]}s ${end[1] / 1000000}ms`
-    );
+    return message.reply(ping.action());
   }
 }

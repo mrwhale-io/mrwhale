@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { createConnection, Connection, ConnectionOptions } from "typeorm";
-import { logger } from "../util/logger";
+import { logger } from '@mrwhale-io/core';
 
 /**
  * Manages the database connection.

@@ -1,13 +1,18 @@
-import { Command, CommandOptions } from "@mrwhale-io/core";
-import { Client, CommandInteraction } from "discord.js";
+import {
+  Command,
+  CommandOptions,
+  DEFAULT_COMMAND_RATE_LIMIT,
+} from "@mrwhale-io/core";
+import { CommandInteraction } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 import { DiscordCommandRateLimiter } from "./discord-command-rate-limiter";
+import { DiscordBotClient } from "./discord-bot-client";
 
-const COMMAND_RATE_LIMIT = 1;
-const COMMAND_COOLDOWN_DEFAULT = 1000;
-
-export abstract class DiscordCommand extends Command<Client> {
+export abstract class DiscordCommand extends Command<DiscordBotClient> {
+  /**
+   * The slash command builder.
+   */
   readonly slashCommandData: SlashCommandBuilder;
   readonly rateLimiter: DiscordCommandRateLimiter;
 
@@ -17,14 +22,14 @@ export abstract class DiscordCommand extends Command<Client> {
       .setName(options.name)
       .setDescription(options.description);
     this.rateLimiter = new DiscordCommandRateLimiter(
-      COMMAND_RATE_LIMIT,
-      options.cooldown || COMMAND_COOLDOWN_DEFAULT
+      DEFAULT_COMMAND_RATE_LIMIT,
+      options.cooldown
     );
   }
 
   /**
    * The action this command performs.
-   * 
+   *
    * @param interaction The message that invoked this command.
    * @param [args] Any arguments passed with this command.
    */

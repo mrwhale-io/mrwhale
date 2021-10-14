@@ -17,17 +17,14 @@
   },
   "dependencies": {
     "@mrwhale-io/commands": "^0.1.0",
+    "@mrwhale-io/core": "^0.1.0",
     "@mrwhale-io/gamejolt-client": "^1.0.0",
     "ascii-table": "^0.0.9",
     "axios": "^0.21.1",
-    "canvas": "^2.6.1",
+    "canvas": "^2.8.0",
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
-    "d20": "^1.4.1",
-    "figlet": "^1.5.0",
-    "glob": "^7.1.6",
     "joltite.js": "^1.0.1",
-    "mathjs": "^7.5.1",
     "moment": "^2.27.0",
     "profanity-util": "^0.2.0",
     "querystring": "^0.2.0",
@@ -36,13 +33,6 @@
     "sqlite3": "^5.0.0",
     "tmp-promise": "^3.0.2",
     "translate-google": "^1.4.2",
-    "typeorm": "^0.2.28",
-    "wikijs": "^6.0.1",
-    "winston": "^3.3.3",
-    "wolfram-alpha-api": "https://products.wolframalpha.com/api/libraries/javascript/wolfram-alpha-api-1.0.0-rc.1.tgz"
-  },
-  "devDependencies": {
-    "@types/figlet": "^1.2.0",
-    "@types/mathjs": "^6.0.5"
+    "typeorm": "^0.2.28"
   }
 }

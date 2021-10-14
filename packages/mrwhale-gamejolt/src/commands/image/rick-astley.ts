@@ -3,10 +3,10 @@ import axios from "axios";
 import { createCanvas, loadImage } from "canvas";
 import * as path from "path";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { uploadImage } from "../../image/upload-image";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "rickastley",

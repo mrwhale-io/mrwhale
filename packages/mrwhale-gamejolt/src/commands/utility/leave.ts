@@ -1,8 +1,8 @@
 import { Message, RoomType } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "leave",
@@ -15,7 +15,7 @@ export default class extends Command {
   }
 
   async action(message: Message): Promise<void> {
-    const room = this.client.chat.activeRooms[message.room_id];
+    const room = this.botClient.client.chat.activeRooms[message.room_id];
     const leaveResponses = [
       `Alright I'm leaving 👋`,
       `Bye Bye 👋`,
@@ -27,9 +27,11 @@ export default class extends Command {
     message.reply(leaveResponses[index]);
 
     if (room?.type === RoomType.ClosedGroup) {
-      this.client.chat.userChannel?.push("group_leave", { room_id: room.id });
+      this.botClient.client.chat.userChannel?.push("group_leave", {
+        room_id: room.id,
+      });
     } else if (room?.type === RoomType.FiresideGroup) {
-      this.client.chat.leaveRoom(room.id);
+      this.botClient.client.chat.leaveRoom(room.id);
     }
   }
 }

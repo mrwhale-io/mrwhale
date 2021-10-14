@@ -1,59 +1,32 @@
+import { ListenerDecorators, BotClient } from "@mrwhale-io/core";
 import {
-  Client,
   ClientOptions,
   Message,
   User,
   Content,
   Room,
   RoomType,
+  Client,
 } from "@mrwhale-io/gamejolt-client";
 import { GameJolt } from "joltite.js";
 
-import { BotOptions } from "./types/bot-options";
-import { Command } from "./commands/command";
-import { CommandDispatcher } from "./commands/command-dispatcher";
-import { CommandLoader } from "./commands/command-loader";
-import { ListenerDecorators } from "./util/listener-decorators";
+import { GameJoltBotOptions } from "../types/bot-options";
 import { FriendRequestManager } from "./managers/friend-request-manager";
 import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
-import { Timer } from "./util/timer";
+import { Timer } from "../util/timer";
 import { UrlManager } from "./managers/url-manager";
-import { Database } from "./database/database";
+import { Database } from "../database/database";
 import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
-import { logger } from "./util/logger";
-import { code } from "./util/markdown-helpers";
+import { code } from "../util/markdown-helpers";
 import { settingsManager } from "./managers/settings-manager";
+import { GameJoltCommandDispatcher } from "./command/gamejolt-command-dispatcher";
+import { GameJoltCommand } from "./command/gamejolt-command";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
-export class BotClient extends Client {
-  /**
-   * Contains all loaded commands.
-   */
-  commands: Command[] = [];
-
-  /**
-   * Default prefix denoting a command call.
-   */
-  defaultPrefix: string;
-
-  /**
-   * Contains the time the bot started.
-   */
-  startTime: number;
-
-  /**
-   * The user identifier of the bot owner.
-   */
-  ownerId: number | string;
-
-  /**
-   * Bot client logging instance.
-   */
-  readonly logger = logger;
-
+export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   /**
    * The game api client.
    */
@@ -65,10 +38,15 @@ export class BotClient extends Client {
   readonly settings: settingsManager;
 
   /**
+   * The Game Jolt bot client.
+   */
+  readonly client: Client;
+
+  /**
    * Returns the chat client uptime.
    */
   get uptime(): number {
-    return Date.now() - this.chat.startTime;
+    return Date.now() - this.client.chat.startTime;
   }
 
   /**
@@ -87,8 +65,7 @@ export class BotClient extends Client {
 
   private timeouts: Set<NodeJS.Timer>;
   private intervals: Set<NodeJS.Timer>;
-  private readonly commandDispatcher: CommandDispatcher;
-  private readonly commandLoader: CommandLoader;
+  private readonly commandDispatcher: GameJoltCommandDispatcher;
   private readonly friendRequestManager: FriendRequestManager;
   private readonly replyManager: ReplyManager;
   private readonly cleverbotManager: CleverbotManager;
@@ -100,17 +77,16 @@ export class BotClient extends Client {
    * @param clientOptions The game jolt client options.
    * @param botOptions The bot options.
    */
-  constructor(clientOptions: ClientOptions, botOptions: BotOptions) {
-    super(clientOptions);
-    this.defaultPrefix = botOptions.prefix;
-    this.ownerId = botOptions.ownerId;
+  constructor(clientOptions: ClientOptions, botOptions: GameJoltBotOptions) {
+    super(botOptions);
 
-    this.commandDispatcher = new CommandDispatcher(this);
-    this.commandLoader = new CommandLoader(this);
+    this.client = new Client(clientOptions);
+    this.commandDispatcher = new GameJoltCommandDispatcher(this);
     this.timeouts = new Set();
     this.intervals = new Set();
     this.settings = new settingsManager();
 
+    this.commandLoader.commandType = GameJoltCommand.name;
     this.commandLoader.loadCommands();
     this.friendRequestManager = new FriendRequestManager(this);
     this.replyManager = new ReplyManager(this);
@@ -129,7 +105,7 @@ export class BotClient extends Client {
       );
     }
 
-    registerListeners(this);
+    registerListeners(this.client, this);
   }
 
   @once("chat_ready")
@@ -139,25 +115,26 @@ export class BotClient extends Client {
     let index = 0;
     const interval = 0.3;
     const roomIds =
-      this.chat.groupIds || this.chat.groups.map((group) => group.id);
+      this.client.chat.groupIds ||
+      this.client.chat.groups.map((group) => group.id);
 
     const timer = new Timer(this, "join-groups", interval, async () => {
       if (index < roomIds.length) {
         const roomId = roomIds[index++];
         this.logger.info(`Joining group chat: ${roomId}`);
-        this.chat.joinRoom(roomId);
+        this.client.chat.joinRoom(roomId);
       } else {
         timer.destroy();
       }
     });
-    this.emit("client_ready");
+    this.client.emit("client_ready");
   }
 
   @once("client_ready")
   protected async onClientReady(): Promise<void> {
     this.startTime = Date.now();
     this.logger.info(
-      `Client ready! Connected as @${this.chat.currentUser.username}`
+      `Client ready! Connected as @${this.client.chat.currentUser.username}`
     );
 
     await Database.instance().init();
@@ -166,9 +143,9 @@ export class BotClient extends Client {
 
   @on("notification")
   protected onNotification(message: Message): void {
-    if (message && !this.chat.roomChannels[message.room_id]) {
-      this.chat.joinRoom(message.room_id).receive("ok", () => {
-        this.emit("message", message);
+    if (message && !this.client.chat.roomChannels[message.room_id]) {
+      this.client.chat.joinRoom(message.room_id).receive("ok", () => {
+        this.client.emit("message", message);
       });
     }
   }
@@ -179,12 +156,12 @@ export class BotClient extends Client {
       this.logger.info(
         `User @${friend.username} (${friend.id}) added as friend`
       );
-      this.chat.joinRoom(friend.room_id).receive("ok", () => {
+      this.client.chat.joinRoom(friend.room_id).receive("ok", () => {
         const message = `Thank you for adding me as a friend! Use ${code(
           `${this.getPrefix(friend.room_id)}help`
         )} for a list of commands.`;
 
-        this.chat.sendMessage(message, friend.room_id);
+        this.client.chat.sendMessage(message, friend.room_id);
       });
     }
   }
@@ -192,12 +169,12 @@ export class BotClient extends Client {
   @on("group_add")
   protected onGroupAdd(group: Room): void {
     if (group) {
-      this.chat.joinRoom(group.id).receive("ok", () => {
+      this.client.chat.joinRoom(group.id).receive("ok", () => {
         const message = `Thank you for adding me to your group! Use ${code(
           `${this.getPrefix(group.id)}help`
         )} for a list of commands.`;
 
-        this.chat.sendMessage(message, group.id);
+        this.client.chat.sendMessage(message, group.id);
       });
       this.logger.info(`Added to a group chat with id: ${group.id}`);
     }
@@ -205,17 +182,17 @@ export class BotClient extends Client {
 
   @on("member_add")
   protected onMemberAdd(data: { room_id: number; members: User[] }): void {
-    const room = this.chat.activeRooms[data.room_id];
+    const room = this.client.chat.activeRooms[data.room_id];
 
     if (data.members && room && room.type === RoomType.ClosedGroup) {
       const members = data.members
-        .filter((member) => member.id !== this.userId)
+        .filter((member) => member.id !== this.client.userId)
         .map((member) => `@${member.username}`);
 
       const content = new Content().insertText(
         `👋 ${members.join(" ")} was just added to the group.`
       );
-      this.chat.sendMessage(content, data.room_id);
+      this.client.chat.sendMessage(content, data.room_id);
       this.logger.info(
         `${members.join(",")} were added to group chat with id: ${data.room_id}`
       );
@@ -224,14 +201,14 @@ export class BotClient extends Client {
 
   @on("member_leave")
   protected onMemberLeave(data: { room_id: number; member: User }): void {
-    const room = this.chat.activeRooms[data.room_id];
+    const room = this.client.chat.activeRooms[data.room_id];
 
     if (data.member && room && room.type === RoomType.ClosedGroup) {
       const content = new Content().insertText(
         `@${data.member.username} just left the group.`
       );
 
-      this.chat.sendMessage(content, data.room_id);
+      this.client.chat.sendMessage(content, data.room_id);
       this.logger.info(
         `${data.member.username} (${data.member.id}) left group chat with id: ${data.room_id}`
       );
@@ -240,14 +217,14 @@ export class BotClient extends Client {
 
   @on("owner_sync")
   protected onOwnerSync(data: { room_id: number; owner_id: number }): void {
-    const room = this.chat.activeRooms[data.room_id];
+    const room = this.client.chat.activeRooms[data.room_id];
 
     if (room && room.owner) {
       const content = new Content().insertText(
         `👑 @${room.owner.username} just became the group owner.`
       );
 
-      this.chat.sendMessage(content, data.room_id);
+      this.client.chat.sendMessage(content, data.room_id);
       this.logger.info(
         `${room.owner.username} (${room.owner.id}) became owner of group chat with id: ${data.room_id}`
       );
@@ -295,21 +272,5 @@ export class BotClient extends Client {
   clearInterval(interval: NodeJS.Timer): void {
     clearInterval(interval);
     this.intervals.delete(interval);
-  }
-
-  /**
-   * Reload a command.
-   * @param command The name of the command to reload.
-   */
-  reloadCommand(command: string): void {
-    if (!command) {
-      throw new Error(`A command name or 'all' must be provided.`);
-    }
-
-    if (command === "all") {
-      this.commandLoader.loadCommands();
-    } else {
-      this.commandLoader.reloadCommand(command);
-    }
   }
 }

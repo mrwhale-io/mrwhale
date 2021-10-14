@@ -1,7 +1,7 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
 import * as seedrandom from "seedrandom";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { InfoBuilder } from "../../util/info-builder";
 import {
   environments,
@@ -11,7 +11,7 @@ import {
   rules,
 } from "../../data/game-idea";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   private rng: seedrandom.prng;
 
   constructor() {

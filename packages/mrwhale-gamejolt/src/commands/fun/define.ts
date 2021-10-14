@@ -1,11 +1,11 @@
 import axios from "axios";
+import { truncate } from "@mrwhale-io/core";
 import { Content, Message } from "@mrwhale-io/gamejolt-client";
 import * as profanity from "profanity-util";
 
-import { Command } from "../command";
-import { truncate } from "../../util/truncate";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "define",

@@ -1,8 +1,8 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "reload",
@@ -15,19 +15,15 @@ export default class extends Command {
 
   async action(message: Message, [commandName]: [string]): Promise<Message> {
     const start = process.hrtime();
-    const command = this.client.commands.find(
-      (cmd) => cmd.name === commandName
-    );
+    const command = this.botClient.commands.findByNameOrAlias(commandName);
 
     if (commandName && !command) {
       return message.reply(`'${commandName}' is not a valid command.`);
     }
 
-    if (command) {
-      this.client.reloadCommand(command.name);
-    } else {
-      this.client.reloadCommand("all");
-    }
+    command
+      ? this.botClient.reloadCommand(command.name)
+      : this.botClient.reloadCommand("all");
 
     const end = process.hrtime(start);
 

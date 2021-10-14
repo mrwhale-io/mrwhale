@@ -1,9 +1,9 @@
 import axios from "axios";
 import { Content, Message } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "avatar",
@@ -22,7 +22,7 @@ export default class extends Command {
         responseType: "stream",
       });
 
-      const mediaItem = await this.client.chat.uploadFile(
+      const mediaItem = await this.botClient.client.chat.uploadFile(
         avatarFile.data,
         message.room_id
       );

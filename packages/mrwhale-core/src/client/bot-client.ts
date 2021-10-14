@@ -1,17 +1,13 @@
-import { Command } from "./command";
-import { CommandLoader } from "./command-loader";
+import { CommandLoader } from "./command/command-loader";
 import { logger } from "../util/logger";
 import { BotOptions } from "../types/bot-options";
+import { CommandStorage } from "./command/command-storage";
+import { Command } from "./command/command";
 
 /**
  * Base class to extend bot client integrations from.
  */
-export abstract class BotClient<T> {
-  /**
-   * Contains the bot commands.
-   */
-  commands: Command<T>[] = [];
-
+export abstract class BotClient<T extends Command<any> = Command<any>> {
   /**
    * Default prefix denoting a command call.
    */
@@ -28,9 +24,9 @@ export abstract class BotClient<T> {
   ownerId: number | string;
 
   /**
-   * The bot integration client.
+   * The commands directory.
    */
-  client: T;
+  commandsDir : string;
 
   /**
    * Bot client logging instance.
@@ -38,13 +34,21 @@ export abstract class BotClient<T> {
   readonly logger = logger;
 
   /**
+   * Contains the command registry.
+   */
+  readonly commands: CommandStorage<this, T>;
+
+  /**
    * Contains the command loader.
    */
   protected commandLoader: CommandLoader;
 
   constructor(options: BotOptions) {
+    this.commandsDir = options.commandsDir;
     this.defaultPrefix = options.prefix;
     this.ownerId = options.ownerId;
+    this.commands = new CommandStorage<this, T>();
+    this.commandLoader = new CommandLoader(this);
   }
 
   /**
@@ -57,10 +61,8 @@ export abstract class BotClient<T> {
       throw new Error(`A command name or 'all' must be provided.`);
     }
 
-    if (command === "all") {
-      this.commandLoader.loadCommands();
-    } else {
-      this.commandLoader.reloadCommand(command);
-    }
+    command === "all"
+      ? this.commandLoader.loadCommands()
+      : this.commandLoader.reloadCommand(command);
   }
 }

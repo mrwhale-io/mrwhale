@@ -1,9 +1,9 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
 import * as math from "mathjs";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "calculate",

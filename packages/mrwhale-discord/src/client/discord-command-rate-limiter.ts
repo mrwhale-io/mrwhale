@@ -1,17 +1,14 @@
 import { CommandRateLimit, CommandRateLimiter } from "@mrwhale-io/core";
 import { CommandInteraction } from "discord.js";
 
-export class DiscordCommandRateLimiter implements CommandRateLimiter {
+export class DiscordCommandRateLimiter extends CommandRateLimiter {
   readonly limit: number;
   readonly duration: number;
 
   private readonly rateLimits: Map<string, Map<string, CommandRateLimit>>;
 
-  /**
-   * @param limit The number of requests before rate limiting.
-   * @param duration The duration the rate limit lasts.
-   */
-  constructor(limit: number, duration: number) {
+  constructor(limit?: number, duration?: number) {
+    super(limit, duration);
     this.limit = limit;
     this.duration = duration;
     this.rateLimits = new Map<string, Map<string, CommandRateLimit>>();

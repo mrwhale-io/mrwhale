@@ -1,7 +1,8 @@
-import { BotClient } from "./bot-client";
+import * as path from "path";
+import { GameJoltBotClient } from "./client/gamejolt-bot-client";
 import * as config from "../config.json";
 
-const client = new BotClient(
+const client = new GameJoltBotClient(
   {
     userId: config.userId,
     frontend: config.frontend,
@@ -11,6 +12,7 @@ const client = new BotClient(
     rateLimitRequests: 3,
   },
   {
+    commandsDir: path.join(__dirname, "./commands"),
     cleverbotToken: config.cleverbot,
     prefix: config.prefix,
     ownerId: config.ownerId,

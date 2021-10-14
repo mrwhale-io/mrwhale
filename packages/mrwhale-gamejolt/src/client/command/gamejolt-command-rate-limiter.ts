@@ -1,29 +1,18 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
+import { CommandRateLimit, CommandRateLimiter } from "@mrwhale-io/core";
 
-import { CommandRateLimit } from "./command-rate-limit";
-
-/**
- * Handle ratelimiter objects for chatrooms.
- */
-export class CommandRateLimiter {
-  private readonly rateLimits: Map<number, Map<number, CommandRateLimit>>;
+export class GameJoltCommandRateLimiter implements CommandRateLimiter {
   readonly limit: number;
   readonly duration: number;
+  
+  private readonly rateLimits: Map<number, Map<number, CommandRateLimit>>;
 
-  /**
-   * @param limit The number of requests before rate limiting.
-   * @param duration The duration the rate limit lasts.
-   */
   constructor(limit: number, duration: number) {
     this.limit = limit;
     this.duration = duration;
     this.rateLimits = new Map<number, Map<number, CommandRateLimit>>();
   }
 
-  /**
-   * Get rate limit collections.
-   * @param message The message to rate limit.
-   */
   get(message: Message): CommandRateLimit {
     if (!this.rateLimits.has(message.room_id)) {
       this.rateLimits.set(message.room_id, new Map<number, CommandRateLimit>());

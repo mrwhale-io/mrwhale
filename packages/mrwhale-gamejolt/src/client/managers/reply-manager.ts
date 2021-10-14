@@ -1,3 +1,4 @@
+import { ListenerDecorators, WHALE_REGEX } from "@mrwhale-io/core";
 import {
   Message,
   Notification,
@@ -6,21 +7,18 @@ import {
   FiresidePost,
 } from "@mrwhale-io/gamejolt-client";
 
-import { BotClient } from "../bot-client";
-import { ListenerDecorators } from "../util/listener-decorators";
+import { GameJoltBotClient } from "../gamejolt-bot-client";
 
 const { on, registerListeners } = ListenerDecorators;
 
-const WHALE_REGEX = /O_{1,5}O/gi;
-
 export class ReplyManager {
-  constructor(private client: BotClient) {
-    registerListeners(this.client, this);
+  constructor(private bot: GameJoltBotClient) {
+    registerListeners(this.bot.client, this);
   }
 
   @on("message")
   protected async onMessage(message: Message): Promise<void> {
-    if (message.user.id === this.client.chat.currentUser.id) {
+    if (message.user.id === this.bot.client.chat.currentUser.id) {
       return;
     }
 
@@ -44,7 +42,7 @@ export class ReplyManager {
         content.insertText(
           notification.action_model.leadStr.match(WHALE_REGEX)[0]
         );
-        this.client.api.comment(
+        this.bot.client.api.comment(
           notification.action_resource_id,
           notification.action_resource,
           content.contentJson()

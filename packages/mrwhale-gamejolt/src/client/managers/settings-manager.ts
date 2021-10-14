@@ -1,5 +1,5 @@
-import { Database } from "../database/database";
-import { Setting } from "../database/entity/setting";
+import { Database } from "../../database/database";
+import { Setting } from "../../database/entity/setting";
 
 export class settingsManager {
   private settings: Map<number, unknown>;

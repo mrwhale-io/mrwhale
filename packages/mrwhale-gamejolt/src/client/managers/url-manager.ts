@@ -1,8 +1,7 @@
+import { ListenerDecorators, truncate } from "@mrwhale-io/core";
 import { Message, Game, GameOverview } from "@mrwhale-io/gamejolt-client";
 
-import { BotClient } from "../bot-client";
-import { ListenerDecorators } from "../util/listener-decorators";
-import { truncate } from "../util/truncate";
+import { GameJoltBotClient } from "../gamejolt-bot-client";
 
 const { on, registerListeners } = ListenerDecorators;
 
@@ -33,8 +32,8 @@ function formatGameInfo(game: Game, overview: GameOverview): string {
  * Dispatches content information about various URLs posted in chat
  */
 export class UrlManager {
-  constructor(private client: BotClient) {
-    registerListeners(this.client, this);
+  constructor(private bot: GameJoltBotClient) {
+    registerListeners(this.bot.client, this);
   }
 
   @on("message")
@@ -46,14 +45,16 @@ export class UrlManager {
       const matches: RegExpExecArray = gameregex.exec(message.toString());
       if (matches) {
         const gameId = parseInt(matches[matches.length - 1], 10);
-        const gameResult = await this.client.api.getGame(gameId);
-        const overviewResult = await this.client.api.getGameOverview(gameId);
+        const gameResult = await this.bot.client.api.getGame(gameId);
+        const overviewResult = await this.bot.client.api.getGameOverview(
+          gameId
+        );
         const gameResponse = formatGameInfo(
           new Game(gameResult),
           new GameOverview(overviewResult)
         );
         if (gameResponse) {
-          this.client.chat.sendMessage(gameResponse, message.room_id);
+          this.bot.client.chat.sendMessage(gameResponse, message.room_id);
         }
       }
     }

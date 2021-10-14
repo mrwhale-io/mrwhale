@@ -1,16 +1,16 @@
-import { BotClient } from "../bot-client";
+import { GameJoltBotClient } from "../client/gamejolt-bot-client";
 
 export class Timer {
   name: string;
 
-  private client: BotClient;
+  private client: GameJoltBotClient;
   private timer: NodeJS.Timer;
   private ticks: number;
   private interval: number;
   private callback: () => Promise<void>;
 
   constructor(
-    client: BotClient,
+    client: GameJoltBotClient,
     name: string,
     interval: number,
     callback: () => Promise<void>

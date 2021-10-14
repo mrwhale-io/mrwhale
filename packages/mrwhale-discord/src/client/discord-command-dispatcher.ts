@@ -1,5 +1,5 @@
-import { TimeUtilities, Command } from "@mrwhale-io/core";
-import { Interaction, CommandInteraction, Client } from "discord.js";
+import { TimeUtilities, dispatch } from "@mrwhale-io/core";
+import { Interaction, CommandInteraction } from "discord.js";
 
 import { DiscordBotClient } from "./discord-bot-client";
 import { DiscordCommand } from "./discord-command";
@@ -10,6 +10,9 @@ import { DiscordCommand } from "./discord-command";
 export class DiscordCommandDispatcher {
   private _ready = false;
 
+  /**
+   * Set whether the command dispatcher is ready.F
+   */
   set ready(value: boolean) {
     this._ready = value;
   }
@@ -29,17 +32,13 @@ export class DiscordCommandDispatcher {
     }
 
     const commandName = interaction.commandName.toLowerCase();
-    const command = this.bot.commands.find(
-      (cmd) => cmd.name.toLowerCase() === commandName
-    ) as DiscordCommand;
+    const command = this.bot.commands.findByNameOrAlias(commandName);
 
     if (!this.checkRateLimits(interaction, command)) {
       return;
     }
 
-    await this.dispatch(command, interaction).catch((e) =>
-      this.bot.logger.error(e)
-    );
+    await dispatch(command, interaction).catch((e) => this.bot.logger.error(e));
 
     this.bot.logger.info(
       `${interaction.user.username}#${interaction.user.discriminator} ran command ${command.name}`
@@ -83,21 +82,5 @@ export class DiscordCommandDispatcher {
     }
 
     return false;
-  }
-
-  private async dispatch(
-    command: Command<Client>,
-    interaction: CommandInteraction
-  ) {
-    return new Promise((resolve, reject) => {
-      try {
-        const action = command.action(interaction);
-        if (action instanceof Promise) {
-          action.then(resolve).catch(reject);
-        } else resolve(action);
-      } catch (err) {
-        reject(err);
-      }
-    });
   }
 }

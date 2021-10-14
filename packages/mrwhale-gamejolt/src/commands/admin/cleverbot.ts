@@ -1,8 +1,8 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "cleverbot",
@@ -14,9 +14,9 @@ export default class extends Command {
   }
 
   async action(message: Message): Promise<Message> {
-    this.client.cleverbot = !this.client.cleverbot;
+    this.botClient.cleverbot = !this.botClient.cleverbot;
 
-    if (this.client.cleverbot) {
+    if (this.botClient.cleverbot) {
       return message.reply("Cleverbot enabled.");
     } else {
       return message.reply("Cleverbot disabled.");

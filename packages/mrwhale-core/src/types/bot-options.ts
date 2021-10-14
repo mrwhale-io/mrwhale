@@ -3,6 +3,11 @@
  */
 export interface BotOptions {
   /**
+   * The commands directory.
+   */
+  commandsDir: string;
+
+  /**
    * Prefix denoting a command call.
    */
   prefix: string;

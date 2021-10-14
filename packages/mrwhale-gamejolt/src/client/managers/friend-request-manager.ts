@@ -1,8 +1,8 @@
+import { ListenerDecorators } from "@mrwhale-io/core";
 import { FriendRequest } from "@mrwhale-io/gamejolt-client";
 
-import { Timer } from "../util/timer";
-import { BotClient } from "../bot-client";
-import { ListenerDecorators } from "../util/listener-decorators";
+import { Timer } from "../../util/timer";
+import { GameJoltBotClient } from "../gamejolt-bot-client";
 
 const { on, registerListeners } = ListenerDecorators;
 
@@ -12,13 +12,13 @@ export class FriendRequestManager {
   private friendRequestsQueue: FriendRequest[];
   private timer: Timer;
 
-  constructor(private client: BotClient) {
-    this.timer = new Timer(this.client, "friend-accept", INTERVAL, async () =>
+  constructor(private bot: GameJoltBotClient) {
+    this.timer = new Timer(this.bot, "friend-accept", INTERVAL, async () =>
       this.accept()
     );
     this.friendRequestsQueue = [];
 
-    registerListeners(this.client, this);
+    registerListeners(this.bot.client, this);
   }
 
   @on("friend_requests")

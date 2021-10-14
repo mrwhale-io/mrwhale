@@ -1,14 +1,13 @@
-import { Message } from "@mrwhale-io/gamejolt-client";
-
-import { CommandOptions } from "../types/command-options";
+import { CommandOptions } from "../../types/command-options";
+import { CommandTypes } from "../../types/command-types";
 import { BotClient } from "../bot-client";
-import { CommandTypes } from "../types/command-types";
-import { CommandRateLimiter } from "./command-rate-limiter";
 
 /**
  * Command class to extend which users can execute.
+ *
+ * @template T The bot client.
  */
-export abstract class Command {
+export abstract class Command<T extends BotClient> {
   /**
    * The name of the command, used by the dispatcher
    * to determine the command being executed.
@@ -48,11 +47,6 @@ export abstract class Command {
   commandLocation: string;
 
   /**
-   * Whether or not the command can be used only in group chats.
-   */
-  groupOnly: boolean;
-
-  /**
    * Whether or not the command can be used only by the bot owner.
    */
   admin: boolean;
@@ -70,12 +64,7 @@ export abstract class Command {
   /**
    * The bot client.
    */
-  client: BotClient;
-
-  /**
-   * Command rate limiter.
-   */
-  readonly rateLimiter: CommandRateLimiter;
+  protected botClient: T;
 
   /**
    * @param options The command options.
@@ -85,47 +74,45 @@ export abstract class Command {
     this.description = options.description;
     this.type = options.type;
     this.usage = options.usage;
-    this.examples = options.examples || [];
-    this.argSeparator = options.argSeparator || ",";
-    this.groupOnly = options.groupOnly || false;
-    this.admin = options.admin || false;
-    this.owner = options.owner || false;
-    this.aliases = options.aliases || [];
-    this.rateLimiter = new CommandRateLimiter(1, options.cooldown || 1000);
+    this.examples = options.examples ?? [];
+    this.argSeparator = options.argSeparator ?? ",";
+    this.admin = options.admin ?? false;
+    this.owner = options.owner ?? false;
+    this.aliases = options.aliases ?? [];
   }
 
   /**
    * The action this command performs.
+   *
    * @param message The message that invoked this command.
    * @param [args] Any arguments passed with this command.
    */
-  abstract action(message: Message, args?: unknown[]): Promise<unknown>;
+  abstract action(message: unknown, args?: unknown[]): Promise<unknown>;
 
   /**
    * Register this as an available command.
+   *
    * @param client The bot client to register command on.
    * @param commandLocation The path location of this command.
    */
-  register(client: BotClient, commandLocation: string): void {
-    this.client = client;
+  register(client: T, commandLocation: string): void {
+    this.botClient = client;
     this.commandLocation = commandLocation;
 
     if (!this.name) {
-      throw new Error(`Command must have a name`);
+      throw new Error(`Command must have a name.`);
     }
 
     if (!this.description) {
-      throw new Error(`Command must have a description`);
+      throw new Error(`Command must have a description.`);
     }
 
     if (!this.type) {
-      throw new Error(`Command must have a type`);
+      throw new Error(`Command must have a type.`);
     }
 
     if (!this.usage) {
-      throw new Error(`Command must have a usage`);
+      throw new Error(`Command must have a usage.`);
     }
-
-    this.client.commands.push(this);
   }
 }

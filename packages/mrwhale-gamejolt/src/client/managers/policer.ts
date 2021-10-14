@@ -1,9 +1,8 @@
+import { ListenerDecorators } from "@mrwhale-io/core";
 import { Message, Content } from "@mrwhale-io/gamejolt-client";
 import * as profanity from "profanity-util";
 
-import { BotClient } from "../bot-client";
-
-import { ListenerDecorators } from "../util/listener-decorators";
+import { GameJoltBotClient } from "../gamejolt-bot-client";
 
 const { on, registerListeners } = ListenerDecorators;
 
@@ -39,16 +38,16 @@ interface PolicerMap {
 export class Policer {
   private policerMap: PolicerMap;
 
-  constructor(private client: BotClient) {
+  constructor(private bot: GameJoltBotClient) {
     this.policerMap = {};
-    registerListeners(this.client, this);
+    registerListeners(this.bot.client, this);
   }
 
   @on("message")
   private async onMessage(message: Message) {
     if (
-      message.user.id === this.client.chat.currentUser.id ||
-      this.client.chat.friendsList.getByRoom(message.room_id)
+      message.user.id === this.bot.client.chat.currentUser.id ||
+      this.bot.client.chat.friendsList.getByRoom(message.room_id)
     ) {
       return;
     }

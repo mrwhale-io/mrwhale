@@ -19,7 +19,8 @@
   },
   "scripts": {
     "start:discord": "ts-node src/index.ts",
-    "deploy-commands": "ts-node scripts/deploy-commands.ts"
+    "deploy-commands": "ts-node scripts/deploy-commands.ts",
+    "deploy-guild-commands": "ts-node scripts/deploy-guild-commands.ts"
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"

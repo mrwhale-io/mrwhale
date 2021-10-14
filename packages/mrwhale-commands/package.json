@@ -26,10 +26,17 @@
   },
   "dependencies": {
     "@mrwhale-io/core": "^0.1.0",
-    "jest": "^27.2.1"
+    "jest": "^27.2.1",
+    "d20": "^1.4.1",
+    "figlet": "^1.5.0",
+    "mathjs": "^7.5.1",
+    "wikijs": "^6.0.1",
+    "wolfram-alpha-api": "https://products.wolframalpha.com/api/libraries/javascript/wolfram-alpha-api-1.0.0-rc.1.tgz"
   },
   "devDependencies": {
     "@types/jest": "^27.0.2",
+    "@types/figlet": "^1.2.0",
+    "@types/mathjs": "^6.0.5",
     "ts-jest": "^27.0.5"
   }
 }

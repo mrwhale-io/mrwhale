@@ -2,12 +2,12 @@ import { Message } from "@mrwhale-io/gamejolt-client";
 import * as figlet from "figlet";
 import * as util from "util";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { codeBlock } from '../../util/markdown-helpers';
 
 const figletAsync = util.promisify(figlet);
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "ascii",
