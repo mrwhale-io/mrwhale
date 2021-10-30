@@ -1,24 +1,14 @@
+import { whale } from "@mrwhale-io/commands";
 import { Message } from "@mrwhale-io/gamejolt-client";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
-import { eyes } from "../../data/eyes";
 
 export default class extends GameJoltCommand {
   constructor() {
-    super({
-      name: "whale",
-      description: "Generate a whale face.",
-      type: "fun",
-      usage: "<prefix>whale <length>",
-      examples: ["<prefix>whale 10"],
-      cooldown: 3000,
-    });
+    super(whale.data);
   }
 
   async action(message: Message, [size]: [string]): Promise<Message> {
-    const min = 5;
-    const max = 50;
-
     let whaleSize = 5;
 
     if (size) {
@@ -30,17 +20,6 @@ export default class extends GameJoltCommand {
       }
     }
 
-    whaleSize = Math.min(Math.max(whaleSize, min), max);
-
-    let whale = "";
-    const whaleEyes = eyes[Math.floor(Math.random() * eyes.length)];
-
-    whale += whaleEyes[0];
-    for (let i = 0; i < whaleSize; i++) {
-      whale += "_";
-    }
-    whale += whaleEyes[1];
-
-    return message.reply(whale);
+    return message.reply(whale.action(whaleSize));
   }
 }

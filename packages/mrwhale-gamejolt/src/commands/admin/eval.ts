@@ -1,10 +1,10 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
+import { codeBlock } from "@mrwhale-io/core";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 import * as util from "util";
 import * as config from "../../../config.json";
-import { codeBlock } from "../../util/markdown-helpers";
 
 export default class extends GameJoltCommand {
   constructor() {

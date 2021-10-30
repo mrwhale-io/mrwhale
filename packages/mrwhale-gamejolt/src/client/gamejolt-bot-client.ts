@@ -1,4 +1,4 @@
-import { ListenerDecorators, BotClient } from "@mrwhale-io/core";
+import { ListenerDecorators, BotClient, code } from "@mrwhale-io/core";
 import {
   ClientOptions,
   Message,
@@ -19,7 +19,6 @@ import { UrlManager } from "./managers/url-manager";
 import { Database } from "../database/database";
 import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
-import { code } from "../util/markdown-helpers";
 import { settingsManager } from "./managers/settings-manager";
 import { GameJoltCommandDispatcher } from "./command/gamejolt-command-dispatcher";
 import { GameJoltCommand } from "./command/gamejolt-command";

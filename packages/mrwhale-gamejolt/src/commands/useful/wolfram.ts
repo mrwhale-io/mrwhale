@@ -1,9 +1,9 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
+import { codeBlock } from '@mrwhale-io/core';
 import * as WolframAlphaAPI from "wolfram-alpha-api";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import * as config from "../../../config.json";
-import { codeBlock } from "../../util/markdown-helpers";
 
 export default class extends GameJoltCommand {
   constructor() {

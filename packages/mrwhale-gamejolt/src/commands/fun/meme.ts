@@ -1,4 +1,5 @@
 import axios from "axios";
+import { meme } from "@mrwhale-io/commands";
 import { Message, Content, MediaItem } from "@mrwhale-io/gamejolt-client";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
@@ -12,8 +13,7 @@ export default class extends GameJoltCommand {
       usage: "<prefix>meme",
       cooldown: 3000,
     });
-    this.fetchMemes();
-    setInterval(() => this.fetchMemes(), 60 * 60 * 1000);
+    this.init();
   }
 
   private memes: {
@@ -22,15 +22,6 @@ export default class extends GameJoltCommand {
   }[] = [];
   private cachedMediaItems: { [id: string]: MediaItem } = {};
   private previous: MediaItem;
-
-  private async fetchMemes() {
-    const { data } = await axios.get(
-      "https://www.reddit.com/r/dankmemes.json?sort=top&t=week"
-    );
-    this.memes = data.data.children
-      .filter((post) => !post.data.over_18)
-      .map((post) => post.data);
-  }
 
   async action(message: Message): Promise<Message> {
     if (!this.memes.length) {
@@ -54,16 +45,24 @@ export default class extends GameJoltCommand {
         );
         this.cachedMediaItems[meme.id] = mediaItem;
         this.previous = mediaItem;
-        await content.insertImage(mediaItem);
+        content.insertImage(mediaItem);
       } catch {
         this.previous
           ? content.insertImage(this.previous)
           : content.insertText("Could not fetch meme.");
       }
     } else {
-      await content.insertImage(mediaItem);
+      content.insertImage(mediaItem);
     }
 
     return message.reply(content);
+  }
+
+  private async init() {
+    this.memes = await meme.fetchMemes();
+    setInterval(
+      async () => (this.memes = await meme.fetchMemes()),
+      60 * 60 * 1000
+    );
   }
 }

@@ -9,15 +9,14 @@ export default class extends DiscordCommand {
     this.slashCommandData.addStringOption((option) =>
       option
         .setName("question")
-        .setDescription("Ask a question.")
+        .setDescription("The question to ask.")
         .setRequired(true)
     );
   }
 
   async action(interaction: CommandInteraction): Promise<void> {
-    const question = interaction.options.get("question").value as string;
-    const answer = conchshell.action(question);
+    const question = interaction.options.getString("question");
 
-    return interaction.reply(answer);
+    return interaction.reply(conchshell.action(question));
   }
 }

@@ -1,8 +1,8 @@
+import { link } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
 import axios from "axios";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
-import { link } from "../../util/markdown-helpers";
 
 export default class extends GameJoltCommand {
   constructor() {

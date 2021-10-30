@@ -1,9 +1,8 @@
-import { TimeUtilities } from "@mrwhale-io/core";
+import { TimeUtilities, InfoBuilder } from '@mrwhale-io/core';
 import { Message } from "@mrwhale-io/gamejolt-client";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { version } from "../../../package.json";
-import { InfoBuilder } from "../../util/info-builder";
 
 const FRACTIONAL_DIGITS = 2;
 const MEM_UNIT = 1024;

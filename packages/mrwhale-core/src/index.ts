@@ -23,3 +23,15 @@ export { levelToExp, getLevelFromExp, getRemainingExp } from "./helpers/levels";
 export { HangmanGame } from "./types/hangman-game";
 export { GuessingGame } from "./types/guessing-game";
 export { getCommandName, getCommandArgs, dispatch } from "./helpers/command";
+export { eyes } from "./data/eyes";
+export { genres, goals, items, environments, rules } from "./data/game-idea";
+export {
+  bold,
+  code,
+  codeBlock,
+  italic,
+  link,
+  unorderedList,
+  orderedList,
+} from "./util/markdown-helpers";
+export { InfoBuilder } from "./util/info-builder";

@@ -24,10 +24,15 @@ function multiDecide(options: string[]): string {
 }
 
 export const data: CommandOptions = {
-  name: "ping",
-  description: "Sends back a pong response.",
-  type: "utility",
-  usage: "<prefix>ping",
+  name: "choose",
+  description: "Choose between one or multiple choices.",
+  type: "fun",
+  usage: "<prefix>choose <choice> or <choice> ...",
+  examples: [
+    "<prefix>choose Whale or Dolphin",
+    "<prefix>choose Apple, Orange, Banana",
+  ],
+  aliases: ["choice", "decide"],
 };
 
 export function action(args: string[]): string {
@@ -36,7 +41,7 @@ export function action(args: string[]): string {
     return "No choices have been passed.";
   }
 
-  const separators = ["or", ","];
+  const separators = [" or ", ","];
   const options = choices.split(new RegExp(separators.join("|"), "gi"));
 
   if (options.length > 1) {

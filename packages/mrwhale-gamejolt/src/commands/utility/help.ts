@@ -1,9 +1,7 @@
-import { TimeUtilities } from "@mrwhale-io/core";
+import { InfoBuilder, TimeUtilities, unorderedList } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
-import { unorderedList } from "../../util/markdown-helpers";
-import { InfoBuilder } from "../../util/info-builder";
 
 export default class extends GameJoltCommand {
   constructor() {

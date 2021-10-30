@@ -1,4 +1,4 @@
-import { CommandOptions } from "@mrwhale-io/core";
+import { codeBlock, CommandOptions } from "@mrwhale-io/core";
 import * as figlet from "figlet";
 import * as util from "util";
 
@@ -18,5 +18,7 @@ export async function action(text: string): Promise<unknown> {
     return "Please provide some text.";
   }
 
-  return await figletAsync(text);
+  const result = (await figletAsync(text)) as string;
+
+  return codeBlock(result);
 }

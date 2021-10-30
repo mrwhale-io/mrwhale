@@ -1,4 +1,4 @@
-import * as translate from "translate-google";
+import { translate } from "@mrwhale-io/commands";
 import { truncate } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
 
@@ -6,15 +6,7 @@ import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 export default class extends GameJoltCommand {
   constructor() {
-    super({
-      name: "translate",
-      description:
-        "Translate to specified language. Use langs command for supported languages.",
-      type: "useful",
-      usage: "<prefix>translate <lang>, <text>",
-      examples: ["<prefix>translate es, Hello", "<prefix>translate auto, Hola"],
-      cooldown: 3000,
-    });
+    super(translate.data);
   }
 
   async action(
@@ -27,16 +19,8 @@ export default class extends GameJoltCommand {
       return message.reply("Please pass some text to translate.");
     }
 
-    translate(toTranslate, { to: lang || "en" })
-      .then((response) => {
-        const max = 980;
+    const translated = await translate.action(toTranslate, lang);
 
-        return message.reply(truncate(max, response));
-      })
-      .catch(() => {
-        return message.reply(
-          "Couldn't find specified language. Use lang command for available languages."
-        );
-      });
+    return message.reply(truncate(980, translated));
   }
 }

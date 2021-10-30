@@ -1,4 +1,4 @@
-import { getLevelFromExp } from "@mrwhale-io/core";
+import { getLevelFromExp, codeBlock } from '@mrwhale-io/core';
 import { Message, User } from "@mrwhale-io/gamejolt-client";
 import * as AsciiTable from "ascii-table";
 import { createQueryBuilder } from "typeorm";
@@ -7,7 +7,6 @@ import { User as GameUser } from "joltite.js";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { Score } from "../../database/entity/score";
 import { Database } from "../../database/database";
-import { codeBlock } from "../../util/markdown-helpers";
 
 interface MappedScores {
   exp: number;

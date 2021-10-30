@@ -1,4 +1,4 @@
-import { User } from "@mrwhale-io/gamejolt";
+import { User } from "@mrwhale-io/gamejolt-client";
 
 export interface PlayerInfo {
   user: User;
