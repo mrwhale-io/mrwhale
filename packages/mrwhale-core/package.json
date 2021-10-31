@@ -7,8 +7,7 @@
   "license": "MIT",
   "main": "lib/index.js",
   "directories": {
-    "lib": "lib",
-    "test": "__tests__"
+    "lib": "lib"
   },
   "files": [
     "lib"
@@ -18,8 +17,7 @@
     "url": "git+https://github.com/mrwhale-io/mrwhale.git"
   },
   "scripts": {
-    "build": "tsc",
-    "test": "jest"
+    "build": "tsc"
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"

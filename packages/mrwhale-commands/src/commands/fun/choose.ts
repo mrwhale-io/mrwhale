@@ -1,6 +1,6 @@
 import { CommandOptions } from "@mrwhale-io/core";
 
-const responses = [
+export const responses = [
   "Oh it has to be <<CHOICE>>",
   "I'd have to go with <<CHOICE>>",
   "It's obviously <<CHOICE>>",
