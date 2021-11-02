@@ -9,6 +9,7 @@
     "prettier": "prettier --write *.{js,ts,json}",
     "boot": "yarn global add lerna && lerna bootstrap",
     "publish": "lerna publish",
+    "build": "lerna run build",
     "test": "lerna run test --parallel",
     "start": "lerna run start --parallel"
   },

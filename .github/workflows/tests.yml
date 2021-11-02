@@ -12,10 +12,11 @@ jobs:
         with:
           node-version: "16.x"
           cache: yarn
-      - name: install & bootstrap
+      - name: install, bootstrap and build
         run: |
           yarn install
           yarn boot
+          yarn build
       - name: test
         run: |
           yarn test
