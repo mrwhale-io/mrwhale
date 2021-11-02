@@ -19,6 +19,10 @@ export default class extends DiscordCommand {
     const city = interaction.options.getString("city");
     const data = await weather.action(city, config.openWeather);
 
+    if (typeof data === "string") {
+      return interaction.reply(data);
+    }
+
     const embed = new MessageEmbed()
       .setTitle(`Weather for ${city}`)
       .addField("☁️ Weather", data.weather[0].description)
