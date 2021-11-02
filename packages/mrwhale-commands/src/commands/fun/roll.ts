@@ -13,7 +13,6 @@ export const data: CommandOptions = {
 const DICE_MAX = 20;
 
 export function action(args: string[]): string {
-  console.log(args);
   let passed = true;
   if (!args || args.length < 1) {
     return `🎲 You rolled a ${d20.roll("6")}`;
