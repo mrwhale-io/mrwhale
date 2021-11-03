@@ -17,7 +17,7 @@
     "url": "git+https://github.com/mrwhale-io/mrwhale.git"
   },
   "scripts": {
-    "start:discord": "ts-node src/index.ts",
+    "start": "ts-node src/index.ts",
     "deploy-commands": "ts-node scripts/deploy-commands.ts",
     "deploy-guild-commands": "ts-node scripts/deploy-guild-commands.ts"
   },
