@@ -9,8 +9,6 @@ export class DiscordCommandRateLimiter extends CommandRateLimiter {
 
   constructor(limit?: number, duration?: number) {
     super(limit, duration);
-    this.limit = limit;
-    this.duration = duration;
     this.rateLimits = new Map<string, Map<string, CommandRateLimit>>();
   }
 
