@@ -3,12 +3,12 @@
   "database": "database.sqlite",
   "synchronize": true,
   "logging": false,
-  "entities": ["src/database/entity/**/*.ts"],
-  "migrations": ["src/database/migration/**/*.ts"],
-  "subscribers": ["src/database/subscriber/**/*.ts"],
+  "entities": ["packages/mrwhale-gamejolt/src/database/entity/**/*.ts"],
+  "migrations": ["packages/mrwhale-gamejolt/src/database/migration/**/*.ts"],
+  "subscribers": ["packages/mrwhale-gamejolt/src/database/subscriber/**/*.ts"],
   "cli": {
-    "entitiesDir": "src/database/entity",
-    "migrationsDir": "src/database/migration",
-    "subscribersDir": "src/database/subscriber"
+    "entitiesDir": "packages/mrwhale-gamejolt/src/database/entity",
+    "migrationsDir": "packages/mrwhale-gamejolt/src/database/migration",
+    "subscribersDir": "packages/mrwhale-gamejolt/src/database/subscriber"
   }
 }
