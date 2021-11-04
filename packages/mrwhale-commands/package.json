@@ -1,6 +1,7 @@
 {
   "name": "@mrwhale-io/commands",
   "version": "0.1.0",
+  "private": true,
   "description": "Shared Mr. Whale command modules.",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "homepage": "https://github.com/mrwhale-io/mrwhale/tree/main/packages/mrwhale-commands#readme",

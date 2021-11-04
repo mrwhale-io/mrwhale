@@ -1,6 +1,7 @@
 {
   "name": "@mrwhale-io/discord",
   "version": "1.0.0",
+  "private": true,
   "description": "Mr. Whale discord chat bot integration.",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "homepage": "https://github.com/mrwhale-io/mrwhale#readme",
