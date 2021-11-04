@@ -3,13 +3,14 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![](https://img.shields.io/discord/773335253032501278.svg?logo=discord&colorB=7289DA)](https://discord.gg/wjBnkR4AUZ)
 
-
 > Mr. Whale is an all-purpose chat bot loaded with dozens of awesome commands and features.
 
 Feel free to add a star ⭐ to the repository to promote the project!
 
 ## Table of Contents
+
 - [Features](#features)
+- [Integrations](#integrations)
 - [Screenshots](#screenshots)
 - [Links](#links)
 - [Maintainers](#maintainers)
@@ -37,6 +38,11 @@ Mr. Whale has a lot of commands, with 6 main categories:
 
 [See the full command list](https://www.mrwhale.io/docs/commands)
 
+## Integrations
+
+- [Game Jolt](https://github.com/mrwhale-io/mrwhale/tree/discord/packages/mrwhale-gamejolt)
+- [Discord](https://github.com/mrwhale-io/mrwhale/tree/discord/packages/mrwhale-discord)
+
 ## Screenshots
 
 Below are some screenshots of the bot in action
@@ -46,10 +52,11 @@ Below are some screenshots of the bot in action
 ![Mr. Whale](images/screenshot2.png)
 
 ## Links
-*   [Website](https://www.mrwhale.io/)
-*   [Discord](https://discord.gg/wjBnkR4AUZ)
-*   [Github](https://github.com/mrwhale-io/mrwhale/)
-*   [Game Jolt](https://gamejolt.com/@mrwhale)
+
+- [Website](https://www.mrwhale.io/)
+- [Discord](https://discord.gg/wjBnkR4AUZ)
+- [Github](https://github.com/mrwhale-io/mrwhale/)
+- [Game Jolt](https://gamejolt.com/@mrwhale)
 
 ## Maintainers
 

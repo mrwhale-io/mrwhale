@@ -1,10 +1,10 @@
 import * as translate from "translate-google";
 import { Message } from "@mrwhale-io/gamejolt-client";
+import { unorderedList } from "@mrwhale-io/core";
 
-import { Command } from "../command";
-import { unorderedList } from "../../util/markdown-helpers";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "langs",

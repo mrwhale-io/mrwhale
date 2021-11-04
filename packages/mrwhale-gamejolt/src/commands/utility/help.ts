@@ -1,11 +1,9 @@
+import { InfoBuilder, TimeUtilities, unorderedList } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
-import { TimeUtilities } from "../../util/time";
 
-import { Command } from "../command";
-import { unorderedList } from "../../util/markdown-helpers";
-import { InfoBuilder } from "../../util/info-builder";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "help",
@@ -28,11 +26,7 @@ export default class extends Command {
     ];
 
     if (typeOrCmdName) {
-      const cmd: Command = this.client.commands.find(
-        (c) =>
-          c.name.toLowerCase() === typeOrCmdName.toLowerCase() ||
-          c.aliases.map((alias) => alias.toLowerCase()).includes(typeOrCmdName)
-      );
+      const cmd = this.botClient.commands.findByNameOrAlias(typeOrCmdName);
 
       if (cmd) {
         const info = new InfoBuilder()
@@ -55,22 +49,20 @@ export default class extends Command {
         return message.reply(
           `${info
             .build()
-            .replace(/<prefix>/g, this.client.getPrefix(message.room_id))}`
+            .replace(/<prefix>/g, this.botClient.getPrefix(message.room_id))}`
         );
       }
 
       if (types.includes(typeOrCmdName.toLowerCase())) {
-        const commands = this.client.commands.filter(
-          (c: Command) => c.type === typeOrCmdName.toLowerCase()
-        );
+        const commands = this.botClient.commands.findByType(typeOrCmdName);
 
         return message.reply(
           unorderedList(
             commands.map(
               (command) =>
-                `${this.client.getPrefix(message.room_id)}${command.name} - ${
-                  command.description
-                }`
+                `${this.botClient.getPrefix(message.room_id)}${
+                  command.name
+                } - ${command.description}`
             )
           )
         );
@@ -82,7 +74,7 @@ export default class extends Command {
     return message.reply(
       unorderedList(
         types.map(
-          (type) => `${this.client.getPrefix(message.room_id)}help ${type}`
+          (type) => `${this.botClient.getPrefix(message.room_id)}help ${type}`
         )
       )
     );

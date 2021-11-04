@@ -9,8 +9,12 @@
     "prettier": "prettier --write *.{js,ts,json}",
     "boot": "yarn global add lerna && lerna bootstrap",
     "publish": "lerna publish",
+    "build": "lerna run build",
     "test": "lerna run test --parallel",
     "start": "lerna run start --parallel"
+  },
+  "dependencies": {
+    "glob": "^7.1.6"
   },
   "devDependencies": {
     "@types/node": "^14.0.14",
@@ -20,6 +24,7 @@
     "eslint-config-prettier": "^7.0.0",
     "lerna": "^4.0.0",
     "prettier": "^2.2.1",
-    "typescript": "^3.9.6"
+    "typescript": "^3.9.6",
+    "reflect-metadata": "^0.1.13"
   }
 }

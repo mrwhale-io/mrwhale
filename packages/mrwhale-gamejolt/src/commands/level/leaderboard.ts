@@ -1,13 +1,12 @@
+import { getLevelFromExp, codeBlock } from '@mrwhale-io/core';
 import { Message, User } from "@mrwhale-io/gamejolt-client";
 import * as AsciiTable from "ascii-table";
+import { createQueryBuilder } from "typeorm";
 import { User as GameUser } from "joltite.js";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { Score } from "../../database/entity/score";
 import { Database } from "../../database/database";
-import { codeBlock } from "../../util/markdown-helpers";
-import { LevelManager } from "../../managers/level-manager";
-import { createQueryBuilder } from "typeorm";
 
 interface MappedScores {
   exp: number;
@@ -24,7 +23,7 @@ function mapUsers(members: User[] | GameUser[]) {
   return mappedMembers;
 }
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "leaderboard",
@@ -67,7 +66,7 @@ export default class extends Command {
         take: 10,
       });
 
-    const room = this.client.chat.activeRooms[roomId];
+    const room = this.botClient.client.chat.activeRooms[roomId];
     const mappedMembers = mapUsers(room.members);
 
     const filteredScores = scores.filter(({ userId }) =>
@@ -77,7 +76,7 @@ export default class extends Command {
     const mappedScores: MappedScores[] = filteredScores.map((score) => ({
       exp: score.exp,
       user: mappedMembers[score.userId],
-      level: LevelManager.getLevelFromExp(score.exp),
+      level: getLevelFromExp(score.exp),
     }));
 
     return mappedScores;
@@ -92,13 +91,13 @@ export default class extends Command {
       .take(10)
       .execute();
     const memberIds = scores.map((score) => score.userId);
-    const members = await this.client.gameApi.users.fetch(memberIds);
+    const members = await this.botClient.gameApi.users.fetch(memberIds);
     const mappedMembers = mapUsers(members.users);
 
     const mappedScores: MappedScores[] = scores.map((score) => ({
       exp: score.exp,
       user: mappedMembers[score.userId],
-      level: LevelManager.getLevelFromExp(score.exp),
+      level: getLevelFromExp(score.exp),
     }));
 
     return mappedScores;

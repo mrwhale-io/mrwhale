@@ -1,31 +1,16 @@
+import { ascii } from "@mrwhale-io/commands";
 import { Message } from "@mrwhale-io/gamejolt-client";
-import * as figlet from "figlet";
-import * as util from "util";
 
-import { Command } from "../command";
-import { codeBlock } from '../../util/markdown-helpers';
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-const figletAsync = util.promisify(figlet);
-
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
-    super({
-      name: "ascii",
-      description: "Generate ascii.",
-      type: "fun",
-      usage: "<prefix>ascii <text>",
-      examples: ["<prefix>ascii Mr. Whale"],
-      cooldown: 5000,
-    });
+    super(ascii.data);
   }
 
   async action(message: Message, [text]: [string]): Promise<Message> {
-    if (!text) {
-      return message.reply("Please provide some text.");
-    }
+    const asciiResult = await ascii.action(text);
 
-    const rendered = await figletAsync(text);
-
-    return message.reply(codeBlock(`${rendered}`));
+    return message.reply(`${asciiResult}`);
   }
 }

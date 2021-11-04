@@ -1,13 +1,14 @@
+import { getLevelFromExp, getRemainingExp, levelToExp } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
-import { LevelManager } from "../../managers/level-manager";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
+import { LevelManager } from "../../client/managers/level-manager";
 import { PlayerInfo } from "../../types/player-info";
 import { createPlayerCard } from "../../image/create-player-card";
 import { CardTheme } from "../../types/card-theme";
 import { uploadImage } from "../../image/upload-image";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "rank",
@@ -35,13 +36,13 @@ export default class extends Command {
         );
       }
 
-      const level = LevelManager.getLevelFromExp(score.exp);
+      const level = getLevelFromExp(score.exp);
       const rank = playerSorted.findIndex((p) => p.userId === user.id) + 1;
       const info: PlayerInfo = {
         user,
         totalExp: score.exp,
-        levelExp: LevelManager.levelToExp(level),
-        remainingExp: LevelManager.getRemainingExp(score.exp),
+        levelExp: levelToExp(level),
+        remainingExp: getRemainingExp(score.exp),
         level,
         rank,
       };

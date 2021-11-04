@@ -1,0 +1,22 @@
+name: tests
+
+on: [push]
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16.x"
+          cache: yarn
+      - name: install, bootstrap and build
+        run: |
+          yarn install
+          yarn boot
+          yarn build
+      - name: test
+        run: |
+          yarn test

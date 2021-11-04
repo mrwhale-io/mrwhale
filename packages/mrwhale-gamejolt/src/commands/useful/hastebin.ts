@@ -1,10 +1,10 @@
+import { link } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
 import axios from "axios";
 
-import { Command } from "../command";
-import { link } from "../../util/markdown-helpers";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "hastebin",

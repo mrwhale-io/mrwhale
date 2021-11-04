@@ -1,8 +1,8 @@
 import { Message } from "@mrwhale-io/gamejolt-client";
 
-import { Command } from "../command";
+import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
-export default class extends Command {
+export default class extends GameJoltCommand {
   constructor() {
     super({
       name: "prefix",
@@ -22,7 +22,7 @@ export default class extends Command {
       return message.reply("Please provide a prefix less than 10 characters.");
     }
 
-    this.client.settings.set(message.room_id, "prefix", prefix);
+    this.botClient.settings.set(message.room_id, "prefix", prefix);
 
     return message.reply("Successfully set the prefix for this room.");
   }

@@ -1,21 +1,13 @@
+import { BotOptions } from "@mrwhale-io/core";
+
 /**
  * Contains options to be passed to a BotClient object on construction.
  */
-export interface BotOptions {
-  /**
-   * Prefix denoting a command call.
-   */
-  prefix: string;
-
+export interface GameJoltBotOptions extends BotOptions {
   /**
    * API token for cleverbot.
    */
   cleverbotToken?: string;
-
-  /**
-   * The user identifier of the bot owner.
-   */
-  ownerId: number;
 
   /**
    * The game api private key.

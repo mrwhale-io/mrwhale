@@ -1,0 +1,13 @@
+export * as ascii from "./ascii";
+export * as choose from "./choose";
+export * as chuck from "./chuck";
+export * as coin from "./coin";
+export * as conchshell from "./conchshell";
+export * as dadjoke from "./dadjoke";
+export * as define from "./define";
+export * as fact from "./fact";
+export * as meme from "./meme";
+export * as roll from "./roll";
+export * as ship from "./ship";
+export * as whale from "./whale";
+export * as gameIdea from "./game-idea";
