@@ -1,5 +1,6 @@
 ![Mr. Whale](images/logo.png)
 
+![tests](https://github.com/mrwhale-io/mrwhale/workflows/tests/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![](https://img.shields.io/discord/773335253032501278.svg?logo=discord&colorB=7289DA)](https://discord.gg/wjBnkR4AUZ)
 
