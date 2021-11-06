@@ -1,6 +1,6 @@
 {
   "name": "@mrwhale-io/commands",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Shared Mr. Whale command modules.",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
@@ -26,15 +26,15 @@
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
   },
   "dependencies": {
-    "@mrwhale-io/core": "^0.1.0",
+    "@mrwhale-io/core": "^1.0.0",
     "d20": "^1.4.1",
     "figlet": "^1.5.0",
     "jest": "^27.2.1",
     "mathjs": "^7.5.1",
     "profanity-util": "^0.2.0",
+    "seedrandom": "^3.0.5",
     "translate-google": "^1.5.0",
     "wikijs": "^6.0.1",
-    "seedrandom": "^3.0.5",
     "wolfram-alpha-api": "https://products.wolframalpha.com/api/libraries/javascript/wolfram-alpha-api-1.0.0-rc.1.tgz"
   },
   "devDependencies": {
