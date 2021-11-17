@@ -2,6 +2,7 @@ import { TimeUtilities, unorderedList, codeBlock } from "@mrwhale-io/core";
 import { CommandInteraction, MessageEmbed, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
+import { EMBED_COLOR } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -25,6 +26,7 @@ export default class extends DiscordCommand {
 
       if (cmd) {
         const info = new MessageEmbed()
+          .setColor(EMBED_COLOR)
           .addField("Name", cmd.name)
           .addField("Description", cmd.description)
           .addField("Type", cmd.type)
@@ -83,6 +85,7 @@ export default class extends DiscordCommand {
 
       if (cmd) {
         const info = new MessageEmbed()
+          .setColor(EMBED_COLOR)
           .addField("Name", cmd.name)
           .addField("Description", cmd.description)
           .addField("Type", cmd.type)

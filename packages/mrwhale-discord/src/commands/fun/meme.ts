@@ -2,6 +2,7 @@ import { meme } from "@mrwhale-io/commands";
 import { CommandInteraction, MessageEmbed, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
+import { EMBED_COLOR } from '../../constants';
 
 export default class extends DiscordCommand {
   constructor() {
@@ -19,6 +20,7 @@ export default class extends DiscordCommand {
       const index = Math.floor(Math.random() * memes.length);
       const embed = new MessageEmbed()
         .setTitle(memes[index].title)
+        .setColor(EMBED_COLOR)
         .setDescription("Posted by " + memes[index].author)
         .setImage(memes[index].url)
         .setFooter(`r/dankmemes`);
@@ -42,6 +44,7 @@ export default class extends DiscordCommand {
       const index = Math.floor(Math.random() * memes.length);
       const embed = new MessageEmbed()
         .setTitle(memes[index].title)
+        .setColor(EMBED_COLOR)
         .setDescription("Posted by " + memes[index].author)
         .setImage(memes[index].url)
         .setFooter(`r/dankmemes`);

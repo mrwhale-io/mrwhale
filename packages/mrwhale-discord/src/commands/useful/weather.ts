@@ -3,6 +3,7 @@ import { CommandInteraction, Message, MessageEmbed } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
 import * as config from "../../../config.json";
+import { EMBED_COLOR } from '../../constants';
 
 export default class extends DiscordCommand {
   constructor() {
@@ -43,6 +44,7 @@ export default class extends DiscordCommand {
 
     const embed = new MessageEmbed()
       .setTitle(`Weather for ${city}`)
+      .setColor(EMBED_COLOR)
       .addField("☁️ Weather", data.weather[0].description)
       .addField("🌡️ Temperature", `${data.main.temp}°C`)
       .addField("💧 Humidity", `${data.main.humidity}`);

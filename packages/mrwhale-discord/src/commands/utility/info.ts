@@ -4,6 +4,7 @@ import { CommandInteraction, Message, MessageEmbed } from "discord.js";
 import { DiscordCommand } from "../../client/discord-command";
 import { version } from "../../../package.json";
 import { discordServer } from "../../../config.json";
+import { EMBED_COLOR } from '../../constants';
 
 const FRACTIONAL_DIGITS = 2;
 const MEM_UNIT = 1024;
@@ -48,7 +49,7 @@ export default class extends DiscordCommand {
         "Bot uptime",
         `${TimeUtilities.convertMs(this.botClient.client.uptime)}`
       )
-      .setColor("#71b8ce")
+      .setColor(EMBED_COLOR)
       .setDescription(
         `Hi I'm ${this.botClient.client.user.username} a general purpose discord bot. Use the \`help\` command to see my commands`
       )

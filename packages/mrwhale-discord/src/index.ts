@@ -1,8 +1,8 @@
 import * as path from "path";
-import { Intents } from "discord.js";
 
 import * as config from "../config.json";
 import { DiscordBotClient } from "./client/discord-bot-client";
+import { INTENTS } from "./constants";
 
 const bot = new DiscordBotClient(
   {
@@ -11,11 +11,7 @@ const bot = new DiscordBotClient(
     ownerId: config.ownerId,
   },
   {
-    intents: [
-      Intents.FLAGS.GUILDS,
-      Intents.FLAGS.GUILD_MESSAGES,
-      Intents.FLAGS.DIRECT_MESSAGES,
-    ],
+    intents: INTENTS,
   }
 );
 
