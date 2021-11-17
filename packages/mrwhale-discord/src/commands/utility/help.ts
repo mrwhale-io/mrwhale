@@ -1,5 +1,5 @@
 import { TimeUtilities, unorderedList, codeBlock } from "@mrwhale-io/core";
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, MessageEmbed, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
 
@@ -17,7 +17,64 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(message: Message, [typeOrCmdName]: [string]): Promise<Message> {
+    const types = ["fun", "utility", "useful"];
+
+    if (typeOrCmdName) {
+      const cmd = this.botClient.commands.findByNameOrAlias(typeOrCmdName);
+
+      if (cmd) {
+        const info = new MessageEmbed()
+          .addField("Name", cmd.name)
+          .addField("Description", cmd.description)
+          .addField("Type", cmd.type)
+          .addField(
+            "Cooldown",
+            `${TimeUtilities.convertMs(cmd.rateLimiter.duration)}`
+          );
+
+        if (cmd.examples.length > 0) {
+          info.addField(
+            "Examples",
+            `${cmd.examples
+              .join(", ")
+              .replace(/<prefix>/g, this.botClient.getPrefix())}`
+          );
+        }
+
+        if (cmd.aliases.length > 0) {
+          info.addField("Aliases", `${cmd.aliases.join(", ")}`);
+        }
+
+        return message.reply({ embeds: [info] });
+      }
+
+      if (types.includes(typeOrCmdName.toLowerCase())) {
+        const commands = this.botClient.commands.findByType(typeOrCmdName);
+
+        return message.reply(
+          unorderedList(
+            commands.map(
+              (command) =>
+                `${this.botClient.getPrefix()}${command.name} - ${
+                  command.description
+                }`
+            )
+          )
+        );
+      }
+
+      return message.reply("Could not find this command or type.");
+    }
+
+    return message.reply(
+      unorderedList(
+        types.map((type) => `${this.botClient.getPrefix()}help ${type}`)
+      )
+    );
+  }
+
+  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
     const typeOrName = interaction.options.getString("name");
     const types = ["fun", "utility", "useful"];
 

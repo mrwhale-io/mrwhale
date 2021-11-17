@@ -26,7 +26,7 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
   /**
    * The commands directory.
    */
-  commandsDir : string;
+  commandsDir: string;
 
   /**
    * Bot client logging instance.
@@ -50,6 +50,13 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
     this.commands = new CommandStorage<this, T>();
     this.commandLoader = new CommandLoader(this);
   }
+
+  /**
+   * Gets the room prefix.
+   * 
+   * @param id The id of the prefix.
+   */
+  abstract getPrefix(id?: unknown): string;
 
   /**
    * Reloads a command or all commands for the bot client.

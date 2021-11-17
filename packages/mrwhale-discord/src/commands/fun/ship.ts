@@ -1,5 +1,5 @@
 import { ship } from "@mrwhale-io/commands";
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
 
@@ -20,7 +20,14 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(
+    message: Message,
+    [firstUser, secondUser]: [string, string]
+  ): Promise<Message> {
+    return message.reply(ship.action(firstUser, secondUser));
+  }
+
+  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
     const first = interaction.options.getMentionable("first").toString();
     const second = interaction.options.getMentionable("second").toString();
     const result = ship.action(first, second);

@@ -1,5 +1,5 @@
 import { newyear } from "@mrwhale-io/commands";
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message } from 'discord.js';
 
 import { DiscordCommand } from "../../client/discord-command";
 
@@ -8,7 +8,11 @@ export default class extends DiscordCommand {
     super(newyear.data);
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(message: Message): Promise<Message> {
+    return message.reply(newyear.action());
+  }
+
+  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
     return interaction.reply(newyear.action());
   }
 }

@@ -1,5 +1,5 @@
 import { weather } from "@mrwhale-io/commands";
-import { CommandInteraction, MessageEmbed } from "discord.js";
+import { CommandInteraction, Message, MessageEmbed } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
 import * as config from "../../../config.json";
@@ -15,12 +15,30 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(message: Message, [city]: [string]): Promise<void | Message> {
+    if (!city) {
+      return message.reply("You must provide a city name.");
+    }
+
+    return this.getWeatherResult(message, city);
+  }
+
+  async slashCommandAction(
+    interaction: CommandInteraction
+  ): Promise<void | Message> {
     const city = interaction.options.getString("city");
+
+    return this.getWeatherResult(interaction, city);
+  }
+
+  private async getWeatherResult(
+    message: Message | CommandInteraction,
+    city: string
+  ) {
     const data = await weather.action(city, config.openWeather);
 
     if (typeof data === "string") {
-      return interaction.reply(data);
+      return message.reply(data);
     }
 
     const embed = new MessageEmbed()
@@ -51,7 +69,7 @@ export default class extends DiscordCommand {
       embed.addField("💨 Wind", `${data.wind.speed} meters per second`);
     }
 
-    return interaction.reply({
+    return message.reply({
       embeds: [embed],
     });
   }

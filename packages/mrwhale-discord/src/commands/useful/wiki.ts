@@ -1,5 +1,5 @@
 import { wiki } from "@mrwhale-io/commands";
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
 
@@ -14,7 +14,11 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(message: Message, [query]: [string]): Promise<Message> {
+    return message.reply(await wiki.action(query));
+  }
+
+  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
     const query = interaction.options.getString("query");
 
     return interaction.reply(await wiki.action(query));

@@ -1,5 +1,5 @@
 import { translate } from "@mrwhale-io/commands";
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
 
@@ -21,7 +21,22 @@ export default class extends DiscordCommand {
       );
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(
+    message: Message,
+    [lang, ...text]: [string, string[]]
+  ): Promise<Message> {
+    const toTranslate = text.join();
+
+    if (!toTranslate) {
+      return message.reply("Please pass some text to translate.");
+    }
+
+    const translated = await translate.action(toTranslate, lang);
+
+    return message.reply(translated);
+  }
+
+  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
     const phrase = interaction.options.getString("phrase");
     const lang = interaction.options.getString("lang");
 

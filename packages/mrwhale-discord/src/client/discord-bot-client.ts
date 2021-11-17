@@ -15,4 +15,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.commandLoader.loadCommands();
     this.commandDispatcher = new DiscordCommandDispatcher(this);
   }
+
+  getPrefix(): string {
+    return "!";
+  }
 }

@@ -1,5 +1,5 @@
 import { chuck } from "@mrwhale-io/commands";
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
 
@@ -17,7 +17,14 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(
+    message: Message,
+    [firstName, lastName, category]: [string, string, string]
+  ): Promise<Message> {
+    return message.reply(await chuck.action(firstName, lastName, category));
+  }
+
+  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
     const firstName = interaction.options.getString("firstname");
     const lastName = interaction.options.getString("lastname");
     const category = interaction.options.getString("category");

@@ -1,5 +1,5 @@
 import { roll } from "@mrwhale-io/commands";
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/discord-command";
 
@@ -11,7 +11,11 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(message: Message, args: string[]): Promise<Message> {
+    return message.reply(roll.action(args));
+  }
+
+  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
     const dice = interaction.options.getString("dice");
 
     return interaction.reply(roll.action([dice]));
