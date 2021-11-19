@@ -31,6 +31,7 @@
     "@mrwhale-io/commands": "^1.0.0",
     "@mrwhale-io/core": "^1.0.0",
     "discord-api-types": "^0.23.1",
-    "discord.js": "^13.1.0"
+    "discord.js": "^13.1.0",
+    "sequelize": "^6.9.0"
   }
 }

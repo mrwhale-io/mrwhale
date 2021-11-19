@@ -1,4 +1,6 @@
 import * as path from "path";
+import { SqliteStorageProvider } from "@mrwhale-io/core";
+
 import { GameJoltBotClient } from "./client/gamejolt-bot-client";
 import * as config from "../config.json";
 
@@ -18,6 +20,9 @@ const client = new GameJoltBotClient(
     ownerId: config.ownerId,
     privateKey: config.privateKey,
     gameId: config.gameId,
+    provider: SqliteStorageProvider(
+      path.join(__dirname, "./database/database.sqlite")
+    ),
   }
 );
 

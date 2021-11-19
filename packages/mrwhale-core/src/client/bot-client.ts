@@ -3,6 +3,7 @@ import { logger } from "../util/logger";
 import { BotOptions } from "../types/bot-options";
 import { CommandStorage } from "./command/command-storage";
 import { Command } from "./command/command";
+import { StorageProviderConstructor } from "../types/storage-provider-constructor";
 
 /**
  * Base class to extend bot client integrations from.
@@ -29,6 +30,11 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
   commandsDir: string;
 
   /**
+   * The storage provider.
+   */
+  readonly provider: StorageProviderConstructor;
+
+  /**
    * Bot client logging instance.
    */
   readonly logger = logger;
@@ -47,16 +53,17 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
     this.commandsDir = options.commandsDir;
     this.defaultPrefix = options.prefix;
     this.ownerId = options.ownerId;
+    this.provider = options.provider;
     this.commands = new CommandStorage<this, T>();
     this.commandLoader = new CommandLoader(this);
   }
 
   /**
    * Gets the room prefix.
-   * 
+   *
    * @param id The id of the prefix.
    */
-  abstract getPrefix(id?: unknown): string;
+  abstract getPrefix(id?: unknown): string | Promise<string>;
 
   /**
    * Reloads a command or all commands for the bot client.

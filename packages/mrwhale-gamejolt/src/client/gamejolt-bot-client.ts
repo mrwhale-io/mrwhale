@@ -1,4 +1,9 @@
-import { ListenerDecorators, BotClient, code } from "@mrwhale-io/core";
+import {
+  ListenerDecorators,
+  BotClient,
+  code,
+  SimpleStorageProvider,
+} from "@mrwhale-io/core";
 import {
   ClientOptions,
   Message,
@@ -16,12 +21,11 @@ import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
 import { Timer } from "../util/timer";
 import { UrlManager } from "./managers/url-manager";
-import { Database } from "../database/database";
 import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
-import { settingsManager } from "./managers/settings-manager";
 import { GameJoltCommandDispatcher } from "./command/gamejolt-command-dispatcher";
 import { GameJoltCommand } from "./command/gamejolt-command";
+import { RoomStorageLoader } from "../storage/room-storage-loader";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -34,7 +38,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   /**
    * The settings manager.
    */
-  readonly settings: settingsManager;
+  readonly roomSettings: Map<number, SimpleStorageProvider>;
 
   /**
    * The Game Jolt bot client.
@@ -71,6 +75,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   private readonly urlManager: UrlManager;
   private readonly levelManager: LevelManager;
   private readonly policer: Policer;
+  private readonly roomStorageLoader: RoomStorageLoader;
 
   /**
    * @param clientOptions The game jolt client options.
@@ -83,7 +88,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     this.commandDispatcher = new GameJoltCommandDispatcher(this);
     this.timeouts = new Set();
     this.intervals = new Set();
-    this.settings = new settingsManager();
+    this.roomSettings = new Map<number, SimpleStorageProvider>();
 
     this.commandLoader.commandType = GameJoltCommand.name;
     this.commandLoader.loadCommands();
@@ -91,6 +96,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     this.replyManager = new ReplyManager(this);
     this.urlManager = new UrlManager(this);
     this.levelManager = new LevelManager(this);
+    this.roomStorageLoader = new RoomStorageLoader(this);
     this.policer = new Policer(this);
     this.gameApi = new GameJolt({
       privateKey: botOptions.privateKey,
@@ -103,6 +109,8 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
         botOptions.cleverbotToken
       );
     }
+
+    this.roomStorageLoader.init();
 
     registerListeners(this.client, this);
   }
@@ -121,7 +129,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
       if (index < roomIds.length) {
         const roomId = roomIds[index++];
         this.logger.info(`Joining group chat: ${roomId}`);
-        this.client.chat.joinRoom(roomId);
+        this.joinRoom(roomId);
       } else {
         timer.destroy();
       }
@@ -135,29 +143,27 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     this.logger.info(
       `Client ready! Connected as @${this.client.chat.currentUser.username}`
     );
-
-    await Database.instance().init();
-    this.settings.init();
   }
 
   @on("notification")
   protected onNotification(message: Message): void {
     if (message && !this.client.chat.roomChannels[message.room_id]) {
-      this.client.chat.joinRoom(message.room_id).receive("ok", () => {
+      this.joinRoom(message.room_id).receive("ok", () => {
         this.client.emit("message", message);
       });
     }
   }
 
   @on("friend_add")
-  protected onFriendAdd(friend: User): void {
+  protected async onFriendAdd(friend: User): Promise<void> {
     if (friend) {
+      const prefix = await this.getPrefix(friend.room_id);
       this.logger.info(
         `User @${friend.username} (${friend.id}) added as friend`
       );
-      this.client.chat.joinRoom(friend.room_id).receive("ok", () => {
+      this.joinRoom(friend.room_id).receive("ok", () => {
         const message = `Thank you for adding me as a friend! Use ${code(
-          `${this.getPrefix(friend.room_id)}help`
+          `${prefix}help`
         )} for a list of commands.`;
 
         this.client.chat.sendMessage(message, friend.room_id);
@@ -166,11 +172,12 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   }
 
   @on("group_add")
-  protected onGroupAdd(group: Room): void {
+  protected async onGroupAdd(group: Room): Promise<void> {
     if (group) {
-      this.client.chat.joinRoom(group.id).receive("ok", () => {
+      const prefix = await this.getPrefix(group.id);
+      this.joinRoom(group.id).receive("ok", () => {
         const message = `Thank you for adding me to your group! Use ${code(
-          `${this.getPrefix(group.id)}help`
+          `${prefix}help`
         )} for a list of commands.`;
 
         this.client.chat.sendMessage(message, group.id);
@@ -232,10 +239,17 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
 
   /**
    * Gets the room prefix.
+   *
    * @param roomId The room prefix.
    */
-  getPrefix(roomId: number): string {
-    return this.settings.get(roomId, "prefix", this.defaultPrefix) as string;
+  async getPrefix(roomId: number): Promise<string> {
+    if (!this.roomSettings.has(roomId)) {
+      return this.defaultPrefix;
+    }
+
+    const settings = this.roomSettings.get(roomId);
+
+    return await settings.get("prefix", this.defaultPrefix);
   }
 
   setTimeout(
@@ -271,5 +285,11 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   clearInterval(interval: NodeJS.Timer): void {
     clearInterval(interval);
     this.intervals.delete(interval);
+  }
+
+  private joinRoom(roomId: number) {
+    return this.client.chat.joinRoom(roomId).receive("ok", () => {
+      this.roomStorageLoader.loadRoomSettings(roomId);
+    });
   }
 }

@@ -1,4 +1,8 @@
-import { getLevelFromExp, getRandomInt, ListenerDecorators } from "@mrwhale-io/core";
+import {
+  getLevelFromExp,
+  getRandomInt,
+  ListenerDecorators,
+} from "@mrwhale-io/core";
 import { Message, Content } from "@mrwhale-io/gamejolt-client";
 
 import { GameJoltBotClient } from "../gamejolt-bot-client";
@@ -19,6 +23,22 @@ export class LevelManager {
   constructor(private bot: GameJoltBotClient) {
     this.lastMessages = {};
     registerListeners(this.bot.client, this);
+  }
+
+
+  /**
+   * Checks whether levels are enabled in the room.
+   * 
+   * @param roomId The identifier of the room.
+   */
+  async isLevelsEnabled(roomId: number): Promise<boolean> {
+    if (!this.bot.roomSettings.has(roomId)) {
+      return true;
+    }
+
+    const settings = this.bot.roomSettings.get(roomId);
+
+    return await settings.get("levels", true);
   }
 
   /**
@@ -70,7 +90,7 @@ export class LevelManager {
     if (
       message.user.id === this.bot.client.userId ||
       this.bot.client.chat.friendsList.getByRoom(message.room_id) ||
-      !this.bot.settings.get(message.room_id, "levels", true)
+      !this.isLevelsEnabled(message.room_id)
     ) {
       return;
     }

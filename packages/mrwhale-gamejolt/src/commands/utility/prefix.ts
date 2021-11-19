@@ -22,8 +22,13 @@ export default class extends GameJoltCommand {
       return message.reply("Please provide a prefix less than 10 characters.");
     }
 
-    this.botClient.settings.set(message.room_id, "prefix", prefix);
+    const settings = this.botClient.roomSettings.get(message.room_id);
 
-    return message.reply("Successfully set the prefix for this room.");
+    if (settings) {
+      settings.set("prefix", prefix);
+      return message.reply("Successfully set the prefix for this room.");
+    } else {
+      return message.reply("Could not set prefix for this room.");
+    }
   }
 }
