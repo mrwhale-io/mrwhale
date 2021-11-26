@@ -1,4 +1,5 @@
 import { Model, DataTypes } from "sequelize";
+
 import { StorageProvider } from "./storage-provider";
 import { Database } from "./database";
 import { StorageProviderConstructor } from "../types/storage-provider-constructor";
@@ -11,9 +12,9 @@ interface Storage extends Model {
 /**
  * Storage provider for sqlite for managing key/value settings.
  *
- * @param url The database url.
+ * @param [url] The database url.
  */
-export function SqliteStorageProvider(url: string): StorageProviderConstructor {
+export function SqliteStorageProvider(url?: string): StorageProviderConstructor {
   return class extends StorageProvider {
     private readonly database: Database;
     private readonly model: (new () => Model) & typeof Model;

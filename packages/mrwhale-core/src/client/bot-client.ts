@@ -4,6 +4,7 @@ import { BotOptions } from "../types/bot-options";
 import { CommandStorage } from "./command/command-storage";
 import { Command } from "./command/command";
 import { StorageProviderConstructor } from "../types/storage-provider-constructor";
+import { SqliteStorageProvider } from '../storage/sqlite-storage-provider';
 
 /**
  * Base class to extend bot client integrations from.
@@ -53,7 +54,7 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
     this.commandsDir = options.commandsDir;
     this.defaultPrefix = options.prefix;
     this.ownerId = options.ownerId;
-    this.provider = options.provider;
+    this.provider = options.provider ?? SqliteStorageProvider();
     this.commands = new CommandStorage<this, T>();
     this.commandLoader = new CommandLoader(this);
   }
