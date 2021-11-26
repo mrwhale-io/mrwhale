@@ -2,7 +2,7 @@ import {
   ListenerDecorators,
   BotClient,
   code,
-  SimpleStorageProvider,
+  KeyedStorageProvider,
 } from "@mrwhale-io/core";
 import {
   ClientOptions,
@@ -25,7 +25,7 @@ import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
 import { GameJoltCommandDispatcher } from "./command/gamejolt-command-dispatcher";
 import { GameJoltCommand } from "./command/gamejolt-command";
-import { RoomStorageLoader } from "../storage/room-storage-loader";
+import { RoomStorageLoader } from "./storage/room-storage-loader";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -38,7 +38,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   /**
    * The settings manager.
    */
-  readonly roomSettings: Map<number, SimpleStorageProvider>;
+  readonly roomSettings: Map<number, KeyedStorageProvider>;
 
   /**
    * The Game Jolt bot client.
@@ -88,7 +88,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     this.commandDispatcher = new GameJoltCommandDispatcher(this);
     this.timeouts = new Set();
     this.intervals = new Set();
-    this.roomSettings = new Map<number, SimpleStorageProvider>();
+    this.roomSettings = new Map<number, KeyedStorageProvider>();
 
     this.commandLoader.commandType = GameJoltCommand.name;
     this.commandLoader.loadCommands();

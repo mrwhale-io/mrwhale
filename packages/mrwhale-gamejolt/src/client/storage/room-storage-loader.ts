@@ -1,7 +1,10 @@
-import { SimpleStorageProvider, StorageProvider } from "@mrwhale-io/core";
+import { KeyedStorageProvider, StorageProvider } from "@mrwhale-io/core";
 
-import { GameJoltBotClient } from "../client/gamejolt-bot-client";
+import { GameJoltBotClient } from "../gamejolt-bot-client";
 
+/**
+ * Responsible for loading room settings.
+ */
 export class RoomStorageLoader {
   private readonly botClient: GameJoltBotClient;
   private readonly settingsProvider: StorageProvider;
@@ -20,13 +23,14 @@ export class RoomStorageLoader {
 
   /**
    * Loads the room settings.
+   * @param roomId The identifier of the room.
    */
   async loadRoomSettings(roomId: number): Promise<void> {
     if (this.botClient.roomSettings.has(roomId)) {
       return;
     }
 
-    const storage = new SimpleStorageProvider(
+    const storage = new KeyedStorageProvider(
       this.settingsProvider,
       roomId.toString()
     );

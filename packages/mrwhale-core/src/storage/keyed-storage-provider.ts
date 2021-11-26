@@ -1,6 +1,6 @@
 import { StorageProvider } from "./storage-provider";
 
-export class SimpleStorageProvider {
+export class KeyedStorageProvider {
   protected readonly _key: string;
   protected readonly _storageProvider: StorageProvider;
   protected _cache: { [key: string]: any };

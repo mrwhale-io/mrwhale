@@ -1,4 +1,4 @@
-export { SimpleStorageProvider } from "./storage/simple-storage-provider";
+export { KeyedStorageProvider } from "./storage/keyed-storage-provider";
 export { SqliteStorageProvider } from "./storage/sqlite-storage-provider";
 export { StorageProvider } from "./storage/storage-provider";
 export { Database } from "./storage/database";
