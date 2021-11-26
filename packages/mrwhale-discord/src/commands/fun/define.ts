@@ -1,7 +1,7 @@
 import { define } from "@mrwhale-io/commands";
 import { CommandInteraction, Message, MessageEmbed } from "discord.js";
 
-import { DiscordCommand } from "../../client/discord-command";
+import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
 
 export default class extends DiscordCommand {

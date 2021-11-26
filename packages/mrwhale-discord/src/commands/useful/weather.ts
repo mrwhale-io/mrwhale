@@ -1,7 +1,7 @@
 import { weather } from "@mrwhale-io/commands";
 import { CommandInteraction, Message, MessageEmbed } from "discord.js";
 
-import { DiscordCommand } from "../../client/discord-command";
+import { DiscordCommand } from "../../client/command/discord-command";
 import * as config from "../../../config.json";
 import { EMBED_COLOR } from '../../constants';
 

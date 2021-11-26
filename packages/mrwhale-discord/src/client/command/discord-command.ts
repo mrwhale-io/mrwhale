@@ -7,7 +7,7 @@ import { CommandInteraction, Message } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 import { DiscordCommandRateLimiter } from "./discord-command-rate-limiter";
-import { DiscordBotClient } from "./discord-bot-client";
+import { DiscordBotClient } from "../discord-bot-client";
 
 export abstract class DiscordCommand extends Command<DiscordBotClient> {
   /**

@@ -2,7 +2,7 @@ import { wolfram } from "@mrwhale-io/commands";
 import { CommandInteraction, Message } from "discord.js";
 
 import * as config from "../../../config.json";
-import { DiscordCommand } from "../../client/discord-command";
+import { DiscordCommand } from "../../client/command/discord-command";
 
 export default class extends DiscordCommand {
   constructor() {

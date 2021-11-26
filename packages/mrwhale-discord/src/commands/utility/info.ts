@@ -1,7 +1,7 @@
 import { TimeUtilities } from "@mrwhale-io/core";
 import { CommandInteraction, Message, MessageEmbed } from "discord.js";
 
-import { DiscordCommand } from "../../client/discord-command";
+import { DiscordCommand } from "../../client/command/discord-command";
 import { version } from "../../../package.json";
 import { discordServer } from "../../../config.json";
 import { EMBED_COLOR } from '../../constants';

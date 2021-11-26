@@ -6,7 +6,7 @@ import {
 } from "@mrwhale-io/core";
 import { Interaction, CommandInteraction, Message } from "discord.js";
 
-import { DiscordBotClient } from "./discord-bot-client";
+import { DiscordBotClient } from "../discord-bot-client";
 import { DiscordCommand } from "./discord-command";
 
 /**
@@ -40,7 +40,7 @@ export class DiscordCommandDispatcher {
       return;
     }
 
-    const prefix = this.bot.getPrefix();
+    const prefix = await this.bot.getPrefix(message.guildId);
 
     if (!message.content.trim().startsWith(prefix)) {
       return;
@@ -51,7 +51,7 @@ export class DiscordCommandDispatcher {
 
     if (!command) {
       return message.reply(
-        `Unknown command. Use ${this.bot.getPrefix()}help to view the command list.`
+        `Unknown command. Use ${prefix}help to view the command list.`
       );
     }
 
