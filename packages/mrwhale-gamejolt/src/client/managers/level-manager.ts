@@ -94,7 +94,7 @@ export class LevelManager {
 
   @on("message")
   protected async onMessage(message: Message): Promise<void> {
-    const isEnabled = this.isLevelsEnabled(message.room_id);
+    const isEnabled = await this.isLevelsEnabled(message.room_id);
     const pmUser = this.bot.client.chat.friendsList.getByRoom(message.room_id);
 
     if (message.user.id === this.bot.client.userId || pmUser || !isEnabled) {
