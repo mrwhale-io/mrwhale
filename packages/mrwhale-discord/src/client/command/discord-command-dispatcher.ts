@@ -32,9 +32,9 @@ export class DiscordCommandDispatcher {
 
   constructor(bot: DiscordBotClient) {
     this.bot = bot;
-    this.bot.client.on("interactionCreate", (interaction) =>
-      this.handleInteraction(interaction)
-    );
+    this.bot.client.on("interactionCreate", (interaction) => {
+      this.handleInteraction(interaction);
+    });
 
     this.bot.client.on("messageCreate", (message) => {
       this.handleMessage(message);
@@ -98,10 +98,27 @@ export class DiscordCommandDispatcher {
       return;
     }
 
+    const dm = interaction.channel.type === "DM";
     const commandName = interaction.commandName.toLowerCase();
     const command = this.bot.commands.findByNameOrAlias(commandName);
 
     if (!this.checkRateLimits(interaction, command)) {
+      return;
+    }
+
+    let hasPermission = false;
+    try {
+      hasPermission = this.hasPermission(
+        command,
+        interaction.channel as TextChannel,
+        interaction.user,
+        dm
+      );
+    } catch (error) {
+      return interaction.reply(error);
+    }
+
+    if (!hasPermission) {
       return;
     }
 
