@@ -4,7 +4,13 @@ import {
   getCommandArgs,
   dispatch,
 } from "@mrwhale-io/core";
-import { Interaction, CommandInteraction, Message } from "discord.js";
+import {
+  Interaction,
+  CommandInteraction,
+  Message,
+  TextChannel,
+  User,
+} from "discord.js";
 
 import { DiscordBotClient } from "../discord-bot-client";
 import { DiscordCommand } from "./discord-command";
@@ -36,10 +42,11 @@ export class DiscordCommandDispatcher {
   }
 
   private async handleMessage(message: Message) {
-    if (message.author.id === this.bot.client.user.id || !this._ready) {
+    if (message.author.bot || !this._ready) {
       return;
     }
 
+    const dm = message.channel.type === "DM";
     const prefix = await this.bot.getPrefix(message.guildId);
 
     if (!message.content.trim().startsWith(prefix)) {
@@ -55,11 +62,23 @@ export class DiscordCommandDispatcher {
       );
     }
 
-    if (command.admin && message.author.id !== this.bot.ownerId) {
-      return message.reply("This is an admin only command.");
+    if (!this.checkRateLimits(message, command)) {
+      return;
     }
 
-    if (!this.checkRateLimits(message, command)) {
+    let hasPermission = false;
+    try {
+      hasPermission = this.hasPermission(
+        command,
+        message.channel as TextChannel,
+        message.author,
+        dm
+      );
+    } catch (error) {
+      return message.reply(error);
+    }
+
+    if (!hasPermission) {
       return;
     }
 
@@ -132,5 +151,69 @@ export class DiscordCommandDispatcher {
     }
 
     return false;
+  }
+
+  private checkCallerPermissions(
+    command: DiscordCommand,
+    channel: TextChannel,
+    user: User,
+    dm: boolean
+  ) {
+    const callerPerms = command.callerPermissions;
+    const perms = channel.permissionsFor(user);
+
+    return !dm ? callerPerms.filter((p) => perms.has(p)) : [];
+  }
+
+  private checkClientPermissions(
+    command: DiscordCommand,
+    channel: TextChannel,
+    user: User,
+    dm: boolean
+  ) {
+    const callerPerms = command.clientPermissions;
+    const perms = channel.permissionsFor(user);
+
+    return !dm ? callerPerms.filter((p) => perms.has(p)) : [];
+  }
+
+  private hasPermission(
+    command: DiscordCommand,
+    channel: TextChannel,
+    user: User,
+    dm: boolean
+  ): boolean {
+    if (command.admin && !this.bot.isOwner(user)) {
+      return false;
+    }
+
+    if (dm && command.guildOnly) {
+      throw "This command is for servers only.";
+    }
+
+    const missingCallerPermissions = this.checkCallerPermissions(
+      command,
+      channel,
+      user,
+      dm
+    );
+    if (missingCallerPermissions.length > 0) {
+      throw `You are missing the following permissions ${missingCallerPermissions.join()}`;
+    }
+
+    const missingClientPermissions = this.checkClientPermissions(
+      command,
+      channel,
+      this.bot.client.user,
+      dm
+    );
+    if (missingClientPermissions.length > 0) {
+      channel.send(
+        `I am missing the following permissions ${missingClientPermissions.join()}`
+      );
+      return false;
+    }
+
+    return true;
   }
 }

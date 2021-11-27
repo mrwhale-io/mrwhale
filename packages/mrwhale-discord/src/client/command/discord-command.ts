@@ -1,23 +1,42 @@
-import {
-  Command,
-  CommandOptions,
-  DEFAULT_COMMAND_RATE_LIMIT,
-} from "@mrwhale-io/core";
-import { CommandInteraction, Message } from "discord.js";
+import { Command, DEFAULT_COMMAND_RATE_LIMIT } from "@mrwhale-io/core";
+import { CommandInteraction, Message, PermissionResolvable } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 import { DiscordCommandRateLimiter } from "./discord-command-rate-limiter";
 import { DiscordBotClient } from "../discord-bot-client";
+import { DiscordCommandOptions } from "../../types/discord-command-options";
 
 export abstract class DiscordCommand extends Command<DiscordBotClient> {
+  /**
+   * Permissions required by the command caller.
+   */
+  callerPermissions: PermissionResolvable[];
+
+  /**
+   * Permissions required by the client.
+   */
+  clientPermissions: PermissionResolvable[];
+
+  /**
+   * Whether this is for guilds only.
+   */
+  guildOnly: boolean;
+
   /**
    * The slash command builder.
    */
   readonly slashCommandData: SlashCommandBuilder;
+
+  /**
+   * Command rate limiter.
+   */
   readonly rateLimiter: DiscordCommandRateLimiter;
 
-  constructor(options: CommandOptions) {
+  constructor(options: DiscordCommandOptions) {
     super(options);
+    this.guildOnly = options.guildOnly ?? false;
+    this.callerPermissions = options.callerPermissions ?? [];
+    this.clientPermissions = options.clientPermissions ?? [];
     this.slashCommandData = new SlashCommandBuilder()
       .setName(options.name)
       .setDescription(options.description);

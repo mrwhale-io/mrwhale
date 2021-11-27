@@ -1,5 +1,5 @@
 import { BotClient, BotOptions, KeyedStorageProvider } from "@mrwhale-io/core";
-import { Client, ClientOptions } from "discord.js";
+import { Client, ClientOptions, User } from "discord.js";
 
 import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
@@ -48,5 +48,14 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     const settings = this.guildSettings.get(guildId);
 
     return await settings.get("prefix", this.defaultPrefix);
+  }
+
+  /**
+   * Checks whether the given user is the bot owner.
+   *
+   * @param user The user to check.
+   */
+  isOwner(user: User): boolean {
+    return user.id === this.ownerId;
   }
 }
