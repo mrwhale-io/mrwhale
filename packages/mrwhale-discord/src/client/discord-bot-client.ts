@@ -31,8 +31,10 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.commandLoader.loadCommands();
     this.commandDispatcher = new DiscordCommandDispatcher(this);
     this.guildStorageLoader = new GuildStorageLoader(this);
-    this.guildStorageLoader.init();
-    this.guildStorageLoader.loadStorages();
+    this.client.on("ready", () => {
+      this.guildStorageLoader.init();
+      this.guildStorageLoader.loadStorages();
+    });
   }
 
   /**
