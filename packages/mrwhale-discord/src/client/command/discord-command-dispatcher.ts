@@ -3,6 +3,7 @@ import {
   getCommandName,
   getCommandArgs,
   dispatch,
+  code,
 } from "@mrwhale-io/core";
 import {
   Interaction,
@@ -170,30 +171,6 @@ export class DiscordCommandDispatcher {
     return false;
   }
 
-  private checkCallerPermissions(
-    command: DiscordCommand,
-    channel: TextChannel,
-    user: User,
-    dm: boolean
-  ) {
-    const callerPerms = command.callerPermissions;
-    const perms = channel.permissionsFor(user);
-
-    return !dm ? callerPerms.filter((p) => perms.has(p)) : [];
-  }
-
-  private checkClientPermissions(
-    command: DiscordCommand,
-    channel: TextChannel,
-    user: User,
-    dm: boolean
-  ) {
-    const callerPerms = command.clientPermissions;
-    const perms = channel.permissionsFor(user);
-
-    return !dm ? callerPerms.filter((p) => perms.has(p)) : [];
-  }
-
   private hasPermission(
     command: DiscordCommand,
     channel: TextChannel,
@@ -208,26 +185,28 @@ export class DiscordCommandDispatcher {
       throw "This command is for servers only.";
     }
 
-    const missingCallerPermissions = this.checkCallerPermissions(
-      command,
-      channel,
-      user,
-      dm
-    );
+    const missingCallerPermissions = !dm
+      ? channel.permissionsFor(user).missing(command.callerPermissions, false)
+      : [];
+
     if (missingCallerPermissions.length > 0) {
-      throw `You are missing the following permissions ${missingCallerPermissions.join()}`;
+      const error = `You are missing the following permissions: ${missingCallerPermissions
+        .map((missing) => code(missing))
+        .join(", ")}`;
+      throw error;
     }
 
-    const missingClientPermissions = this.checkClientPermissions(
-      command,
-      channel,
-      this.bot.client.user,
-      dm
-    );
+    const missingClientPermissions = !dm
+      ? channel
+          .permissionsFor(this.bot.client.user)
+          .missing(command.clientPermissions, false)
+      : [];
+
     if (missingClientPermissions.length > 0) {
-      channel.send(
-        `I am missing the following permissions ${missingClientPermissions.join()}`
-      );
+      const error = `I am missing the following permissions: ${missingCallerPermissions
+        .map((missing) => code(missing))
+        .join(", ")}`;
+      channel.send(error);
       return false;
     }
 
