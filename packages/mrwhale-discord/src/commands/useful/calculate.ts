@@ -1,7 +1,7 @@
 import { calculate } from "@mrwhale-io/commands";
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message } from "discord.js";
 
-import { DiscordCommand } from "../../client/discord-command";
+import { DiscordCommand } from "../../client/command/discord-command";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -14,7 +14,11 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(interaction: CommandInteraction): Promise<void> {
+  async action(message: Message, [expression]: [string]): Promise<Message> {
+    return message.reply(calculate.action(expression));
+  }
+
+  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
     const expression = interaction.options.getString("expression");
 
     return interaction.reply(calculate.action(expression));

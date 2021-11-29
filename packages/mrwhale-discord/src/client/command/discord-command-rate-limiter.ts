@@ -1,5 +1,5 @@
 import { CommandRateLimit, CommandRateLimiter } from "@mrwhale-io/core";
-import { CommandInteraction } from "discord.js";
+import { CommandInteraction, Message } from "discord.js";
 
 export class DiscordCommandRateLimiter extends CommandRateLimiter {
   readonly limit: number;
@@ -17,7 +17,7 @@ export class DiscordCommandRateLimiter extends CommandRateLimiter {
    *
    * @param interaction The command interaction to rate limit.
    */
-  get(interaction: CommandInteraction): CommandRateLimit {
+  get(interaction: CommandInteraction | Message): CommandRateLimit {
     if (!this.rateLimits.has(interaction.channelId)) {
       this.rateLimits.set(
         interaction.channelId,
@@ -25,15 +25,17 @@ export class DiscordCommandRateLimiter extends CommandRateLimiter {
       );
     }
 
-    if (!this.rateLimits.get(interaction.channelId).has(interaction.user.id)) {
+    const userId =
+      interaction instanceof CommandInteraction
+        ? interaction.user.id
+        : interaction.author.id;
+
+    if (!this.rateLimits.get(interaction.channelId).has(userId)) {
       this.rateLimits
         .get(interaction.channelId)
-        .set(
-          interaction.user.id,
-          new CommandRateLimit(this.limit, this.duration)
-        );
+        .set(userId, new CommandRateLimit(this.limit, this.duration));
     }
 
-    return this.rateLimits.get(interaction.channelId).get(interaction.user.id);
+    return this.rateLimits.get(interaction.channelId).get(userId);
   }
 }

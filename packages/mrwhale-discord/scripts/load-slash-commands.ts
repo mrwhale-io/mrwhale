@@ -3,7 +3,7 @@ import * as path from "path";
 
 import { COMMAND_TYPE_NAMES, loadCommand } from "@mrwhale-io/core";
 
-import { DiscordCommand } from "../src/client/discord-command";
+import { DiscordCommand } from "../src/client/command/discord-command";
 
 export function loadSlashCommands(): any[] {
   const commands = [];

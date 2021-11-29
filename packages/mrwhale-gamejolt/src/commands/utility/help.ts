@@ -15,6 +15,7 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, [typeOrCmdName]: [string]): Promise<Message> {
+    const prefix = await this.botClient.getPrefix(message.room_id);
     const types = [
       "admin",
       "fun",
@@ -46,11 +47,7 @@ export default class extends GameJoltCommand {
           info.addField("Aliases", `${cmd.aliases.join(", ")}`);
         }
 
-        return message.reply(
-          `${info
-            .build()
-            .replace(/<prefix>/g, this.botClient.getPrefix(message.room_id))}`
-        );
+        return message.reply(`${info.build().replace(/<prefix>/g, prefix)}`);
       }
 
       if (types.includes(typeOrCmdName.toLowerCase())) {
@@ -59,10 +56,7 @@ export default class extends GameJoltCommand {
         return message.reply(
           unorderedList(
             commands.map(
-              (command) =>
-                `${this.botClient.getPrefix(message.room_id)}${
-                  command.name
-                } - ${command.description}`
+              (command) => `${prefix}${command.name} - ${command.description}`
             )
           )
         );
@@ -72,11 +66,7 @@ export default class extends GameJoltCommand {
     }
 
     return message.reply(
-      unorderedList(
-        types.map(
-          (type) => `${this.botClient.getPrefix(message.room_id)}help ${type}`
-        )
-      )
+      unorderedList(types.map((type) => `${prefix}help ${type}`))
     );
   }
 }

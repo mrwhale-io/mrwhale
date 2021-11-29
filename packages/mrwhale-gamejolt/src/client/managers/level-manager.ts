@@ -1,9 +1,12 @@
-import { getLevelFromExp, getRandomInt, ListenerDecorators } from "@mrwhale-io/core";
+import {
+  getLevelFromExp,
+  getRandomInt,
+  ListenerDecorators,
+} from "@mrwhale-io/core";
 import { Message, Content } from "@mrwhale-io/gamejolt-client";
 
 import { GameJoltBotClient } from "../gamejolt-bot-client";
-import { Database } from "../../database/database";
-import { Score } from "../../database/entity/score";
+import { Score, ScoreInstance } from "../../database/models/score";
 
 const { on, registerListeners } = ListenerDecorators;
 
@@ -22,11 +25,30 @@ export class LevelManager {
   }
 
   /**
+   * Checks whether levels are enabled in the room.
+   *
+   * @param roomId The identifier of the room.
+   */
+  async isLevelsEnabled(roomId: number): Promise<boolean> {
+    if (!this.bot.roomSettings.has(roomId)) {
+      return true;
+    }
+
+    const settings = this.bot.roomSettings.get(roomId);
+
+    return await settings.get("levels", true);
+  }
+
+  /**
    * Get room scores.
    * @param roomId The room id to get scores for.
    */
-  static async getScores(roomId: number): Promise<Score[]> {
-    return await Database.connection.getRepository(Score).find({ roomId });
+  static async getScores(roomId: number): Promise<ScoreInstance[]> {
+    return await Score.findAll<ScoreInstance>({
+      where: {
+        roomId,
+      },
+    });
   }
 
   /**
@@ -34,10 +56,16 @@ export class LevelManager {
    * @param roomId The room id to get scores for.
    * @param userId The user id to get scores for.
    */
-  static async getUserScore(roomId: number, userId: number): Promise<Score> {
-    return await Database.connection
-      .getRepository(Score)
-      .findOne({ roomId, userId });
+  static async getUserScore(
+    roomId: number,
+    userId: number
+  ): Promise<ScoreInstance> {
+    return await Score.findOne({
+      where: {
+        roomId,
+        userId,
+      },
+    });
   }
 
   private isTimeForExp(roomId: number, userId: number) {
@@ -51,15 +79,14 @@ export class LevelManager {
   }
 
   private async getScore(userId: number, roomId: number) {
-    let score: Score = await Database.connection
-      .getRepository(Score)
-      .findOne({ roomId, userId });
+    let score = await LevelManager.getUserScore(roomId, userId);
 
     if (!score) {
-      score = new Score();
-      score.userId = userId;
-      score.roomId = roomId;
-      score.exp = 0;
+      score = Score.build({
+        userId,
+        roomId,
+        exp: 0,
+      });
     }
 
     return score;
@@ -67,11 +94,10 @@ export class LevelManager {
 
   @on("message")
   protected async onMessage(message: Message): Promise<void> {
-    if (
-      message.user.id === this.bot.client.userId ||
-      this.bot.client.chat.friendsList.getByRoom(message.room_id) ||
-      !this.bot.settings.get(message.room_id, "levels", true)
-    ) {
+    const isEnabled = await this.isLevelsEnabled(message.room_id);
+    const pmUser = this.bot.client.chat.friendsList.getByRoom(message.room_id);
+
+    if (message.user.id === this.bot.client.userId || pmUser || !isEnabled) {
       return;
     }
 
@@ -88,7 +114,7 @@ export class LevelManager {
     const level = getLevelFromExp(score.exp);
 
     score.exp += expGained;
-    Database.connection.getRepository(Score).save(score);
+    score.save();
 
     const newLevel = getLevelFromExp(score.exp);
 

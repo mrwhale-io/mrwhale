@@ -3,6 +3,8 @@ import { logger } from "../util/logger";
 import { BotOptions } from "../types/bot-options";
 import { CommandStorage } from "./command/command-storage";
 import { Command } from "./command/command";
+import { StorageProviderConstructor } from "../types/storage-provider-constructor";
+import { SqliteStorageProvider } from '../storage/sqlite-storage-provider';
 
 /**
  * Base class to extend bot client integrations from.
@@ -26,7 +28,12 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
   /**
    * The commands directory.
    */
-  commandsDir : string;
+  commandsDir: string;
+
+  /**
+   * The storage provider.
+   */
+  readonly provider: StorageProviderConstructor;
 
   /**
    * Bot client logging instance.
@@ -47,9 +54,17 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
     this.commandsDir = options.commandsDir;
     this.defaultPrefix = options.prefix;
     this.ownerId = options.ownerId;
+    this.provider = options.provider ?? SqliteStorageProvider();
     this.commands = new CommandStorage<this, T>();
     this.commandLoader = new CommandLoader(this);
   }
+
+  /**
+   * Gets the room prefix.
+   *
+   * @param id The id of the prefix.
+   */
+  abstract getPrefix(id?: unknown): string | Promise<string>;
 
   /**
    * Reloads a command or all commands for the bot client.

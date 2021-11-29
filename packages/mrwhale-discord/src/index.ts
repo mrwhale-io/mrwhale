@@ -1,21 +1,19 @@
+import { SqliteStorageProvider } from "@mrwhale-io/core";
 import * as path from "path";
-import { Intents } from "discord.js";
 
 import * as config from "../config.json";
 import { DiscordBotClient } from "./client/discord-bot-client";
+import { INTENTS } from "./constants";
 
 const bot = new DiscordBotClient(
   {
     commandsDir: path.join(__dirname, "./commands"),
     prefix: config.prefix,
     ownerId: config.ownerId,
+    provider: SqliteStorageProvider(path.join(process.cwd(), config.database))
   },
   {
-    intents: [
-      Intents.FLAGS.GUILDS,
-      Intents.FLAGS.GUILD_MESSAGES,
-      Intents.FLAGS.DIRECT_MESSAGES,
-    ],
+    intents: INTENTS,
   }
 );
 

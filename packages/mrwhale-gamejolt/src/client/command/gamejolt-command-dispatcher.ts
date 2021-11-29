@@ -28,7 +28,7 @@ export class GameJoltCommandDispatcher {
       return;
     }
 
-    const prefix = this.bot.getPrefix(message.room_id);
+    const prefix = await this.bot.getPrefix(message.room_id);
 
     if (!message.textContent.trim().startsWith(prefix)) {
       return;
@@ -39,9 +39,7 @@ export class GameJoltCommandDispatcher {
 
     if (!command) {
       return message.reply(
-        `Unknown command. Use ${this.bot.getPrefix(
-          message.room_id
-        )}help to view the command list.`
+        `Unknown command. Use ${prefix}help to view the command list.`
       );
     }
 

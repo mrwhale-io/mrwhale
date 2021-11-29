@@ -31,9 +31,9 @@
     "querystring": "^0.2.0",
     "reflect-metadata": "^0.1.13",
     "seedrandom": "^3.0.5",
+    "sequelize": "^6.9.0",
     "sqlite3": "^5.0.0",
     "tmp-promise": "^3.0.2",
-    "translate-google": "^1.4.2",
-    "typeorm": "^0.2.28"
+    "translate-google": "^1.4.2"
   }
 }

@@ -3,6 +3,7 @@
   "userId": 1,
   "prefix": "!",
   "ownerId": 1,
+  "database": "database.sqlite",
   "baseApiUrl": "https://gamejolt.com/site-api",
   "baseChatUrl": "https://chatex.gamejolt.com/chatex",
   "baseGridUrl": "",

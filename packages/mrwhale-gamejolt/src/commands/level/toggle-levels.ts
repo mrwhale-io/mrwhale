@@ -15,12 +15,27 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message): Promise<Message> {
-    let enabled = this.botClient.settings.get(message.room_id, "levels", true);
+    let enabled = await this.isLevelsEnabled(message.room_id);
     enabled = !enabled;
-    this.botClient.settings.set(message.room_id, "levels", enabled);
+
+    const settings = this.botClient.roomSettings.get(message.room_id);
+
+    if (settings) {
+      settings.set("levels", enabled);
+    }
 
     return enabled
       ? message.reply("Levels enabled.")
       : message.reply("Levels disabled.");
+  }
+
+  private async isLevelsEnabled(roomId: number): Promise<boolean> {
+    if (!this.botClient.roomSettings.has(roomId)) {
+      return true;
+    }
+
+    const settings = this.botClient.roomSettings.get(roomId);
+
+    return await settings.get("levels", true);
   }
 }

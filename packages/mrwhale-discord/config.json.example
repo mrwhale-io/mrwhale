@@ -1,6 +1,7 @@
 {
   "token": "",
   "prefix": "!",
+  "database: "database.sqlite",
   "ownerId": "",
   "cleverbot": "",
   "youtube": "",

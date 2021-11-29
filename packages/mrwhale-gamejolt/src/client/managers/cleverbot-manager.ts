@@ -26,8 +26,8 @@ export class CleverbotManager {
     registerListeners(this.bot.client, this);
   }
 
-  private hasCommand(message: Message) {
-    const prefix = this.bot.getPrefix(message.room_id);
+  private async hasCommand(message: Message) {
+    const prefix = await this.bot.getPrefix(message.room_id);
     const commandName = getCommandName(message.textContent, prefix);
     const command = this.bot.commands.findByNameOrAlias(commandName);
 

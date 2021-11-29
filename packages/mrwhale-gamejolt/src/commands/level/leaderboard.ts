@@ -1,12 +1,11 @@
-import { getLevelFromExp, codeBlock } from '@mrwhale-io/core';
+import { getLevelFromExp, codeBlock } from "@mrwhale-io/core";
 import { Message, User } from "@mrwhale-io/gamejolt-client";
+import * as sequelize from "sequelize";
 import * as AsciiTable from "ascii-table";
-import { createQueryBuilder } from "typeorm";
 import { User as GameUser } from "joltite.js";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
-import { Score } from "../../database/entity/score";
-import { Database } from "../../database/database";
+import { Score } from "../../database/models/score";
 
 interface MappedScores {
   exp: number;
@@ -53,18 +52,13 @@ export default class extends GameJoltCommand {
   }
 
   private async getRoomScores(roomId: number) {
-    const scores: Score[] = await Database.connection
-      .getRepository(Score)
-      .find({
-        where: {
-          roomId,
-        },
-        order: {
-          exp: "DESC",
-        },
-        skip: 0,
-        take: 10,
-      });
+    const scores = await Score.findAll({
+      where: {
+        roomId,
+      },
+      order: [["exp", "DESC"]],
+      limit: 10,
+    });
 
     const room = this.botClient.client.chat.activeRooms[roomId];
     const mappedMembers = mapUsers(room.members);
@@ -83,13 +77,14 @@ export default class extends GameJoltCommand {
   }
 
   private async getGlobalScores() {
-    const scores: Score[] = await createQueryBuilder("score")
-      .select("score.userId, SUM(score.exp)", "exp")
-      .orderBy("exp", "DESC")
-      .groupBy("score.userId")
-      .skip(0)
-      .take(10)
-      .execute();
+    const sum: any = sequelize.fn("sum", sequelize.col("exp"));
+    const scores = await Score.findAll({
+      attributes: ["userId", sum, "exp"],
+      order: [["exp", "DESC"]],
+      group: ["Score.userId"],
+      limit: 10,
+    });
+
     const memberIds = scores.map((score) => score.userId);
     const members = await this.botClient.gameApi.users.fetch(memberIds);
     const mappedMembers = mapUsers(members.users);
