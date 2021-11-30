@@ -25,6 +25,7 @@
     "canvas": "^2.8.0",
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
+    "jimp": "^0.16.1",
     "joltite.js": "^1.0.1",
     "moment": "^2.27.0",
     "profanity-util": "^0.2.0",
