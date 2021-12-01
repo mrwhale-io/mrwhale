@@ -70,6 +70,7 @@ export class GridManager extends events.EventEmitter {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       socketAny.reconnectTimer = { scheduleTimeout: () => {}, reset: () => {} };
     }
+    socketAny.params = { gj_platform: "web", gj_platform_version: "0.76.1" };
 
     await pollRequest(
       "Connect to socket",
@@ -83,7 +84,7 @@ export class GridManager extends events.EventEmitter {
     );
 
     const channel = this.socket.channel("notifications:" + this.client.userId, {
-      frontend_cookie: this.frontend,
+      auth_token: this.frontend,
     });
     this.notificationChannel = channel;
 
