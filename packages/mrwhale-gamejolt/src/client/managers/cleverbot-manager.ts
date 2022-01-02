@@ -31,11 +31,7 @@ export class CleverbotManager {
     const commandName = getCommandName(message.textContent, prefix);
     const command = this.bot.commands.findByNameOrAlias(commandName);
 
-    if (!command) {
-      return false;
-    }
-
-    return true;
+    return !!command;
   }
 
   @on("message")
@@ -45,11 +41,9 @@ export class CleverbotManager {
     }
 
     const pm = this.bot.client.chat.friendsList.getByRoom(message.room_id);
-    const hasCommand = this.hasCommand(message);
-    const canChat =
-      this.isEnabled && !hasCommand && (pm || message.isMentioned);
+    const hasCommand = await this.hasCommand(message);
 
-    if (canChat) {
+    if (this.isEnabled && !hasCommand && (pm || message.isMentioned)) {
       const user = this.bot.client.chat.currentUser;
       const userRegex = new RegExp(
         `((@)*${user?.username}|${user?.display_name})`,
