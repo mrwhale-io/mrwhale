@@ -1,6 +1,6 @@
 {
   "name": "@mrwhale-io/gamejolt",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Mr. Whale Game Jolt chat bot integration.",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@mrwhale-io/commands": "^1.0.1",
     "@mrwhale-io/core": "^1.1.0",
-    "@mrwhale-io/gamejolt-client": "^1.0.0",
+    "@mrwhale-io/gamejolt-client": "^1.0.1",
     "ascii-table": "^0.0.9",
     "axios": "^0.21.1",
     "canvas": "^2.8.0",
