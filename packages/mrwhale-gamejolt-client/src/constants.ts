@@ -31,3 +31,5 @@ export const Endpoints = {
     `/web/content/temp-resource-id/${content}`,
   fireside: (id: string): string => `/web/fireside/fetch/${id}`,
 };
+
+export const GJ_PLATFORM_VERSION = "0.76.1";

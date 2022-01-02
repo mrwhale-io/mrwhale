@@ -6,6 +6,7 @@ import { pollRequest } from "../../util/poll-request";
 import { Client } from "../client";
 import { GridManagerOptions } from "../../types/grid-manager-options";
 import { Notification } from "../../structures/notification";
+import { GJ_PLATFORM_VERSION } from "../../constants";
 
 interface NewNotificationPayload {
   notification_data: {
@@ -70,6 +71,10 @@ export class GridManager extends events.EventEmitter {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       socketAny.reconnectTimer = { scheduleTimeout: () => {}, reset: () => {} };
     }
+    socketAny.params = {
+      gj_platform: "web",
+      gj_platform_version: GJ_PLATFORM_VERSION,
+    };
 
     await pollRequest(
       "Connect to socket",
@@ -83,7 +88,7 @@ export class GridManager extends events.EventEmitter {
     );
 
     const channel = this.socket.channel("notifications:" + this.client.userId, {
-      frontend_cookie: this.frontend,
+      auth_token: this.frontend,
     });
     this.notificationChannel = channel;
 
