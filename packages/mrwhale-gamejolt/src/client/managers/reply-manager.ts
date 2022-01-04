@@ -6,10 +6,31 @@ import {
   User,
   FiresidePost,
 } from "@mrwhale-io/gamejolt-client";
+import { AxiosResponse } from "axios";
 
 import { GameJoltBotClient } from "../gamejolt-bot-client";
 
 const { on, registerListeners } = ListenerDecorators;
+
+const RESPONSES = [
+  {
+    regex: /harp(o+)n/gi,
+    responses: [
+      "h-h-harpoon????!",
+      "*swims away fast*",
+      "Oh no don't hurt me please!",
+      "Oh no not the harpoons!",
+    ],
+  },
+  {
+    regex: /b(o+)t/gi,
+    responses: ["Did someone say bot?", "I'm a robot", "beep boop"],
+  },
+  {
+    regex: /wh(a+)(l+)(e+)/gi,
+    responses: ["That's me!", "Whale then", "You have summoned me."],
+  },
+];
 
 export class ReplyManager {
   constructor(private bot: GameJoltBotClient) {
@@ -30,7 +51,7 @@ export class ReplyManager {
   @on("user_notification")
   protected async onUserNotification(
     notification: Notification
-  ): Promise<void> {
+  ): Promise<AxiosResponse<unknown>> {
     if (
       notification.type === "post-add" &&
       notification.from_model instanceof User &&
@@ -42,11 +63,26 @@ export class ReplyManager {
         content.insertText(
           notification.action_model.leadStr.match(WHALE_REGEX)[0]
         );
-        this.bot.client.api.comment(
+        return this.bot.client.api.comment(
           notification.action_resource_id,
           notification.action_resource,
           content.contentJson()
         );
+      }
+
+      for (const response of RESPONSES) {
+        if (notification.action_model.leadStr.match(response.regex)) {
+          content.insertText(
+            response.responses[
+              Math.floor(Math.random() * response.responses.length)
+            ]
+          );
+          return this.bot.client.api.comment(
+            notification.action_resource_id,
+            notification.action_resource,
+            content.contentJson()
+          );
+        }
       }
     }
   }
