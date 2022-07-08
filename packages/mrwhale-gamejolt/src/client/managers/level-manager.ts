@@ -101,6 +101,14 @@ export class LevelManager {
       return;
     }
 
+    const blockedUsersIds = this.bot.client.blockedUsers.map(
+      (blocked) => blocked.user.id
+    );
+
+    if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
+      return;
+    }
+
     const timeForExp = this.isTimeForExp(message.room_id, message.user.id);
 
     if (!timeForExp) {

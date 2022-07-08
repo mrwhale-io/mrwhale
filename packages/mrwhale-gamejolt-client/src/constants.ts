@@ -17,6 +17,9 @@ export const Events = {
 };
 
 export const Endpoints = {
+  block: `/web/dash/blocks/add`,
+  blocks: `/web/dash/blocks`,
+  unblock: (id: number): string => `/web/dash/blocks/remove/${id}`,
   requests: `/web/dash/friends/requests/requests`,
   friend_accept: (id: number): string =>
     `/web/dash/friends/requests/accept/${id}`,

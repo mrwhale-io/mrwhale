@@ -28,6 +28,14 @@ export class GameJoltCommandDispatcher {
       return;
     }
 
+    const blockedUsersIds = this.bot.client.blockedUsers.map(
+      (blocked) => blocked.user.id
+    );
+
+    if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
+      return;
+    }
+
     const prefix = await this.bot.getPrefix(message.room_id);
 
     if (!message.textContent.trim().startsWith(prefix)) {

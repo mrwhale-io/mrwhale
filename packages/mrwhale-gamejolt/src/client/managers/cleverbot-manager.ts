@@ -40,6 +40,14 @@ export class CleverbotManager {
       return;
     }
 
+    const blockedUsersIds = this.bot.client.blockedUsers.map(
+      (blocked) => blocked.user.id
+    );
+
+    if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
+      return;
+    }
+
     const pm = this.bot.client.chat.friendsList.getByRoom(message.room_id);
     const hasCommand = await this.hasCommand(message);
 

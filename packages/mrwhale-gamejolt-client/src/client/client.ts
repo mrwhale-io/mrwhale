@@ -7,6 +7,7 @@ import { APIManager } from "./api/api-manager";
 import { User } from "../structures/user";
 import { GridManager } from "./grid/grid-manager";
 import { Notification } from "../structures/notification";
+import { Block } from '../structures/block';
 
 const FRIEND_REQUEST_INTERVAL = 60;
 
@@ -35,6 +36,11 @@ export class Client extends events.EventEmitter {
   readonly userId: number;
 
   /**
+   * Contains all blocked users.
+   */
+  blockedUsers: Block[];
+
+  /**
    * The max number of requests that can be made
    * before rate limiting.
    */
@@ -60,6 +66,7 @@ export class Client extends events.EventEmitter {
       frontend: options.frontend,
       baseUrl: options.baseGridUrl,
     });
+    this.getBlockedUsers();
     this.rateLimitRequests = options.rateLimitRequests || 1;
     this.rateLimitDuration = options.rateLimitDuration || 1;
     this.initTimers();
@@ -101,6 +108,10 @@ export class Client extends events.EventEmitter {
   on(event: "user_notification", listener: (data: Notification) => void): this;
   on(event: string, listener: (...args: never[]) => void): this {
     return super.on(event, listener);
+  }
+
+  private async getBlockedUsers() {
+    this.blockedUsers = await this.api.getBlockedUsers();
   }
 
   /**

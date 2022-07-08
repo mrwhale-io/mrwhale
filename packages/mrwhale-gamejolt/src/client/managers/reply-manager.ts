@@ -43,6 +43,12 @@ export class ReplyManager {
       return;
     }
 
+    const blockedUsersIds = this.bot.client.blockedUsers.map((user) => user.id);
+
+    if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
+      return;
+    }
+
     if (message.textContent.match(WHALE_REGEX)) {
       message.reply(message.toString().match(WHALE_REGEX)[0]);
     }
