@@ -39,11 +39,13 @@ export class ReplyManager {
 
   @on("message")
   protected async onMessage(message: Message): Promise<void> {
-    if (message.user.id === this.bot.client.chat.currentUser.id) {
+    if (message.user.id === this.bot.client.grid.chat.currentUser.id) {
       return;
     }
 
-    const blockedUsersIds = this.bot.client.blockedUsers.map((user) => user.id);
+    const blockedUsersIds = this.bot.client.blockedUsers.map(
+      (blocked) => blocked.user.id
+    );
 
     if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
       return;

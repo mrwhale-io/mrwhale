@@ -22,7 +22,7 @@ export default class extends GameJoltCommand {
         responseType: "stream",
       });
 
-      const mediaItem = await this.botClient.client.chat.uploadFile(
+      const mediaItem = await this.botClient.client.grid.chat.uploadFile(
         avatarFile.data,
         message.room_id
       );

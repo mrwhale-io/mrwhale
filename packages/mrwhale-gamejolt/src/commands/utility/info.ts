@@ -22,14 +22,14 @@ export default class extends GameJoltCommand {
   async action(message: Message): Promise<Message> {
     const memoryUsage = process.memoryUsage().heapUsed / MEM_UNIT / MEM_UNIT;
     const groupIds =
-      this.botClient.client.chat.groupIds ||
-      this.botClient.client.chat.groups.map((group) => group.id);
+      this.botClient.client.grid.chat.groupIds ||
+      this.botClient.client.grid.chat.groups.map((group) => group.id);
     const response = new InfoBuilder()
       .addField("Version", version)
       .addField("Group chats", `${groupIds.length}`)
       .addField(
         "Friends",
-        `${this.botClient.client.chat.friendsList.collection.length}`
+        `${this.botClient.client.grid.chat.friendsList.collection.length}`
       )
       .addField("Loaded commands", `${this.botClient.commands.size}`)
       .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)}`)

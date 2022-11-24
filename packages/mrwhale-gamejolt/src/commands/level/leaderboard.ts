@@ -60,7 +60,7 @@ export default class extends GameJoltCommand {
       limit: 10,
     });
 
-    const room = this.botClient.client.chat.activeRooms[roomId];
+    const room = this.botClient.client.grid.chat.activeRooms[roomId];
     const mappedMembers = mapUsers(room.members);
 
     const filteredScores = scores.filter(({ userId }) =>

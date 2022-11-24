@@ -35,4 +35,4 @@ export const Endpoints = {
   fireside: (id: string): string => `/web/fireside/fetch/${id}`,
 };
 
-export const GJ_PLATFORM_VERSION = "0.76.1";
+export const GJ_PLATFORM_VERSION = "1.16.0";

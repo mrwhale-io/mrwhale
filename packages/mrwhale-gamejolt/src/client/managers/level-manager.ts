@@ -95,7 +95,7 @@ export class LevelManager {
   @on("message")
   protected async onMessage(message: Message): Promise<void> {
     const isEnabled = await this.isLevelsEnabled(message.room_id);
-    const pmUser = this.bot.client.chat.friendsList.getByRoom(message.room_id);
+    const pmUser = this.bot.client.grid.chat.friendsList.getByRoom(message.room_id);
 
     if (message.user.id === this.bot.client.userId || pmUser || !isEnabled) {
       return;
@@ -131,7 +131,7 @@ export class LevelManager {
         `Congrats @${message.user.username}, you just advanced to level ${newLevel}!`
       );
 
-      this.bot.client.chat.sendMessage(content, message.room_id);
+      this.bot.client.grid.chat.sendMessage(content, message.room_id);
     }
   }
 }
