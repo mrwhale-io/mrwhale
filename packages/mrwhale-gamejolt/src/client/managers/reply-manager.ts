@@ -23,12 +23,17 @@ const RESPONSES = [
     ],
   },
   {
-    regex: /b(o+)t/gi,
-    responses: ["Did someone say bot?", "I'm a robot", "beep boop"],
-  },
-  {
     regex: /wh(a+)(l+)(e+)/gi,
-    responses: ["That's me!", "Whale then", "You have summoned me."],
+    responses: [
+      "Hello!",
+      "Hey, Don't mind me I'm just watching your posts.",
+      "I'm guessing you're talking about me?",
+      "*insert insightful comment here*",
+      "Whale then",
+      "I didn't read the post but I sense you mentioned me.",
+      "My Whale sense is tingling",
+      "Okay what did I do this time?",
+    ],
   },
 ];
 
