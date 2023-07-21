@@ -34,8 +34,7 @@
     "profanity-util": "^0.2.0",
     "seedrandom": "^3.0.5",
     "translate-google": "^1.5.0",
-    "wikijs": "^6.0.1",
-    "wolfram-alpha-api": "https://products.wolframalpha.com/api/libraries/javascript/wolfram-alpha-api-1.0.0-rc.1.tgz"
+    "wikijs": "^6.0.1"
   },
   "devDependencies": {
     "@types/figlet": "^1.2.0",
