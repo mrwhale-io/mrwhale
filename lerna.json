@@ -1,11 +1,15 @@
 {
-  "packages": ["packages/*"],
+  "packages": [
+    "packages/*"
+  ],
   "version": "independent",
   "npmClient": "yarn",
-  "useWorkspaces": true,
   "command": {
     "publish": {
-      "ignoreChanges": ["*.md", "__tests__"],
+      "ignoreChanges": [
+        "*.md",
+        "__tests__"
+      ],
       "message": "chore(release): publish"
     }
   }

@@ -1,0 +1,37 @@
+{
+  "name": "@mrwhale-io/mudgolt",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mr. Whale mudgolt chat bot integration.",
+  "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
+  "homepage": "https://github.com/mrwhale-io/mrwhale#readme",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrwhale-io/mrwhale.git"
+  },
+  "scripts": {
+    "start": "ts-node src/index.ts"
+  },
+  "bugs": {
+    "url": "https://github.com/mrwhale-io/mrwhale/issues"
+  },
+  "dependencies": {
+    "@mrwhale-io/commands": "^1.0.1",
+    "@mrwhale-io/core": "^1.1.0",
+    "sequelize": "^6.9.0",
+    "sqlite3": "^5.0.0",
+    "ws": "^7.4.4"
+  },
+  "devDependencies": {
+    "@types/jwk-to-pem": "^2.0.0",
+    "@types/ws": "^7.4.1"
+  }
+}
