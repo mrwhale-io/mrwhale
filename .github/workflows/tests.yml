@@ -15,7 +15,6 @@ jobs:
       - name: install, bootstrap and build
         run: |
           yarn install
-          yarn boot
           yarn build
       - name: test
         run: |
