@@ -84,7 +84,7 @@ export class DiscordCommandDispatcher {
     }
 
     const args = getCommandArgs(message.content, prefix, command.argSeparator);
-
+    
     await dispatch(command, message, args).catch((e) =>
       this.bot.logger.error(e)
     );
@@ -203,7 +203,7 @@ export class DiscordCommandDispatcher {
       : [];
 
     if (missingClientPermissions.length > 0) {
-      const error = `I am missing the following permissions: ${missingCallerPermissions
+      const error = `I am missing the following permissions: ${missingClientPermissions
         .map((missing) => code(missing))
         .join(", ")}`;
       channel.send(error);

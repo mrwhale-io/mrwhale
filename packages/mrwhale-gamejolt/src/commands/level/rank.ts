@@ -52,7 +52,7 @@ export default class extends GameJoltCommand {
         secondaryTextColor: "#ccff00",
         progressFillColor: "#201d27",
         progressColor: "#ff3fac",
-        font: "34px sans-serif",
+        font: "32px sans-serif",
       };
 
       const canvas = await createPlayerCard(info, theme);

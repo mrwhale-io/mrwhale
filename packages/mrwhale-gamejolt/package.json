@@ -22,7 +22,7 @@
     "@mrwhale-io/gamejolt-client": "^1.0.1",
     "ascii-table": "^0.0.9",
     "axios": "^0.21.1",
-    "canvas": "^2.8.0",
+    "canvas": "^2.11.2",
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
     "jimp": "^0.16.1",

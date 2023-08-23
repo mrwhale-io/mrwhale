@@ -20,5 +20,9 @@ export async function action(text: string): Promise<unknown> {
 
   const result = (await figletAsync(text)) as string;
 
+  if (!result) {
+    return "Could not parse input."
+  }
+
   return codeBlock(result);
 }
