@@ -1,4 +1,4 @@
-import { TimeUtilities, unorderedList, codeBlock } from "@mrwhale-io/core";
+import { TimeUtilities, unorderedList, codeBlock, code } from "@mrwhale-io/core";
 import { CommandInteraction, MessageEmbed, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
@@ -19,9 +19,11 @@ export default class extends DiscordCommand {
   }
 
   async action(message: Message, [typeOrCmdName]: [string]): Promise<Message> {
-    const types = ["fun", "utility", "useful"];
-    const prefix = await this.botClient.getPrefix(message.guildId);
-
+    const types = ["fun", "utility", "useful", "level"];
+    let prefix = await this.botClient.getPrefix(message.guildId);
+    if (prefix.length > 1) {
+      prefix = prefix + ' ';
+    }
     if (typeOrCmdName) {
       const cmd = this.botClient.commands.findByNameOrAlias(typeOrCmdName);
 
@@ -56,7 +58,7 @@ export default class extends DiscordCommand {
         return message.reply(
           unorderedList(
             commands.map(
-              (command) => `${prefix}${command.name} - ${command.description}`
+              (command) => `${code(prefix + command.name)} - ${command.description}`
             )
           )
         );

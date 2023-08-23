@@ -20,7 +20,9 @@ export function loadSlashCommands(): any[] {
     const commandLocation = file.replace(".ts", "");
     const loadedCommand: any = loadCommand(commandLocation, "DiscordCommand");
     const command: DiscordCommand = new loadedCommand();
-    commands.push(command.slashCommandData.toJSON());
+    if (command.slashCommandAction) {
+      commands.push(command.slashCommandData.toJSON());
+    }
   }
 
   return commands;

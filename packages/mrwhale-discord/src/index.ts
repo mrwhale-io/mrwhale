@@ -23,3 +23,7 @@ bot.client.on("ready", () => {
   bot.commandDispatcher.ready = true;
   bot.client.user.setActivity(`in ${bot.client.guilds.cache.size} servers`);
 });
+
+process.on("unhandledRejection", (err) => {
+	console.error(err);
+});

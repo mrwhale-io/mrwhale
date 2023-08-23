@@ -30,6 +30,8 @@
     "@discordjs/rest": "^0.1.0-canary.0",
     "@mrwhale-io/commands": "^1.0.1",
     "@mrwhale-io/core": "^1.1.0",
+    "axios": "^0.21.1",
+    "canvas": "^2.11.2",
     "discord-api-types": "^0.23.1",
     "discord.js": "^13.1.0",
     "sequelize": "^6.9.0"

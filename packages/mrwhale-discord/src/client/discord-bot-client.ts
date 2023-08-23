@@ -4,6 +4,7 @@ import { Client, ClientOptions, User } from "discord.js";
 import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
 import { GuildStorageLoader } from "./storage/guild-storage-loader";
+import { LevelManager } from "./managers/level-manager";
 
 export class DiscordBotClient extends BotClient<DiscordCommand> {
   /**
@@ -21,6 +22,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   readonly guildSettings: Map<string, KeyedStorageProvider>;
 
+  private readonly levelManager: LevelManager;
   private readonly guildStorageLoader: GuildStorageLoader;
 
   constructor(botOptions: BotOptions, clientOptions: ClientOptions) {
@@ -29,6 +31,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.guildSettings = new Map<string, KeyedStorageProvider>();
     this.commandLoader.commandType = DiscordCommand.name;
     this.commandLoader.loadCommands();
+    this.levelManager = new LevelManager(this);
     this.commandDispatcher = new DiscordCommandDispatcher(this);
     this.guildStorageLoader = new GuildStorageLoader(this);
     this.guildStorageLoader.init();
