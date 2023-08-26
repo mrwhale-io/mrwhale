@@ -17,7 +17,7 @@ export default class extends DiscordCommand {
   async action(message: Message): Promise<void | Message<boolean>> {
     const settings = this.botClient.guildSettings.get(message.guildId);
     const channel = message.mentions.channels.first();
-    if (channel.type !== ChannelType.GuildText) {
+    if (!channel || channel.type !== ChannelType.GuildText) {
       return message.reply("You must pass a text based channel.");
     }
 
