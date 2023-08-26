@@ -58,6 +58,10 @@ export class DiscordCommandDispatcher {
     const commandName = getCommandName(message.content, prefix);
     const command = this.bot.commands.findByNameOrAlias(commandName);
 
+    if (!command) {
+      return;
+    }
+
     if (!this.checkRateLimits(message, command)) {
       return;
     }
