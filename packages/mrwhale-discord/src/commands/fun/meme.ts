@@ -1,8 +1,13 @@
 import { meme } from "@mrwhale-io/commands";
-import { CommandInteraction, MessageEmbed, Message } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  Message,
+  InteractionResponse,
+} from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
-import { EMBED_COLOR } from '../../constants';
+import { EMBED_COLOR } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -18,12 +23,12 @@ export default class extends DiscordCommand {
       }
 
       const index = Math.floor(Math.random() * memes.length);
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setTitle(memes[index].title)
         .setColor(EMBED_COLOR)
         .setDescription("Posted by " + memes[index].author)
         .setImage(memes[index].url)
-        .setFooter(`r/dankmemes`);
+        .setFooter({ text: `r/dankmemes` });
 
       return message.reply({
         embeds: [embed],
@@ -33,7 +38,9 @@ export default class extends DiscordCommand {
     }
   }
 
-  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<InteractionResponse<boolean>> {
     try {
       const memes = await meme.fetchMemes();
 
@@ -42,12 +49,12 @@ export default class extends DiscordCommand {
       }
 
       const index = Math.floor(Math.random() * memes.length);
-      const embed = new MessageEmbed()
+      const embed = new EmbedBuilder()
         .setTitle(memes[index].title)
         .setColor(EMBED_COLOR)
         .setDescription("Posted by " + memes[index].author)
         .setImage(memes[index].url)
-        .setFooter(`r/dankmemes`);
+        .setFooter({ text: `r/dankmemes` });
 
       return interaction.reply({
         embeds: [embed],

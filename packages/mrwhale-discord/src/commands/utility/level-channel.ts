@@ -1,4 +1,4 @@
-import { Message } from "discord.js";
+import { ChannelType, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
 
@@ -10,14 +10,14 @@ export default class extends DiscordCommand {
       type: "utility",
       usage: "<prefix>level channel <channel>",
       guildOnly: true,
-      callerPermissions: ["ADMINISTRATOR"],
+      callerPermissions: ["Administrator"],
     });
   }
 
   async action(message: Message): Promise<void | Message<boolean>> {
     const settings = this.botClient.guildSettings.get(message.guildId);
     const channel = message.mentions.channels.first();
-    if (!channel.isText()) {
+    if (channel.type !== ChannelType.GuildText) {
       return message.reply("You must pass a text based channel.");
     }
 

@@ -1,4 +1,8 @@
-import { CommandInteraction, Message } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  InteractionResponse,
+  Message,
+} from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
 
@@ -11,7 +15,7 @@ export default class extends DiscordCommand {
       description: "Sets the bot prefix.",
       type: "utility",
       usage: "<prefix>prefix <prefix>",
-      callerPermissions: ["ADMINISTRATOR"],
+      callerPermissions: ["Administrator"],
     });
     this.slashCommandData.addStringOption((option) =>
       option
@@ -25,7 +29,9 @@ export default class extends DiscordCommand {
     return message.reply(this.setPrefix(prefix, message.guildId));
   }
 
-  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<InteractionResponse<boolean>> {
     const prefix = interaction.options.getString("prefix");
 
     return interaction.reply(this.setPrefix(prefix, interaction.guildId));

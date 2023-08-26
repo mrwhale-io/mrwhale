@@ -1,4 +1,8 @@
-import { CommandInteraction, Message, MessageAttachment } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  Message,
+  AttachmentBuilder,
+} from "discord.js";
 
 import { getLevelFromExp, getRemainingExp, levelToExp } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
@@ -25,7 +29,7 @@ export default class extends DiscordCommand {
       type: "level",
       cooldown: 3000,
       guildOnly: true,
-      clientPermissions: ["ATTACH_FILES"],
+      clientPermissions: ["AttachFiles"],
     });
     this.slashCommandData.addUserOption((option) =>
       option
@@ -61,10 +65,9 @@ export default class extends DiscordCommand {
         rank,
       };
       const canvas = await createPlayerCard(info, THEME);
-      const attachment = new MessageAttachment(
-        canvas.toBuffer("image/png"),
-        "rank-image.png"
-      );
+      const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
+        name: "rank-image.png",
+      });
 
       responseMsg.edit({ files: [attachment], content: null });
     } catch {
@@ -72,7 +75,9 @@ export default class extends DiscordCommand {
     }
   }
 
-  async slashCommandAction(interaction: CommandInteraction): Promise<unknown> {
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<unknown> {
     try {
       await interaction.deferReply();
       const user = interaction.options.getUser("user") || interaction.user;
@@ -101,10 +106,9 @@ export default class extends DiscordCommand {
         rank,
       };
       const canvas = await createPlayerCard(info, THEME);
-      const attachment = new MessageAttachment(
-        canvas.toBuffer("image/png"),
-        "rank-image.png"
-      );
+      const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
+        name: "rank-image.png",
+      });
 
       interaction.editReply({ files: [attachment] });
     } catch {

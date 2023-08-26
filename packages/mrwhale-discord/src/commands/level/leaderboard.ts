@@ -1,4 +1,10 @@
-import { CommandInteraction, Message, MessageEmbed, User } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  InteractionResponse,
+  Message,
+  User,
+} from "discord.js";
 import * as sequelize from "sequelize";
 
 import { code, getLevelFromExp } from "@mrwhale-io/core";
@@ -37,7 +43,7 @@ export default class extends DiscordCommand {
     let table = "Here are the top players for this leaderboard.\n\n";
     for (let i = 0; i < mappedScores.length; i++) {
       const score = mappedScores[i];
-      table += `${code(`#${i + 1}`)} | <@${score.user.id}> • *Exp: ${
+      table += `${code(`#${i + 1}`)} | **@${score.user.username}** • *Exp: ${
         score.exp
       } (Level ${score.level})*\n\n`;
     }
@@ -45,7 +51,7 @@ export default class extends DiscordCommand {
     return table.toString();
   }
 
-  private async getGuildScores(message: Message | CommandInteraction) {
+  private async getGuildScores(message: Message | ChatInputCommandInteraction) {
     const scores = await Score.findAll({
       where: {
         guildId: message.guildId,
@@ -69,7 +75,7 @@ export default class extends DiscordCommand {
   }
 
   private async getGlobalScores(
-    message: Message | CommandInteraction
+    message: Message | ChatInputCommandInteraction
   ): Promise<MappedScores[]> {
     const sum: any = sequelize.fn("sum", sequelize.col("exp"));
     const scores = await Score.findAll({
@@ -93,7 +99,7 @@ export default class extends DiscordCommand {
 
   async action(message: Message, [command]: [string]): Promise<Message> {
     try {
-      const embed = new MessageEmbed().setColor(EMBED_COLOR);
+      const embed = new EmbedBuilder().setColor(EMBED_COLOR);
 
       let mappedScores: MappedScores[] = [];
       if (command && command.toLowerCase().trim() === "global") {
@@ -124,12 +130,14 @@ export default class extends DiscordCommand {
     }
   }
 
-  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<InteractionResponse<boolean>> {
     try {
       let mappedScores: MappedScores[] = [];
 
       const global = interaction.options.getBoolean("global") || false;
-      const embed = new MessageEmbed().setColor(EMBED_COLOR);
+      const embed = new EmbedBuilder().setColor(EMBED_COLOR);
 
       if (global) {
         embed.setTitle(`Global leaderboard`);

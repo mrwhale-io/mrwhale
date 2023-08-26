@@ -24,7 +24,7 @@
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
   },
   "dependencies": {
-    "@discordjs/collection": "^0.2.1",
+    "@discordjs/collection": "^1.5.3",
     "jest": "^27.2.1",
     "sequelize": "^6.9.0",
     "winston": "^3.3.3"

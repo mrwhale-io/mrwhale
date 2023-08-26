@@ -1,5 +1,9 @@
 import { fact } from "@mrwhale-io/commands";
-import { CommandInteraction, Message } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  InteractionResponse,
+  Message,
+} from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
 
@@ -12,7 +16,9 @@ export default class extends DiscordCommand {
     return message.reply(await fact.action());
   }
 
-  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<InteractionResponse<boolean>> {
     return interaction.reply(await fact.action());
   }
 }

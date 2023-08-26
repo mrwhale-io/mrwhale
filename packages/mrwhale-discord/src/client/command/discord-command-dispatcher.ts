@@ -7,10 +7,11 @@ import {
 } from "@mrwhale-io/core";
 import {
   Interaction,
-  CommandInteraction,
+  ChatInputCommandInteraction,
   Message,
   TextChannel,
   User,
+  ChannelType,
 } from "discord.js";
 
 import { DiscordBotClient } from "../discord-bot-client";
@@ -47,7 +48,7 @@ export class DiscordCommandDispatcher {
       return;
     }
 
-    const dm = message.channel.type === "DM";
+    const dm = message.channel.type === ChannelType.DM;
     const prefix = await this.bot.getPrefix(message.guildId);
 
     if (!message.content.trim().startsWith(prefix)) {
@@ -56,12 +57,6 @@ export class DiscordCommandDispatcher {
 
     const commandName = getCommandName(message.content, prefix);
     const command = this.bot.commands.findByNameOrAlias(commandName);
-
-    if (!command) {
-      return message.reply(
-        `Unknown command. Use ${prefix}help to view the command list.`
-      );
-    }
 
     if (!this.checkRateLimits(message, command)) {
       return;
@@ -84,7 +79,7 @@ export class DiscordCommandDispatcher {
     }
 
     const args = getCommandArgs(message.content, prefix, command.argSeparator);
-    
+
     await dispatch(command, message, args).catch((e) =>
       this.bot.logger.error(e)
     );
@@ -95,11 +90,10 @@ export class DiscordCommandDispatcher {
   }
 
   private async handleInteraction(interaction: Interaction) {
-    if (!interaction.isCommand() || !this._ready) {
+    if (!interaction.isChatInputCommand() || !this._ready) {
       return;
     }
 
-    const dm = interaction.channel.type === "DM";
     const commandName = interaction.commandName.toLowerCase();
     const command = this.bot.commands.findByNameOrAlias(commandName);
 
@@ -113,7 +107,7 @@ export class DiscordCommandDispatcher {
         command,
         interaction.channel as TextChannel,
         interaction.user,
-        dm
+        !interaction.inGuild()
       );
     } catch (error) {
       return interaction.reply(error);
@@ -133,7 +127,7 @@ export class DiscordCommandDispatcher {
   }
 
   private checkRateLimits(
-    interaction: CommandInteraction | Message,
+    interaction: ChatInputCommandInteraction | Message,
     command: DiscordCommand
   ): boolean {
     const passed = this.checkRateLimiter(interaction, command);
@@ -146,7 +140,7 @@ export class DiscordCommandDispatcher {
   }
 
   private checkRateLimiter(
-    interaction: CommandInteraction | Message,
+    interaction: ChatInputCommandInteraction | Message,
     command: DiscordCommand
   ): boolean {
     const rateLimiter = command.rateLimiter;
