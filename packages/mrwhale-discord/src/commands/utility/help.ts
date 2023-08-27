@@ -40,7 +40,7 @@ export default class extends DiscordCommand {
     typeOrCmdName: string,
     prefix: string
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
-    const types = ["fun", "utility", "useful", "level", "image"];
+    const types = ["fun", "utility", "useful", "level", "game", "image"];
     if (prefix.length > 1) {
       prefix = prefix + " ";
     }
