@@ -18,6 +18,7 @@ export default class extends DiscordCommand {
       usage: "<prefix>chocolatemilk",
       aliases: ["choccy", "milk", "choccymilk"],
       cooldown: 5000,
+      clientPermissions: ["AttachFiles"],
     });
   }
 

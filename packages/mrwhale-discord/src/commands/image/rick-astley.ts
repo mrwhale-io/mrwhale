@@ -12,20 +12,27 @@ import { DiscordCommand } from "../../client/command/discord-command";
 export default class extends DiscordCommand {
   constructor() {
     super({
-      name: "gun",
-      description: "Edits your avatar to hold a gun.",
+      name: "rickastley",
+      description: "Places your avatar on Rick Astley.",
       type: "image",
-      usage: "<prefix>gun",
-      aliases: ["deletethis"],
+      usage: "<prefix>rickastley @user",
       cooldown: 5000,
+      aliases: ["rick", "rickroll"],
       clientPermissions: ["AttachFiles"],
     });
+    this.slashCommandData.addUserOption((option) =>
+      option
+        .setName("user")
+        .setDescription("The user's avatar to put on Rick Astley.")
+        .setRequired(false)
+    );
   }
 
   async action(message: Message): Promise<Message<boolean>> {
+    const user = message.mentions.users.first() || message.author;
     const responseMsg = await message.reply("Processing please wait...");
     const attachment = await this.generateImage(
-      message.author.displayAvatarURL({ extension: "png", size: 512 })
+      user.displayAvatarURL({ extension: "png", size: 512 })
     );
 
     return responseMsg.edit({ files: [attachment], content: null });
@@ -34,9 +41,10 @@ export default class extends DiscordCommand {
   async slashCommandAction(
     interaction: ChatInputCommandInteraction
   ): Promise<void> {
+    const user = interaction.options.getUser("user") || interaction.user;
     await interaction.deferReply();
     const attachment = await this.generateImage(
-      interaction.user.displayAvatarURL({ extension: "png", size: 512 })
+      user.displayAvatarURL({ extension: "png", size: 512 })
     );
 
     interaction.editReply({ files: [attachment] });
@@ -46,26 +54,25 @@ export default class extends DiscordCommand {
     const avatarFile = await axios.get(avatarUrl, {
       responseType: "arraybuffer",
     });
-    const base = await loadImage(
-      path.join(__dirname, "..", "..", "..", "images", "gun.png")
+    const rick = await loadImage(
+      path.join(__dirname, "..", "..", "..", "images", "Rick-astley.png")
     );
     const avatar = await loadImage(avatarFile.data);
-    const canvas = createCanvas(avatar.width, avatar.height);
+    const canvas = createCanvas(rick.width, rick.height);
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(avatar, 0, 0);
-
-    const ratio = avatar.height / 2 / base.height;
-    const width = base.width * ratio;
+    ctx.drawImage(rick, 0, 0);
+    const ratio = rick.height / 3 / avatar.height;
+    const width = avatar.width * ratio;
     ctx.drawImage(
-      base,
-      avatar.width - width,
-      avatar.height - avatar.height / 2,
+      avatar,
+      width + width / 2,
+      avatar.height / 4,
       width,
-      avatar.height / 2
+      rick.height / 3
     );
 
     const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
-      name: "gun.png",
+      name: "Rick-astley.png",
     });
 
     return attachment;
