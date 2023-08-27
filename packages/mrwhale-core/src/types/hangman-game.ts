@@ -51,7 +51,7 @@ export class HangmanGame {
   /**
    * @param ownerId The id of the user who started the game.
    */
-  constructor(ownerId: number) {
+  constructor(ownerId: number | string) {
     this.lettersGuessed = "";
     this.lettersMatched = "";
     this.numLettersMatched = 0;
