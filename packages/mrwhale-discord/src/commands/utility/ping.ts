@@ -13,7 +13,6 @@ export default class extends DiscordCommand {
   }
 
   async action(message: Message): Promise<Message> {
-    console.log("ping")
     return message.reply(ping.action());
   }
 
