@@ -1,8 +1,8 @@
+import { ChannelType, Message, TextBasedChannel } from "discord.js";
 import { getLevelFromExp, getRandomInt } from "@mrwhale-io/core";
 
 import { DiscordBotClient } from "../discord-bot-client";
 import { Score, ScoreInstance } from "../../database/models/score";
-import { CommandInteraction, Message, TextBasedChannels } from "discord.js";
 
 const TIME_FOR_EXP = 6e4;
 
@@ -90,7 +90,7 @@ export class LevelManager {
 
   private async getAnnouncementChannel(
     message: Message
-  ): Promise<TextBasedChannels> {
+  ): Promise<TextBasedChannel> {
     if (!this.bot.guildSettings.has(message.guildId)) {
       return message.channel;
     }
@@ -99,15 +99,15 @@ export class LevelManager {
     const channelId = await settings.get("levelChannel", message.channel.id);
 
     return this.bot.client.channels.cache.has(channelId)
-      ? (this.bot.client.channels.cache.get(channelId) as TextBasedChannels)
+      ? (this.bot.client.channels.cache.get(channelId) as TextBasedChannel)
       : ((await this.bot.client.channels.fetch(
           channelId
-        )) as TextBasedChannels);
+        )) as TextBasedChannel);
   }
 
   protected async onMessage(message: Message): Promise<void> {
     const isEnabled = await this.isLevelsEnabled(message.guildId);
-    const dm = message.channel.type === "DM";
+    const dm = message.channel.type === ChannelType.DM;
 
     if (message.author.bot || dm || !isEnabled) {
       return;

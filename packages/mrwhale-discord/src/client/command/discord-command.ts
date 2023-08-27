@@ -1,5 +1,5 @@
 import { Command, DEFAULT_COMMAND_RATE_LIMIT } from "@mrwhale-io/core";
-import { CommandInteraction, Message, PermissionResolvable } from "discord.js";
+import { ChatInputCommandInteraction, Message, PermissionResolvable } from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 import { DiscordCommandRateLimiter } from "./discord-command-rate-limiter";
@@ -59,5 +59,5 @@ export abstract class DiscordCommand extends Command<DiscordBotClient> {
    *
    * @param interaction The interaction that invoked this command.
    */
-  slashCommandAction?(interaction: CommandInteraction): Promise<unknown>;
+  slashCommandAction?(interaction: ChatInputCommandInteraction): Promise<unknown>;
 }

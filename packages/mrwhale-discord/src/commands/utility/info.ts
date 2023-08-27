@@ -1,10 +1,15 @@
 import { TimeUtilities } from "@mrwhale-io/core";
-import { CommandInteraction, Message, MessageEmbed } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  InteractionResponse,
+  Message,
+} from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
 import { version } from "../../../package.json";
 import { discordServer } from "../../../config.json";
-import { EMBED_COLOR } from '../../constants';
+import { EMBED_COLOR } from "../../constants";
 
 const FRACTIONAL_DIGITS = 2;
 const MEM_UNIT = 1024;
@@ -21,34 +26,55 @@ export default class extends DiscordCommand {
     });
   }
 
-  async action(message: Message): Promise<void | Message> {
+  async action(
+    message: Message
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     return this.getInfo(message);
   }
 
   async slashCommandAction(
-    interaction: CommandInteraction
-  ): Promise<void | Message> {
+    interaction: ChatInputCommandInteraction
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     return this.getInfo(interaction);
   }
 
-  private getInfo(message: Message | CommandInteraction) {
+  private getInfo(
+    message: Message | ChatInputCommandInteraction
+  ): Promise<InteractionResponse<boolean>> | Promise<Message<boolean>> {
     const avatar = this.botClient.client.user.displayAvatarURL();
     const memoryUsage = process.memoryUsage().heapUsed / MEM_UNIT / MEM_UNIT;
 
-    const embed = new MessageEmbed()
-      .addField(
-        "Official Discord server",
-        `[Join my Discord server!](${discordServer})`
-      )
-      .addField("Source code", "https://github.com/mrwhale-io/mrwhale")
-      .addField("Version", version)
-      .addField("Server", `${this.botClient.client.guilds.cache.size}`)
-      .addField("Loaded commands", `${this.botClient.commands.size}`)
-      .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)} MB`)
-      .addField(
-        "Bot uptime",
-        `${TimeUtilities.convertMs(this.botClient.client.uptime)}`
-      )
+    const embed = new EmbedBuilder()
+      .addFields([
+        {
+          name: "Official Discord server",
+          value: `[Join my Discord server!](${discordServer})`,
+        },
+        {
+          name: "Source code",
+          value: "https://github.com/mrwhale-io/mrwhale",
+        },
+        {
+          name: "Version",
+          value: version,
+        },
+        {
+          name: "Server",
+          value: `${this.botClient.client.guilds.cache.size}`,
+        },
+        {
+          name: "Loaded commands",
+          value: `${this.botClient.commands.size}`,
+        },
+        {
+          name: "Memory usage",
+          value: `${memoryUsage.toFixed(FRACTIONAL_DIGITS)} MB`,
+        },
+        {
+          name: "Bot uptime",
+          value: `${TimeUtilities.convertMs(this.botClient.client.uptime)}`,
+        },
+      ])
       .setColor(EMBED_COLOR)
       .setDescription(
         `Hi I'm ${this.botClient.client.user.username} a general purpose discord bot. Use the \`help\` command to see my commands`

@@ -1,5 +1,10 @@
-import { TimeUtilities, unorderedList, codeBlock, code } from "@mrwhale-io/core";
-import { CommandInteraction, MessageEmbed, Message } from "discord.js";
+import { TimeUtilities, unorderedList, code } from "@mrwhale-io/core";
+import {
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  Message,
+  InteractionResponse,
+} from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
@@ -18,35 +23,57 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(message: Message, [typeOrCmdName]: [string]): Promise<Message> {
-    const types = ["fun", "utility", "useful", "level"];
-    let prefix = await this.botClient.getPrefix(message.guildId);
+  async action(message: Message, [typeOrCmdName]: [string]): Promise<void> {
+    const prefix = await this.botClient.getPrefix(message.guildId);
+    this.getHelpInfo(message, typeOrCmdName, prefix);
+  }
+
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<void> {
+    const name = interaction.options.getString("name");
+    this.getHelpInfo(interaction, name, "/");
+  }
+
+  private async getHelpInfo(
+    message: Message | ChatInputCommandInteraction,
+    typeOrCmdName: string,
+    prefix: string
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
+    const types = ["fun", "utility", "useful", "level", "image"];
     if (prefix.length > 1) {
-      prefix = prefix + ' ';
+      prefix = prefix + " ";
     }
     if (typeOrCmdName) {
       const cmd = this.botClient.commands.findByNameOrAlias(typeOrCmdName);
 
       if (cmd) {
-        const info = new MessageEmbed()
-          .setColor(EMBED_COLOR)
-          .addField("Name", cmd.name)
-          .addField("Description", cmd.description)
-          .addField("Type", cmd.type)
-          .addField(
-            "Cooldown",
-            `${TimeUtilities.convertMs(cmd.rateLimiter.duration)}`
-          );
+        const info = new EmbedBuilder().setColor(EMBED_COLOR).addFields([
+          { name: "Name", value: cmd.name },
+          { name: "Description", value: cmd.description },
+          { name: "Type", value: cmd.type },
+          {
+            name: "Cooldown",
+            value: `${TimeUtilities.convertMs(cmd.rateLimiter.duration)}`,
+          },
+        ]);
 
         if (cmd.examples.length > 0) {
-          info.addField(
-            "Examples",
-            `${cmd.examples.join(", ").replace(/<prefix>/g, prefix)}`
-          );
+          info.addFields([
+            {
+              name: "Examples",
+              value: `${cmd.examples.join(", ").replace(/<prefix>/g, prefix)}`,
+            },
+          ]);
         }
 
         if (cmd.aliases.length > 0) {
-          info.addField("Aliases", `${cmd.aliases.join(", ")}`);
+          info.addFields([
+            {
+              name: "Aliases",
+              value: `${cmd.aliases.join(", ")}`,
+            },
+          ]);
         }
 
         return message.reply({ embeds: [info] });
@@ -58,7 +85,8 @@ export default class extends DiscordCommand {
         return message.reply(
           unorderedList(
             commands.map(
-              (command) => `${code(prefix + command.name)} - ${command.description}`
+              (command) =>
+                `${code(prefix + command.name)} - ${command.description}`
             )
           )
         );
@@ -69,49 +97,6 @@ export default class extends DiscordCommand {
 
     return message.reply(
       unorderedList(types.map((type) => `${prefix}help ${type}`))
-    );
-  }
-
-  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
-    const typeOrName = interaction.options.getString("name");
-    const types = ["fun", "utility", "useful"];
-
-    if (typeOrName) {
-      const cmd = this.botClient.commands.findByNameOrAlias(typeOrName);
-
-      if (cmd) {
-        const info = new MessageEmbed()
-          .setColor(EMBED_COLOR)
-          .addField("Name", cmd.name)
-          .addField("Description", cmd.description)
-          .addField("Type", cmd.type)
-          .addField(
-            "Cooldown",
-            `${TimeUtilities.convertMs(cmd.rateLimiter.duration)}`
-          );
-
-        return interaction.reply({ embeds: [info] });
-      }
-
-      if (types.includes(typeOrName.toLowerCase())) {
-        const commands = this.botClient.commands.findByType(typeOrName);
-
-        return interaction.reply(
-          codeBlock(
-            unorderedList(
-              commands.map(
-                (command) => `/${command.name} - ${command.description}`
-              )
-            )
-          )
-        );
-      }
-
-      return interaction.reply("Could not find this command or type.");
-    }
-
-    return interaction.reply(
-      codeBlock(unorderedList(types.map((type) => `/help ${type}`)))
     );
   }
 }

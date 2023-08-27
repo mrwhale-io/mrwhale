@@ -48,7 +48,7 @@ function Home() {
   return (
     <Layout
       title=""
-      description="Introducing Mr. Whale the best chat bot on Game Jolt!"
+      description="Introducing Mr. Whale a general purpose bot for Discord and Game Jolt!"
     >
       <header className={clsx("hero hero--primary", styles.heroBanner)}>
         <div className="container">

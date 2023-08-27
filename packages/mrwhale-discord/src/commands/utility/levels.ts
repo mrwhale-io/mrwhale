@@ -1,4 +1,8 @@
-import { CommandInteraction, Message } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  InteractionResponse,
+  Message,
+} from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
 
@@ -10,23 +14,25 @@ export default class extends DiscordCommand {
       type: "utility",
       usage: "<prefix>levels",
       guildOnly: true,
-      callerPermissions: ["ADMINISTRATOR"],
+      callerPermissions: ["Administrator"],
     });
   }
 
-  async action(message: Message): Promise<void | Message<boolean>> {
+  async action(
+    message: Message
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     return this.enableLevels(message);
   }
 
   async slashCommandAction(
-    interaction: CommandInteraction
-  ): Promise<void | Message<boolean>> {
+    interaction: ChatInputCommandInteraction
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     return this.enableLevels(interaction);
   }
 
   private async enableLevels(
-    interaction: Message | CommandInteraction
-  ): Promise<void | Message<boolean>> {
+    interaction: Message | ChatInputCommandInteraction
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     let enabled = await this.isLevelsEnabled(interaction.guildId);
     enabled = !enabled;
 

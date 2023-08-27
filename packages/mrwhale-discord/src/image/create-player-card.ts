@@ -70,7 +70,7 @@ export async function createPlayerCard(player: PlayerInfo, theme: CardTheme): Pr
   ctx.closePath();
   ctx.clip();
 
-  const avatarFile = await axios.get(player.user.displayAvatarURL({ format: 'png' }), {
+  const avatarFile = await axios.get(player.user.displayAvatarURL({ extension: 'png' }), {
     responseType: "arraybuffer",
   });
   const avatar = await loadImage(avatarFile.data);

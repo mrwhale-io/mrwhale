@@ -1,5 +1,9 @@
 import { whale } from "@mrwhale-io/commands";
-import { CommandInteraction, Message } from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  InteractionResponse,
+  Message,
+} from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
 
@@ -26,7 +30,9 @@ export default class extends DiscordCommand {
     return message.reply(whale.action(whaleSize));
   }
 
-  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<InteractionResponse<boolean>> {
     const size = interaction.options.getNumber("size");
 
     return interaction.reply(whale.action(size));

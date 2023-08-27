@@ -18,22 +18,21 @@
     "url": "git+https://github.com/mrwhale-io/mrwhale.git"
   },
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "deploy-commands": "ts-node scripts/deploy-commands.ts",
+    "start": "ts-node --transpile-only src/index.ts",
+    "deploy-commands": "ts-node --transpile-only scripts/deploy-commands.ts",
     "deploy-guild-commands": "ts-node scripts/deploy-guild-commands.ts"
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
   },
   "dependencies": {
-    "@discordjs/builders": "^0.6.0",
-    "@discordjs/rest": "^0.1.0-canary.0",
     "@mrwhale-io/commands": "^1.0.1",
     "@mrwhale-io/core": "^1.1.0",
     "axios": "^0.21.1",
     "canvas": "^2.11.2",
-    "discord-api-types": "^0.23.1",
-    "discord.js": "^13.1.0",
+    "discord-api-types": "^0.37.55",
+    "discord.js": "^14.13.0",
+    "jimp": "^0.22.10",
     "sequelize": "^6.9.0"
   }
 }

@@ -1,5 +1,9 @@
 import { conchshell } from "@mrwhale-io/commands";
-import { CommandInteraction, Message } from 'discord.js';
+import {
+  ChatInputCommandInteraction,
+  InteractionResponse,
+  Message,
+} from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
 
@@ -18,7 +22,9 @@ export default class extends DiscordCommand {
     return message.reply(conchshell.action(question));
   }
 
-  async slashCommandAction(interaction: CommandInteraction): Promise<void> {
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<InteractionResponse<boolean>> {
     const question = interaction.options.getString("question");
 
     return interaction.reply(conchshell.action(question));
