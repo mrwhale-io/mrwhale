@@ -19,7 +19,7 @@
   },
   "scripts": {
     "start": "ts-node --transpile-only src/index.ts",
-    "deploy-commands": "ts-node scripts/deploy-commands.ts",
+    "deploy-commands": "ts-node --transpile-only scripts/deploy-commands.ts",
     "deploy-guild-commands": "ts-node scripts/deploy-guild-commands.ts"
   },
   "bugs": {

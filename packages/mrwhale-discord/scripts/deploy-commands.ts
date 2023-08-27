@@ -1,14 +1,23 @@
-import { REST } from "@discordjs/rest";
-import { Routes } from "discord-api-types/v9";
+import { REST, Routes } from "discord.js";
 
 import { clientId, token } from "../config.json";
 import { loadSlashCommands } from "./load-slash-commands";
 
-const rest = new REST({ version: "9" }).setToken(token);
+const rest = new REST().setToken(token);
 
-rest
-  .put((Routes as any).applicationCommands(clientId), {
-    body: loadSlashCommands(),
-  })
-  .then(() => console.log("Successfully registered application commands."))
-  .catch(console.error);
+(async () => {
+  try {
+    const commands = loadSlashCommands();
+    console.log(
+      `Started refreshing ${commands.length} application (/) commands.`
+    );
+
+    await rest.put(Routes.applicationCommands(clientId), {
+      body: commands,
+    });
+
+    console.log(`Successfully reloaded application (/) commands.`);
+  } catch (error) {
+    console.error(error);
+  }
+})();
