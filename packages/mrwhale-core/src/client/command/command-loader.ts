@@ -43,8 +43,16 @@ export class CommandLoader {
     const files = [];
     for (const directory of COMMAND_TYPE_NAMES) {
       files.push(
-        ...glob.sync(`${path.join(this.botClient.commandsDir, directory)}/*.ts`)
+        ...glob.sync(`${path.join(this.botClient.commandsDir, directory)}/*.js`)
       );
+
+      if (this.botClient.tsNode) {
+        files.push(
+          ...glob.sync(
+            `${path.join(this.botClient.commandsDir, directory)}/*.ts`
+          )
+        );
+      }
     }
 
     for (const file of files) {

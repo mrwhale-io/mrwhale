@@ -1,13 +1,13 @@
 import { SqliteStorageProvider } from "@mrwhale-io/core";
 import * as path from "path";
 
-import * as config from "../config.json";
-import { DiscordBotClient } from "./client/discord-bot-client";
-import { INTENTS } from "./constants";
+import * as config from "./config.json";
+import { DiscordBotClient } from "./src/client/discord-bot-client";
+import { INTENTS } from "./src/constants";
 
 const bot = new DiscordBotClient(
   {
-    commandsDir: path.join(__dirname, "./commands"),
+    commandsDir: path.join(__dirname, "./src/commands"),
     prefix: config.prefix,
     ownerId: config.ownerId,
     provider: SqliteStorageProvider(path.join(process.cwd(), config.database))

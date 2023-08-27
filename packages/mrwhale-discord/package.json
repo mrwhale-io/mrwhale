@@ -18,7 +18,8 @@
     "url": "git+https://github.com/mrwhale-io/mrwhale.git"
   },
   "scripts": {
-    "start": "ts-node --transpile-only src/index.ts",
+    "dev": "ts-node --transpile-only index.ts",
+    "start": "tsc && node ./lib/index.js",
     "deploy-commands": "ts-node --transpile-only scripts/deploy-commands.ts",
     "deploy-guild-commands": "ts-node scripts/deploy-guild-commands.ts"
   },

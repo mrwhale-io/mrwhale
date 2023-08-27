@@ -1,5 +1,10 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src/**/*"],
+  "compilerOptions": {
+    "outDir": "lib",
+    "baseUrl": "./",
+    "moduleResolution": "Node"
+  },
+  "include": ["src/**/*", "index.ts"],
   "exclude": ["node_modules", "**/__tests__/*"]
 }

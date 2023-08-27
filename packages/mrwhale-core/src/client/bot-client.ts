@@ -4,7 +4,7 @@ import { BotOptions } from "../types/bot-options";
 import { CommandStorage } from "./command/command-storage";
 import { Command } from "./command/command";
 import { StorageProviderConstructor } from "../types/storage-provider-constructor";
-import { SqliteStorageProvider } from '../storage/sqlite-storage-provider';
+import { SqliteStorageProvider } from "../storage/sqlite-storage-provider";
 
 /**
  * Base class to extend bot client integrations from.
@@ -29,6 +29,11 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
    * The commands directory.
    */
   commandsDir: string;
+
+  /**
+   * Whether the client is running in tsnode.
+   */
+  readonly tsNode: boolean;
 
   /**
    * The storage provider.
@@ -57,6 +62,10 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
     this.provider = options.provider ?? SqliteStorageProvider();
     this.commands = new CommandStorage<this, T>();
     this.commandLoader = new CommandLoader(this);
+  
+    if (process[Symbol.for("ts-node.register.instance")]) {
+      this.tsNode = true;
+    }
   }
 
   /**
