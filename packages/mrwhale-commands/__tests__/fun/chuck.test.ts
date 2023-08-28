@@ -5,10 +5,6 @@ import { chuck } from "../../src/commands/fun";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-const firstName = "Chuck";
-const lastName = "Norris";
-const category = "dev";
-
 describe("chuck", () => {
   it("should fetch a chucknorris joke", async () => {
     const joke =
@@ -16,7 +12,7 @@ describe("chuck", () => {
     const response = { data: { value: { joke } } };
     mockedAxios.get.mockResolvedValue(response);
 
-    const result = await chuck.action(firstName, lastName, category);
+    const result = await chuck.action();
 
     expect(result).toEqual(joke);
   });
@@ -24,7 +20,7 @@ describe("chuck", () => {
   it("should return error string when failed", async () => {
     mockedAxios.get.mockRejectedValue(new Error("Async error."));
 
-    const result = await chuck.action(firstName, lastName, category);
+    const result = await chuck.action();
 
     expect(result).toEqual("Could not fetch chuck norris joke.");
   });
