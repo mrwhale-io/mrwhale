@@ -104,10 +104,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.guildStorageLoader.loadStorages();
     if (this.discordBotList) {
       const discordBotList = createDjsClient(this.discordBotList, this.client);
-      discordBotList.startPolling();
+      discordBotList.startPosting();
       discordBotList.postBotCommands(
         this.commands.map((cmd) => cmd.slashCommandData.toJSON())
       );
+      discordBotList.startPolling();
     }
   }
 
