@@ -19,7 +19,8 @@
   },
   "scripts": {
     "dev": "ts-node --transpile-only index.ts",
-    "start": "tsc && node ./lib/index.js",
+    "build": "tsc && copyfiles ./images/*.png ./lib/images",
+    "start": "node ./lib/index.js",
     "deploy-commands": "ts-node --transpile-only scripts/deploy-commands.ts",
     "deploy-guild-commands": "ts-node scripts/deploy-guild-commands.ts"
   },
@@ -31,6 +32,7 @@
     "@mrwhale-io/core": "^1.1.0",
     "axios": "^0.21.1",
     "canvas": "^2.11.2",
+    "copyfiles": "^2.4.1",
     "discord-api-types": "^0.37.55",
     "discord.js": "^14.13.0",
     "jimp": "^0.22.10",
