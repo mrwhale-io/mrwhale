@@ -20,6 +20,7 @@ import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
 import { EMBED_COLOR } from "../constants";
 import { DiscordBotOptions } from "../types/discord-bot-options";
+import { createDjsClient } from "discordbotlist";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -49,6 +50,10 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   readonly version: string;
 
+  /**
+   * The discord bot list API key.
+   */
+  private readonly discordBotList?: string;
   private readonly levelManager: LevelManager;
   private readonly guildStorageLoader: GuildStorageLoader;
 
@@ -64,6 +69,9 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.commandDispatcher = new DiscordCommandDispatcher(this);
     this.guildStorageLoader = new GuildStorageLoader(this);
     this.guildStorageLoader.init();
+    if (botOptions.discordBotList) {
+      this.discordBotList = botOptions.discordBotList;
+    }
     registerListeners(this.client, this);
   }
 
@@ -94,6 +102,13 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   @once(Events.ClientReady)
   private async onClientReady(): Promise<void> {
     this.guildStorageLoader.loadStorages();
+    if (this.discordBotList) {
+      const discordBotList = createDjsClient(this.discordBotList, this.client);
+      discordBotList.startPolling();
+      discordBotList.postBotCommands(
+        this.commands.map((cmd) => cmd.slashCommandData.toJSON())
+      );
+    }
   }
 
   @on(Events.GuildCreate)

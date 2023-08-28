@@ -34,6 +34,7 @@
     "copyfiles": "^2.4.1",
     "discord-api-types": "^0.37.55",
     "discord.js": "^14.13.0",
+    "discordbotlist": "^1.1.1",
     "jimp": "^0.22.10",
     "sequelize": "^6.9.0"
   }

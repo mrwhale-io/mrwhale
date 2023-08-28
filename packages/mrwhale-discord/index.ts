@@ -13,6 +13,7 @@ const bot = new DiscordBotClient(
     prefix: config.prefix,
     ownerId: config.ownerId,
     discordServer: config.discordServer,
+    discordBotList: config.discordBotList,
     version,
     provider: SqliteStorageProvider(path.join(process.cwd(), config.database)),
   },

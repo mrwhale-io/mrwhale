@@ -13,4 +13,9 @@ export interface DiscordBotOptions extends BotOptions {
    * The support server for the discord bot.
    */
   discordServer: string;
+
+  /**
+   * The discord bot list API key.
+   */
+  discordBotList?: string;
 }
