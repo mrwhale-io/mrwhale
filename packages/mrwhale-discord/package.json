@@ -19,8 +19,7 @@
   },
   "scripts": {
     "dev": "ts-node --transpile-only index.ts",
-    "build": "tsc && copyfiles ./images/*.png ./lib/images",
-    "start": "node ./lib/index.js",
+    "start": "tsc && copyfiles ./images/*.png ./lib && node ./lib/index.js",
     "deploy-commands": "ts-node --transpile-only scripts/deploy-commands.ts",
     "deploy-guild-commands": "ts-node scripts/deploy-guild-commands.ts"
   },
