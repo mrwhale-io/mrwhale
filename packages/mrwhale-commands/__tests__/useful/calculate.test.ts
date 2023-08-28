@@ -8,7 +8,7 @@ describe("calculate", () => {
   });
 
   it("should ask to enter a calculation if expression is empty", () => {
-    const result = calculate.action(null);
+    const result = calculate.action("");
 
     expect(result).toEqual("Please enter a calculation.");
   });
