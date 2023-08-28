@@ -142,7 +142,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       )
       .setThumbnail(avatar);
 
-    if (channel.isTextBased()) {
+    if (channel && channel.isTextBased()) {
       channel.send({ embeds: [embed] });
     }
   }
