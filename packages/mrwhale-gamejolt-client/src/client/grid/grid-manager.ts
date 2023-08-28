@@ -7,6 +7,9 @@ import { Client } from "../client";
 import { GridManagerOptions } from "../../types/grid-manager-options";
 import { Notification } from "../../structures/notification";
 import { GJ_PLATFORM_VERSION } from "../../constants";
+import { ChatManager } from "../chat/chat-manager";
+
+const AUTH_TIMEOUT = 3000;
 
 interface NewNotificationPayload {
   notification_data: {
@@ -30,6 +33,7 @@ export class GridManager extends events.EventEmitter {
   notificationChannel: Channel;
   readonly gridUrl: string;
   readonly client: Client;
+  readonly chat: ChatManager;
 
   private frontend: string;
 
@@ -40,8 +44,9 @@ export class GridManager extends events.EventEmitter {
   constructor(client: Client, options: GridManagerOptions) {
     super();
     this.client = client;
-    this.gridUrl = options.baseUrl || "https://grid.gamejolt.com/grid/host";
+    this.gridUrl = options.baseUrl || "https://grid.gamejolt.com/grid";
     this.frontend = options.frontend;
+    this.chat = new ChatManager(this.client, this);
     this.connect();
   }
 
@@ -49,32 +54,44 @@ export class GridManager extends events.EventEmitter {
    * Connects to grid.
    */
   async connect(): Promise<void> {
-    // get hostname from loadbalancer first
-    const hostResult = await pollRequest("Select server", () =>
-      Axios.get(this.gridUrl, {
-        timeout: 3000,
-      })
-    );
+    const [hostResult, tokenResult] = await this.getAuth();
     const host = `${hostResult.data}/grid/socket`;
+    const token = tokenResult.data.token;
 
     this.socket = new Socket(host, {
       heartbeatIntervalMs: 30000,
+      params: {
+        token,
+        gj_platform: "web",
+        gj_platform_version: GJ_PLATFORM_VERSION,
+      },
     });
+
+    const socketAny: any = this.socket;
 
     // HACK
     // there is no built in way to stop a Phoenix socket from attempting to reconnect on its own after it got disconnected.
     // this replaces the socket's "reconnectTimer" property with an empty object that matches the Phoenix "Timer" signature
     // The 'reconnectTimer' usually restarts the connection after a delay, this prevents that from happening
-    const socketAny: any = this.socket;
     // eslint-disable-next-line no-prototype-builtins
     if (socketAny.hasOwnProperty("reconnectTimer")) {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
       socketAny.reconnectTimer = { scheduleTimeout: () => {}, reset: () => {} };
     }
-    socketAny.params = {
-      gj_platform: "web",
-      gj_platform_version: GJ_PLATFORM_VERSION,
-    };
+
+    this.socket.onOpen(() => {
+      this.connected = true;
+    });
+
+    this.socket.onError((err) => {
+      console.warn("[Chat] Got error from socket", err);
+      this.restart();
+    });
+
+    this.socket.onClose((err) => {
+      console.warn("[Chat] Socket closed unexpectedly", err);
+      this.restart();
+    });
 
     await pollRequest(
       "Connect to socket",
@@ -82,14 +99,14 @@ export class GridManager extends events.EventEmitter {
         new Promise((resolve: any) => {
           if (this.socket !== null) {
             this.socket.connect();
+            socketAny.conn._client.config.maxReceivedFrameSize =
+              64 * 1024 * 1024 * 1024;
           }
           resolve();
         })
     );
 
-    const channel = this.socket.channel("notifications:" + this.client.userId, {
-      auth_token: this.frontend,
-    });
+    const channel = this.socket.channel("notifications:" + this.client.userId);
     this.notificationChannel = channel;
 
     await pollRequest(
@@ -100,7 +117,6 @@ export class GridManager extends events.EventEmitter {
             .join()
             .receive("error", reject)
             .receive("ok", () => {
-              this.connected = true;
               this.channels.push(channel);
               for (const resolver of connectionResolvers) {
                 resolver();
@@ -120,11 +136,14 @@ export class GridManager extends events.EventEmitter {
       console.log(`[Grid] Connection error encountered (Reason: ${reason}).`);
       this.restart(0);
     });
+
+    this.chat.joinUserChannel();
   }
 
   async disconnect(): Promise<void> {
     if (this.connected) {
       this.connected = false;
+      this.chat.reset();
       this.channels.forEach((channel) => {
         this.leaveChannel(channel);
       });
@@ -158,6 +177,19 @@ export class GridManager extends events.EventEmitter {
     if (this.socket !== null) {
       this.socket.remove(channel);
     }
+  }
+
+  private async getAuth() {
+    return await pollRequest("Auth to server", () => {
+      return Promise.all([
+        Axios.get(`${this.gridUrl}/host`, { timeout: AUTH_TIMEOUT }),
+        Axios.post(
+          `${this.gridUrl}/token`,
+          { auth_token: this.frontend, user_id: this.client.userId },
+          { timeout: AUTH_TIMEOUT }
+        ),
+      ]);
+    });
   }
 
   private handleNotification(payload: NewNotificationPayload) {

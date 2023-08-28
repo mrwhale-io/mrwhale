@@ -23,9 +23,9 @@ export class UserChannel extends Channel {
     chat: ChatManager,
     params?: Record<string, unknown>
   ) {
-    super("user:" + userId, params, chat.socket as Socket);
+    super("user:" + userId, params, chat.grid.socket as Socket);
     this.chat = chat;
-    this.socket = chat.socket as Socket;
+    this.socket = chat.grid.socket as Socket;
     this.socket.channels.push(this);
 
     this.on(Events.FRIEND_UPDATED, this.onFriendUpdated.bind(this));
@@ -49,7 +49,7 @@ export class UserChannel extends Channel {
   private onFriendRemove(data: FriendRemovePayload) {
     const { client } = this.chat;
     const { user_id } = data;
-    const friend = client.chat.friendsList.get(user_id);
+    const friend = client.grid.chat.friendsList.get(user_id);
 
     if (friend) {
       this.chat.leaveRoom(friend.room_id);

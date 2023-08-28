@@ -6,10 +6,36 @@ import {
   User,
   FiresidePost,
 } from "@mrwhale-io/gamejolt-client";
+import { AxiosResponse } from "axios";
 
 import { GameJoltBotClient } from "../gamejolt-bot-client";
 
 const { on, registerListeners } = ListenerDecorators;
+
+const RESPONSES = [
+  {
+    regex: /harp(o+)n/gi,
+    responses: [
+      "h-h-harpoon????!",
+      "*swims away fast*",
+      "Oh no don't hurt me please!",
+      "Oh no not the harpoons!",
+    ],
+  },
+  {
+    regex: /wh(a+)(l+)(e+)/gi,
+    responses: [
+      "Hello!",
+      "Hey, Don't mind me I'm just watching your posts.",
+      "I'm guessing you're talking about me?",
+      "*insert insightful comment here*",
+      "Whale then",
+      "I didn't read the post but I sense you mentioned me.",
+      "My Whale sense is tingling",
+      "Okay what did I do this time?",
+    ],
+  },
+];
 
 export class ReplyManager {
   constructor(private bot: GameJoltBotClient) {
@@ -18,7 +44,15 @@ export class ReplyManager {
 
   @on("message")
   protected async onMessage(message: Message): Promise<void> {
-    if (message.user.id === this.bot.client.chat.currentUser.id) {
+    if (message.user.id === this.bot.client.grid.chat.currentUser.id) {
+      return;
+    }
+
+    const blockedUsersIds = this.bot.client.blockedUsers.map(
+      (blocked) => blocked.user.id
+    );
+
+    if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
       return;
     }
 
@@ -30,7 +64,7 @@ export class ReplyManager {
   @on("user_notification")
   protected async onUserNotification(
     notification: Notification
-  ): Promise<void> {
+  ): Promise<AxiosResponse<unknown>> {
     if (
       notification.type === "post-add" &&
       notification.from_model instanceof User &&
@@ -42,11 +76,26 @@ export class ReplyManager {
         content.insertText(
           notification.action_model.leadStr.match(WHALE_REGEX)[0]
         );
-        this.bot.client.api.comment(
+        return this.bot.client.api.comment(
           notification.action_resource_id,
           notification.action_resource,
           content.contentJson()
         );
+      }
+
+      for (const response of RESPONSES) {
+        if (notification.action_model.leadStr.match(response.regex)) {
+          content.insertText(
+            response.responses[
+              Math.floor(Math.random() * response.responses.length)
+            ]
+          );
+          return this.bot.client.api.comment(
+            notification.action_resource_id,
+            notification.action_resource,
+            content.contentJson()
+          );
+        }
       }
     }
   }

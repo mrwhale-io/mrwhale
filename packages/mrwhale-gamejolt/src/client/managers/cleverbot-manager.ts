@@ -36,15 +36,23 @@ export class CleverbotManager {
 
   @on("message")
   private async onMessage(message: Message) {
-    if (message.user.id === this.bot.client.chat.currentUser.id) {
+    if (message.user.id === this.bot.client.grid.chat.currentUser.id) {
       return;
     }
 
-    const pm = this.bot.client.chat.friendsList.getByRoom(message.room_id);
+    const blockedUsersIds = this.bot.client.blockedUsers.map(
+      (blocked) => blocked.user.id
+    );
+
+    if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
+      return;
+    }
+
+    const pm = this.bot.client.grid.chat.friendsList.getByRoom(message.room_id);
     const hasCommand = await this.hasCommand(message);
 
     if (this.isEnabled && !hasCommand && (pm || message.isMentioned)) {
-      const user = this.bot.client.chat.currentUser;
+      const user = this.bot.client.grid.chat.currentUser;
       const userRegex = new RegExp(
         `((@)*${user?.username}|${user?.display_name})`,
         "i"

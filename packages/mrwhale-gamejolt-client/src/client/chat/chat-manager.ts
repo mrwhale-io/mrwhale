@@ -1,33 +1,28 @@
-import Axios from "axios";
 import * as events from "events";
-import { Socket, Channel, Push } from "phoenix-channels";
+import { Push } from "phoenix-channels";
 import { Readable } from "stream";
 
 import { Client } from "../client";
 import { User } from "../../structures/user";
 import { UserCollection } from "../../structures/user-collection";
 import { RateLimiter } from "./rate-limiter";
-import { pollRequest } from "../../util/poll-request";
+
 import { ContentDocument } from "../../content/content-document";
 import { Room } from "../../structures/room";
 import { RoomChannel } from "./channels/room-channel";
 import { Events } from "../../constants";
 import { UserChannel } from "./channels/user-channel";
-import { ChatManagerOptions } from "../../types/chat-manager-options";
 import { MediaItem } from "../../structures/media-item";
 import { Content } from "../../content/content";
 import { Message } from "../../structures/message";
-
-const AUTH_TIMEOUT = 3000;
+import { GridManager } from "../grid/grid-manager";
 
 /**
  * Manages the websocket connection to the chat.
  */
 export class ChatManager extends events.EventEmitter {
-  connected: boolean;
   currentUser?: User;
   friendsList: UserCollection;
-  socket?: Socket;
   userChannel?: UserChannel;
   groups: Room[] = [];
   groupIds: number[] = [];
@@ -37,74 +32,23 @@ export class ChatManager extends events.EventEmitter {
 
   readonly chatUrl: string;
   readonly client: Client;
+  readonly grid: GridManager;
+
+  get connected(): boolean {
+    return this.grid.connected;
+  }
 
   private rateLimiters: { [roomId: string]: RateLimiter } = {};
-  private frontend: string;
 
   /**
    * @param client The Game Jolt client.
    * @param options The chat manager options.
    */
-  constructor(client: Client, options: ChatManagerOptions) {
+  constructor(client: Client, grid: GridManager) {
     super();
     this.client = client;
-    this.frontend = options.frontend;
-    this.chatUrl = options.baseUrl || "https://chatex.gamejolt.com/chatex";
+    this.grid = grid;
     this.reset();
-    this.connect();
-  }
-
-  /**
-   * Connects to the chat server.
-   */
-  async connect(): Promise<void> {
-    const [hostResult, tokenResult] = await this.getAuth();
-    const host = `${hostResult.data}`;
-    const token = tokenResult.data.token;
-    
-    this.socket = new Socket(host, {
-      heartbeatIntervalMs: 30000,
-      params: { token },
-    });
-    
-    this.socket.connect();
-    const socketAny: any = this.socket;
-    socketAny.conn._client.config.maxReceivedFrameSize =
-      64 * 1024 * 1024 * 1024;
-
-    this.socket.onOpen(() => {
-      this.connected = true;
-    });
-
-    // HACK
-    // there is no built in way to stop a Phoenix socket from attempting to reconnect on its own after it got disconnected.
-    // this replaces the socket's "reconnectTimer" property with an empty object that matches the Phoenix "Timer" signature
-    // The 'reconnectTimer' usually restarts the connection after a delay, this prevents that from happening
-    // eslint-disable-next-line no-prototype-builtins
-    if (socketAny.hasOwnProperty("reconnectTimer")) {
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      socketAny.reconnectTimer = { scheduleTimeout: () => {}, reset: () => {} };
-    }
-
-    this.socket.onError((err) => {
-      console.warn("[Chat] Got error from socket", err);
-      this.reconnect();
-    });
-
-    this.socket.onClose((err) => {
-      console.warn("[Chat] Socket closed unexpectedly", err);
-      this.reconnect();
-    });
-
-    this.joinUserChannel();
-  }
-
-  /**
-   * Reconnects to the chat.
-   */
-  reconnect(): void {
-    this.destroy();
-    this.connect();
   }
 
   /**
@@ -131,24 +75,13 @@ export class ChatManager extends events.EventEmitter {
   leaveRoom(roomId: number): void {
     const channel = this.roomChannels[roomId];
     if (channel) {
-      this.leaveChannel(channel);
+      this.grid.leaveChannel(channel);
       delete this.roomChannels[roomId];
     }
 
     const activeRoom = this.activeRooms[roomId];
     if (activeRoom) {
       delete this.activeRooms[roomId];
-    }
-  }
-
-  /**
-   * Leaves a phoenix channel.
-   * @param channel The channel to leave.
-   */
-  leaveChannel(channel: Channel): void {
-    channel.leave();
-    if (this.socket) {
-      this.socket.remove(channel);
     }
   }
 
@@ -233,7 +166,6 @@ export class ChatManager extends events.EventEmitter {
    * Reset the chat client.
    */
   reset(): void {
-    this.connected = false;
     this.currentUser = undefined;
     this.friendsList = new UserCollection();
     this.activeRooms = {};
@@ -242,7 +174,7 @@ export class ChatManager extends events.EventEmitter {
     this.startTime = Date.now();
   }
 
-  private destroy() {
+  destroy(): void {
     if (!this.connected) {
       return;
     }
@@ -250,36 +182,23 @@ export class ChatManager extends events.EventEmitter {
     this.reset();
 
     if (this.userChannel) {
-      this.leaveChannel(this.userChannel);
+      this.grid.leaveChannel(this.userChannel);
       this.userChannel = undefined;
     }
 
     Object.keys(this.roomChannels).forEach((roomId) => {
-      this.leaveChannel(this.roomChannels[roomId]);
+      this.grid.leaveChannel(this.roomChannels[roomId]);
     });
     this.roomChannels = {};
 
-    if (this.socket) {
+    if (this.grid.socket) {
       console.log("Disconnecting socket");
-      this.socket.disconnect();
-      this.socket = undefined;
+      this.grid.socket.disconnect();
+      this.grid.socket = undefined;
     }
   }
 
-  private async getAuth() {
-    return await pollRequest("Auth to server", () => {
-      return Promise.all([
-        Axios.get(`${this.chatUrl}/host`, { timeout: AUTH_TIMEOUT }),
-        Axios.post(
-          `${this.chatUrl}/token`,
-          { frontend: this.frontend },
-          { timeout: AUTH_TIMEOUT }
-        ),
-      ]);
-    });
-  }
-
-  private joinUserChannel() {
+  joinUserChannel(): void {
     const channel = new UserChannel(this.client.userId, this);
 
     channel.join().receive("ok", (response: any) => {

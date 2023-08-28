@@ -9,9 +9,24 @@ import { ContentContext } from "../../content/content-context";
 import { MediaItem } from "../../structures/media-item";
 import { Game } from "../../structures/game";
 import { GameOverview } from "../../structures/game-overview";
+import { User } from "../../structures/user";
+import { Block } from "../../structures/block";
 
 interface ApiData<T> {
   payload: T;
+}
+
+interface BlockedUsersPayload {
+  blocks: Partial<Block>[];
+}
+
+interface BlockPayload {
+  block: Partial<Block>;
+  success: boolean;
+}
+
+interface UnBlockPayload {
+  success: boolean;
 }
 
 interface FriendRequestPayload {
@@ -68,6 +83,64 @@ export class APIManager {
     return payload.requests.map(
       (request) => new FriendRequest(this.client, request)
     );
+  }
+
+  /**
+   * Fetches blocked users for the client user.
+   */
+  async getBlockedUsers(): Promise<Block[]> {
+    const result = await this.axios.get<ApiData<BlockedUsersPayload>>(
+      `${this.base}${Endpoints.blocks}`
+    );
+    const payload = result.data.payload;
+
+    if (!payload || !payload.blocks) {
+      return [];
+    }
+
+    return payload.blocks.map((block) => new Block(block));
+  }
+
+  /**
+   * Blocks a user.
+   *
+   * @param user The user to block.
+   */
+  async blockUser(user: User): Promise<boolean> {
+    const result = await this.axios.post<ApiData<BlockPayload>>(
+      `${this.base}${Endpoints.block}`,
+      { username: user.username }
+    );
+    const payload = result.data.payload;
+
+    if (payload) {
+      this.client.blockedUsers.push(new Block(payload.block));
+      return payload.success;
+    } else {
+      throw new Error("Failure to block user.");
+    }
+  }
+
+  /**
+   * Unblocks a user.
+   *
+   * @param userId The identifier of the user to unblock.
+   */
+  async unblockUser(blockId: number): Promise<boolean> {
+    const result = await this.axios.post<ApiData<UnBlockPayload>>(
+      `${this.base}${Endpoints.unblock(blockId)}`,
+      {}
+    );
+    const payload = result.data.payload;
+
+    if (payload) {
+      this.client.blockedUsers = this.client.blockedUsers.filter(
+        (block) => block.id !== blockId
+      );
+      return payload.success;
+    } else {
+      throw new Error("Failure to unblock user.");
+    }
   }
 
   /**

@@ -1,4 +1,5 @@
 export * as advice from "./advice";
+export * as bearweek from "./bearweek";
 export * as calculate from "./calculate";
 export * as newyear from "./newyear";
 export * as translate from "./translate";

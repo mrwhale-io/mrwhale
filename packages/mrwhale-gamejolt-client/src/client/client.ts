@@ -7,6 +7,7 @@ import { APIManager } from "./api/api-manager";
 import { User } from "../structures/user";
 import { GridManager } from "./grid/grid-manager";
 import { Notification } from "../structures/notification";
+import { Block } from "../structures/block";
 
 const FRIEND_REQUEST_INTERVAL = 60;
 
@@ -14,11 +15,6 @@ const FRIEND_REQUEST_INTERVAL = 60;
  * The main client for interacting with the chat and site api.
  */
 export class Client extends events.EventEmitter {
-  /**
-   * The chat manager for interacting with the chat.
-   */
-  readonly chat: ChatManager;
-
   /**
    * The api manager for interacting with the site api.
    */
@@ -33,6 +29,11 @@ export class Client extends events.EventEmitter {
    * The identifier of the client user.
    */
   readonly userId: number;
+
+  /**
+   * Contains all blocked users.
+   */
+  blockedUsers: Block[];
 
   /**
    * The max number of requests that can be made
@@ -51,15 +52,12 @@ export class Client extends events.EventEmitter {
   constructor(options: ClientOptions) {
     super();
     this.userId = options.userId;
-    this.chat = new ChatManager(this, {
-      frontend: options.frontend,
-      baseUrl: options.baseChatUrl,
-    });
-    this.api = new APIManager(this, options.frontend, options.baseApiUrl);
     this.grid = new GridManager(this, {
       frontend: options.frontend,
       baseUrl: options.baseGridUrl,
     });
+    this.api = new APIManager(this, options.frontend, options.baseApiUrl);
+    this.getBlockedUsers();
     this.rateLimitRequests = options.rateLimitRequests || 1;
     this.rateLimitDuration = options.rateLimitDuration || 1;
     this.initTimers();
@@ -101,6 +99,10 @@ export class Client extends events.EventEmitter {
   on(event: "user_notification", listener: (data: Notification) => void): this;
   on(event: string, listener: (...args: never[]) => void): this {
     return super.on(event, listener);
+  }
+
+  private async getBlockedUsers() {
+    this.blockedUsers = await this.api.getBlockedUsers();
   }
 
   /**

@@ -29,7 +29,7 @@ export class RoomChannel extends Channel {
     chat: ChatManager,
     params?: Record<string, unknown>
   ) {
-    const socket = chat.socket;
+    const socket = chat.grid.socket;
 
     super("room:" + roomId, params, socket);
     this.chat = chat;
