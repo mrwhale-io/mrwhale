@@ -19,7 +19,7 @@ export default class extends DiscordCommand {
     this.slashCommandData.addStringOption((option) =>
       option
         .setName("sides")
-        .setDescription("The number of dice to roll.")
+        .setDescription("The sides of dice to roll.")
         .setRequired(true)
         .addChoices(
           { name: "d4", value: "d4" },

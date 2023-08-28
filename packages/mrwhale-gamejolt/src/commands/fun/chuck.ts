@@ -8,10 +8,7 @@ export default class extends GameJoltCommand {
     super(chuck.data);
   }
 
-  async action(
-    message: Message,
-    [firstName, lastName, category]: [string, string, string]
-  ): Promise<Message> {
-    return message.reply(await chuck.action(firstName, lastName, category));
+  async action(message: Message): Promise<Message> {
+    return message.reply(await chuck.action());
   }
 }
