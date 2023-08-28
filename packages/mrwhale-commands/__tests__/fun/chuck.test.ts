@@ -9,7 +9,7 @@ describe("chuck", () => {
   it("should fetch a chucknorris joke", async () => {
     const joke =
       "Chuck Norris does not need to type-cast. The Chuck-Norris Compiler (CNC) sees through things. All way down. Always.";
-    const response = { data: { value: { joke } } };
+    const response = { data: { value: joke } };
     mockedAxios.get.mockResolvedValue(response);
 
     const result = await chuck.action();
