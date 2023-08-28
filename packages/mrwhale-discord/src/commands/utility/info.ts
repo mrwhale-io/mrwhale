@@ -7,8 +7,6 @@ import {
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
-import { version } from "../../../package.json";
-import { discordServer } from "../../../config.json";
 import { EMBED_COLOR } from "../../constants";
 
 const FRACTIONAL_DIGITS = 2;
@@ -48,7 +46,7 @@ export default class extends DiscordCommand {
       .addFields([
         {
           name: "Official Discord server",
-          value: `[Join my Discord server!](${discordServer})`,
+          value: `[Join my Discord server!](${this.botClient.discordServer})`,
         },
         {
           name: "Source code",
@@ -56,7 +54,7 @@ export default class extends DiscordCommand {
         },
         {
           name: "Version",
-          value: version,
+          value: this.botClient.version,
         },
         {
           name: "Server",

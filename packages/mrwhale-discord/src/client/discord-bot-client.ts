@@ -1,10 +1,27 @@
-import { BotClient, BotOptions, KeyedStorageProvider } from "@mrwhale-io/core";
-import { Client, ClientOptions, User } from "discord.js";
+import {
+  BotClient,
+  KeyedStorageProvider,
+  ListenerDecorators,
+} from "@mrwhale-io/core";
+import {
+  ChannelType,
+  Client,
+  ClientOptions,
+  EmbedBuilder,
+  Events,
+  Guild,
+  GuildBasedChannel,
+  User,
+} from "discord.js";
 
 import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
 import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
+import { EMBED_COLOR } from "../constants";
+import { DiscordBotOptions } from "../types/discord-bot-options";
+
+const { on, once, registerListeners } = ListenerDecorators;
 
 export class DiscordBotClient extends BotClient<DiscordCommand> {
   /**
@@ -22,12 +39,24 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   readonly guildSettings: Map<string, KeyedStorageProvider>;
 
+  /**
+   * The support server for the discord bot.
+   */
+  readonly discordServer: string;
+
+  /**
+   * The version of the discord bot.
+   */
+  readonly version: string;
+
   private readonly levelManager: LevelManager;
   private readonly guildStorageLoader: GuildStorageLoader;
 
-  constructor(botOptions: BotOptions, clientOptions: ClientOptions) {
+  constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
     this.client = new Client(clientOptions);
+    this.version = botOptions.version;
+    this.discordServer = botOptions.discordServer;
     this.guildSettings = new Map<string, KeyedStorageProvider>();
     this.commandLoader.commandType = DiscordCommand.name;
     this.commandLoader.loadCommands();
@@ -35,9 +64,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.commandDispatcher = new DiscordCommandDispatcher(this);
     this.guildStorageLoader = new GuildStorageLoader(this);
     this.guildStorageLoader.init();
-    this.client.on("ready", () => {
-      this.guildStorageLoader.loadStorages();
-    });
+    registerListeners(this.client, this);
   }
 
   /**
@@ -62,5 +89,55 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   isOwner(user: User): boolean {
     return user.id === this.ownerId;
+  }
+
+  @once(Events.ClientReady)
+  private async onClientReady(): Promise<void> {
+    this.guildStorageLoader.loadStorages();
+  }
+
+  @on(Events.GuildCreate)
+  private async onGuildCreate(guild: Guild): Promise<void> {
+    const channel = this.getFirstTextChannel(guild);
+    const avatar = this.client.user.displayAvatarURL();
+    const embed = new EmbedBuilder()
+      .addFields([
+        {
+          name: "Official Discord server",
+          value: `[Join my Discord server!](${this.discordServer})`,
+        },
+        {
+          name: "Source code",
+          value: "https://github.com/mrwhale-io/mrwhale",
+        },
+        {
+          name: "Version",
+          value: this.version,
+        },
+        { name: "Toggle levels", value: "`/levels`", inline: true },
+        {
+          name: "Set level up announcement channel",
+          value: "`/levelchannel`",
+          inline: true,
+        },
+      ])
+      .setColor(EMBED_COLOR)
+      .setDescription(
+        `Hi I'm ${this.client.user.username} a general purpose bot. Use the \`/help\` command to see my commands!`
+      )
+      .setThumbnail(avatar);
+
+    if (channel.isTextBased()) {
+      channel.send({ embeds: [embed] });
+    }
+  }
+
+  private getFirstTextChannel(guild: Guild): GuildBasedChannel {
+    const channels = guild.channels.cache;
+    return channels.find(
+      (c) =>
+        c.type === ChannelType.GuildText &&
+        c.permissionsFor(guild.members.me).has("SendMessages")
+    );
   }
 }
