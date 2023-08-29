@@ -66,8 +66,10 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     this.cleverbotManager.isEnabled = value;
   }
 
-  private timeouts: Set<NodeJS.Timer>;
-  private intervals: Set<NodeJS.Timer>;
+  private timeouts: Set<
+    NodeJS.Timer | NodeJS.Timeout | string | number | undefined
+  >;
+  private intervals: Set<NodeJS.Timeout | string | number | undefined>;
   private readonly commandDispatcher: GameJoltCommandDispatcher;
   private readonly friendRequestManager: FriendRequestManager;
   private readonly replyManager: ReplyManager;
@@ -147,10 +149,17 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
 
   @on("notification")
   protected onNotification(message: Message): void {
+    // Join the room channel if haven't joined already.
     if (message && !this.client.grid.chat.roomChannels[message.room_id]) {
       this.joinRoom(message.room_id).receive("ok", () => {
         this.client.emit("message", message);
       });
+    }
+
+    // Accept chat invite.
+    if (message && message.type === "invite") {
+      const invite = JSON.parse(message.content);
+      this.client.grid.chat.acceptInvite(invite.content[0].attrs.id);
     }
   }
 
@@ -266,7 +275,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     return timeout;
   }
 
-  clearTimeout(timeout: NodeJS.Timer): void {
+  clearTimeout(timeout: number): void {
     clearTimeout(timeout);
     this.timeouts.delete(timeout);
   }
@@ -282,7 +291,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     return interval;
   }
 
-  clearInterval(interval: NodeJS.Timer): void {
+  clearInterval(interval: NodeJS.Timeout | string | number | undefined): void {
     clearInterval(interval);
     this.intervals.delete(interval);
   }
