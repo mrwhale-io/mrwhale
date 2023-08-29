@@ -81,6 +81,7 @@ export default class extends DiscordCommand {
     const scores = await Score.findAll({
       attributes: ["userId", [sum, "total"]],
       group: ["Score.userId"],
+      order: [[sum, "DESC"]],
       limit: 10,
     });
     let mappedScores: MappedScores[] = [];
