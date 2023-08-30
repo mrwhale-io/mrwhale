@@ -33,7 +33,7 @@ export default class extends GameJoltCommand {
       )
       .addField("Discord support", `https://discord.com/invite/wjBnkR4AUZ`)
       .addField("Loaded commands", `${this.botClient.commands.size}`)
-      .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)}`)
+      .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)} MB`)
       .addField("Uptime", `${TimeUtilities.convertMs(this.botClient.uptime)}`)
       .addField("Cleverbot", this.botClient.cleverbot ? "on" : "off")
       .build();
