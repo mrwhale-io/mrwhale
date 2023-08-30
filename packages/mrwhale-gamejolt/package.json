@@ -11,7 +11,8 @@
     "url": "git+https://github.com/mrwhale-io/mrwhale.git"
   },
   "scripts": {
-    "start": "ts-node src/index.ts"
+    "dev": "ts-node --transpile-only index.ts",
+    "start": "tsc && copyfiles ./images/*.png ./lib && node ./lib/index.js"
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
@@ -25,6 +26,7 @@
     "canvas": "^2.11.2",
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
+    "copyfiles": "^2.4.1",
     "jimp": "^0.16.1",
     "joltite.js": "^1.0.1",
     "moment": "^2.27.0",

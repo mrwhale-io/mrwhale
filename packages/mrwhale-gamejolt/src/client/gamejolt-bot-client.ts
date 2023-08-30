@@ -276,7 +276,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   }
 
   clearInterval(interval: NodeJS.Timeout | string | number | undefined): void {
-    clearInterval(interval);
+    clearInterval(interval as number);
     this.intervals.delete(interval);
   }
 
