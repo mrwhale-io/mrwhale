@@ -20,7 +20,7 @@
  ) =>
    language
      ? `\`\`\`\n#${language}\n${text}\n\`\`\``
-     : `\`\`\`\n${text}\n\`\`\``;
+     : `\`\`\`\n\n${text}\n\`\`\``;
  
  /**
   * Return italic markdown text.
