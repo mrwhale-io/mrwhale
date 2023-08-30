@@ -4,7 +4,7 @@ export class Timer {
   name: string;
 
   private client: GameJoltBotClient;
-  private timer: NodeJS.Timer;
+  private timer: NodeJS.Timeout | string | number | undefined;
   private ticks: number;
   private interval: number;
   private callback: () => Promise<void>;

@@ -14,6 +14,7 @@ export const Events = {
   OWNER_SYNC: "owner_sync",
   GROUP_ADD: "group_add",
   GROUP_LEAVE: "group_leave",
+  INVITE_ACCEPT: "invite_accept",
 };
 
 export const Endpoints = {
@@ -35,4 +36,4 @@ export const Endpoints = {
   fireside: (id: string): string => `/web/fireside/fetch/${id}`,
 };
 
-export const GJ_PLATFORM_VERSION = "1.16.0";
+export const GJ_PLATFORM_VERSION = "1.33.1";

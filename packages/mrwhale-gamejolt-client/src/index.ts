@@ -1,6 +1,6 @@
 export { ClientOptions } from "./types/client-options";
 export { FriendRequest } from "./structures/friend-request";
-export { Message } from "./structures/message";
+export { Message, MessageType } from "./structures/message";
 export { Room, RoomType } from "./structures/room";
 export { User } from "./structures/user";
 export { Game } from "./structures/game";

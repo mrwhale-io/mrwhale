@@ -163,6 +163,16 @@ export class ChatManager extends events.EventEmitter {
   }
 
   /**
+   * Accept a chat invite.
+   * @param inviteId The id of the invite.
+   */
+  acceptInvite(inviteId: number): Push {
+    return this.userChannel.push(Events.INVITE_ACCEPT, {
+      invite_id: inviteId,
+    });
+  }
+
+  /**
    * Reset the chat client.
    */
   reset(): void {
@@ -207,8 +217,9 @@ export class ChatManager extends events.EventEmitter {
       this.userChannel = channel;
       this.currentUser = currentUser;
       this.friendsList = friendsList;
-      this.groupIds = response.groups_ids;
       this.groups = response.groups;
+      this.groupIds =
+        response.groups_ids || this.groups.map((group) => group.id);
       this.client.emit("chat_ready", response);
     });
   }

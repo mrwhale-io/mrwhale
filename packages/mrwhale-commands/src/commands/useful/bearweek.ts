@@ -9,19 +9,23 @@ export const data: CommandOptions = {
 
 export function action(): string {
   const now = new Date();
-  const from = new Date();
-  const to = new Date();
-  from.setMonth(7);
-  from.setDate(11);
-  to.setMonth(7);
-  to.setDate(from.getDate() + 7);
-  console.log(to, from);
-  const ms = from.valueOf() - now.valueOf();
-  const time = TimeUtilities.convertMs(ms);
+  const currentMonth = now.getMonth() + 1;
 
-  if (now.getTime() <= to.getTime() && now.getTime() >= from.getTime()) {
-    return `It is Bear week! Visit https://mudgolt.com/`;
+  const currentDay = now.getDate();
+  let nextBearWeekYear = now.getFullYear();
+  if (currentMonth === 8 && currentDay > 18) {
+    nextBearWeekYear++;
   }
 
-  return `${time}until bear week! 🐻`;
+  const nextBearWeekDate = nextBearWeekYear + "-08-11T00:00:00.000Z";
+  const bearWeek = new Date(nextBearWeekDate);
+
+  const ms = Math.floor(bearWeek.getTime() - now.getTime());
+  const time = TimeUtilities.convertMs(ms);
+
+  if (currentMonth === 8 && currentDay <= 18 && currentDay >= 11) {
+    return `It is Bear week! 🐻 Visit https://mudgolt.com/`;
+  }
+
+  return `${time.toString()} until bear week! 🐻`;
 }

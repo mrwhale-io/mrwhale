@@ -1,8 +1,8 @@
 import * as path from "path";
 import { SqliteStorageProvider } from "@mrwhale-io/core";
 
-import { GameJoltBotClient } from "./client/gamejolt-bot-client";
-import * as config from "../config.json";
+import { GameJoltBotClient } from "./src/client/gamejolt-bot-client";
+import * as config from "./config.json";
 
 const client = new GameJoltBotClient(
   {
@@ -14,7 +14,7 @@ const client = new GameJoltBotClient(
     rateLimitRequests: 3,
   },
   {
-    commandsDir: path.join(__dirname, "./commands"),
+    commandsDir: path.join(__dirname, "./src/commands"),
     cleverbotToken: config.cleverbot,
     prefix: config.prefix,
     ownerId: config.ownerId,

@@ -3,6 +3,8 @@ import { Client } from "../client/client";
 import { ContentDocument } from "../content/content-document";
 import { Content } from "../content/content";
 
+export type MessageType = "content" | "sticker" | "invite";
+
 export class Message {
   id!: number;
   user_id!: number;
@@ -10,6 +12,7 @@ export class Message {
   room_id!: number;
   content!: string;
   logged_on!: Date;
+  type: MessageType;
 
   private replied = false;
 
