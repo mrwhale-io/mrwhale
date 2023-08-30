@@ -14,7 +14,7 @@ const client = new GameJoltBotClient(
     rateLimitRequests: 3,
   },
   {
-    commandsDir: path.join(__dirname, "./commands"),
+    commandsDir: path.join(__dirname, "./src/commands"),
     cleverbotToken: config.cleverbot,
     prefix: config.prefix,
     ownerId: config.ownerId,
