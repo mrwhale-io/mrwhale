@@ -22,19 +22,6 @@ const RESPONSES = [
       "Oh no not the harpoons!",
     ],
   },
-  {
-    regex: /wh(a+)(l+)(e+)/gi,
-    responses: [
-      "Hello!",
-      "Hey, Don't mind me I'm just watching your posts.",
-      "I'm guessing you're talking about me?",
-      "*insert insightful comment here*",
-      "Whale then",
-      "I didn't read the post but I sense you mentioned me.",
-      "My Whale sense is tingling",
-      "Okay what did I do this time?",
-    ],
-  },
 ];
 
 export class ReplyManager {

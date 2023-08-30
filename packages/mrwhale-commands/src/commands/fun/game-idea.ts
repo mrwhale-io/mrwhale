@@ -31,7 +31,7 @@ export function action(): Game {
   const item = items[Math.floor(RNG() * items.length)];
   const environment = environments[Math.floor(RNG * environments.length)];
   const goal = goals[Math.floor(RNG * goals.length)];
-  const rule = rules[Math.floor(RNG * goals.length)];
+  const rule = rules[Math.floor(RNG * rules.length)];
 
   const game: Game = {
     environment,
