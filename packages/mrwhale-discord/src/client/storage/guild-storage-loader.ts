@@ -6,8 +6,9 @@ import { DiscordBotClient } from "../discord-bot-client";
  * Responsible for loading guild settings.
  */
 export class GuildStorageLoader {
+  readonly settingsProvider: StorageProvider;
+
   private readonly botClient: DiscordBotClient;
-  private readonly settingsProvider: StorageProvider;
 
   constructor(client: DiscordBotClient) {
     this.botClient = client;

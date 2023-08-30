@@ -114,6 +114,17 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   @on(Events.GuildCreate)
   private async onGuildCreate(guild: Guild): Promise<void> {
+    if (!this.guildSettings.has(guild.id)) {
+      const storage = new KeyedStorageProvider(
+        this.guildStorageLoader.settingsProvider,
+        guild.id
+      );
+
+      await storage.init();
+
+      this.guildSettings.set(guild.id, storage);
+    }
+
     const channel = this.getFirstTextChannel(guild);
     const avatar = this.client.user.displayAvatarURL();
     const embed = new EmbedBuilder()
