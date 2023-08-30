@@ -31,6 +31,7 @@ export default class extends GameJoltCommand {
         "Friends",
         `${this.botClient.client.grid.chat.friendsList.collection.length}`
       )
+      .addField("Discord support", `https://discord.com/invite/wjBnkR4AUZ`)
       .addField("Loaded commands", `${this.botClient.commands.size}`)
       .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)}`)
       .addField("Uptime", `${TimeUtilities.convertMs(this.botClient.uptime)}`)
