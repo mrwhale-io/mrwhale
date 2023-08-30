@@ -120,22 +120,6 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   @once("chat_ready")
   protected async onChatReady(): Promise<void> {
     this.commandDispatcher.ready = true;
-
-    let index = 0;
-    const interval = 0.3;
-    const roomIds =
-      this.client.grid.chat.groupIds ||
-      this.client.grid.chat.groups.map((group) => group.id);
-
-    const timer = new Timer(this, "join-groups", interval, async () => {
-      if (index < roomIds.length) {
-        const roomId = roomIds[index++];
-        this.logger.info(`Joining group chat: ${roomId}`);
-        this.joinRoom(roomId);
-      } else {
-        timer.destroy();
-      }
-    });
     this.client.emit("client_ready");
   }
 
