@@ -29,6 +29,7 @@ export default class extends GameJoltCommand {
     const avatar = await loadImage(avatarFile.data);
     const canvas = createCanvas(base.width, base.height);
     const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "rgba(255, 255, 255, 0)";
     ctx.fillRect(0, 0, base.width, base.height);
     ctx.drawImage(avatar, 0, 0, 512, 512);
     ctx.drawImage(base, 0, 0);
