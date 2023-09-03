@@ -51,6 +51,21 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly version: string;
 
   /**
+   * The base url of the dashboard api.
+   */
+  readonly apiBaseUrl: string;
+
+  /**
+   * The client id of the OAuth2 discord client.
+   */
+  readonly clientId: string;
+
+  /**
+   * The client secret of the OAuth2 discord client.
+   */
+  readonly clientSecret: string;
+
+  /**
    * The discord bot list API key.
    */
   private readonly discordBotList?: string;
@@ -62,6 +77,9 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.client = new Client(clientOptions);
     this.version = botOptions.version;
     this.discordServer = botOptions.discordServer;
+    this.apiBaseUrl = botOptions.apiBaseUrl;
+    this.clientId = botOptions.clientId;
+    this.clientSecret = botOptions.clientSecret;
     this.guildSettings = new Map<string, KeyedStorageProvider>();
     this.commandLoader.commandType = DiscordCommand.name;
     this.commandLoader.loadCommands();

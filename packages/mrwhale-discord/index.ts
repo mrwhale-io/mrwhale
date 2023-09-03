@@ -1,11 +1,12 @@
 import { SqliteStorageProvider } from "@mrwhale-io/core";
+import { Events } from "discord.js";
 import * as path from "path";
 
 import * as config from "./config.json";
 import { version } from "./package.json";
 import { DiscordBotClient } from "./src/client/discord-bot-client";
 import { INTENTS } from "./src/constants";
-import { Events } from "discord.js";
+import { startServer } from "./server";
 
 const bot = new DiscordBotClient(
   {
@@ -14,6 +15,9 @@ const bot = new DiscordBotClient(
     ownerId: config.ownerId,
     discordServer: config.discordServer,
     discordBotList: config.discordBotList,
+    apiBaseUrl: config.apiBaseUrl,
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
     version,
     provider: SqliteStorageProvider(path.join(process.cwd(), config.database)),
   },
@@ -32,3 +36,5 @@ bot.client.once(Events.ClientReady, () => {
 process.on("unhandledRejection", (err) => {
   console.error(err);
 });
+
+startServer(bot);

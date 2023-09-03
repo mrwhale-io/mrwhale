@@ -1,0 +1,23 @@
+{
+  "name": "@mrwhale-io/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mr. Whale's dashboard.",
+  "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
+  "homepage": "https://github.com/mrwhale-io/mrwhale#readme",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "files": [
+    "lib"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrwhale-io/mrwhale.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mrwhale-io/mrwhale/issues"
+  }
+}
