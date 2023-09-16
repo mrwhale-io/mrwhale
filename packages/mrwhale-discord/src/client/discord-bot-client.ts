@@ -51,9 +51,14 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly version: string;
 
   /**
-   * The base url of the dashboard api.
+   * The url of the discord OAuth2 redirect.
    */
-  readonly apiBaseUrl: string;
+  readonly redirectUrl: string;
+
+  /**
+   * The url of the dashboard.
+   */
+  readonly proxyUrl: string;
 
   /**
    * The client id of the OAuth2 discord client.
@@ -77,7 +82,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.client = new Client(clientOptions);
     this.version = botOptions.version;
     this.discordServer = botOptions.discordServer;
-    this.apiBaseUrl = botOptions.apiBaseUrl;
+    this.redirectUrl = botOptions.redirectUrl;
+    this.proxyUrl = botOptions.proxyUrl;
     this.clientId = botOptions.clientId;
     this.clientSecret = botOptions.clientSecret;
     this.guildSettings = new Map<string, KeyedStorageProvider>();

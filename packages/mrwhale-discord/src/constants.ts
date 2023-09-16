@@ -7,3 +7,4 @@ export const INTENTS = [
   GatewayIntentBits.GuildMessages,
   GatewayIntentBits.DirectMessages,
 ];
+export const DISCORD_URL = "https://discord.com";

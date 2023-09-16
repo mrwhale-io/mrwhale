@@ -1,12 +1,16 @@
 import * as express from "express";
 import * as session from "express-session";
+import * as connectSessionSequelize from "connect-session-sequelize";
 import * as path from "path";
 
+import { Database } from "@mrwhale-io/core";
 import * as config from "./config.json";
 import { DiscordBotClient } from "./src/client/discord-bot-client";
-import { discordRouter } from "./src/api/controllers/discord";
+import { apiRouter } from "./src/dashboard/controllers";
+import { authRouter } from "./src/dashboard/controllers/auth";
 
 const app = express();
+const SequelizeStore = connectSessionSequelize(session.Store);
 
 export function startServer(botClient: DiscordBotClient) {
   app
@@ -16,6 +20,9 @@ export function startServer(botClient: DiscordBotClient) {
     .use(
       session({
         secret: config.sessionSecret,
+        store: new SequelizeStore({
+          db: Database.connection,
+        }),
         resave: false,
         saveUninitialized: false,
       })
@@ -26,10 +33,9 @@ export function startServer(botClient: DiscordBotClient) {
       next();
     })
     .set("port", config.port);
+         
+  app.use("/authorize", authRouter);
+  app.use("/api", apiRouter);
 
-  app.use("/api", discordRouter);
-
-  app.listen(config.port, () =>
-    console.log(`App listening at ${config.apiBaseUrl}`)
-  );
+  app.listen(config.port, () => console.log(`App listening on port: ${config.port}`));
 }

@@ -12,6 +12,7 @@ export { TimeUtilities } from "./util/time";
 export { Time } from "./types/time";
 export { CommandOptions } from "./types/command-options";
 export { CommandTypes } from "./types/command-types";
+export { HttpStatusCode } from "./types/http-status-code";
 export {
   COMMAND_TYPE_NAMES,
   WHALE_REGEX,
