@@ -1,6 +1,12 @@
-import { CssBaseline, GlobalStyles, ThemeProvider } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  CssBaseline,
+  GlobalStyles,
+  ThemeProvider,
+} from "@mui/material";
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Commands from "./features/commands/Commands";
@@ -10,15 +16,25 @@ import { useGetCurrentUserMutation } from "./features/users/usersApi";
 import Home from "./features/home/Home";
 import Dashboard from "./features/dashboard/Dashboard";
 import PrivateRoute from "./shared/PrivateRoute";
+import ManageGuild from "./features/dashboard/ManageGuild";
+import { selectIsInitialLoad } from "./features/auth/authSlice";
+import Loading from "./components/Loading";
 
 function App() {
   const dispatch = useDispatch();
+  const isInitialLoad = useSelector(selectIsInitialLoad);
   const [getCurrentUser] = useGetCurrentUserMutation();
 
   // Here we are fetching the logged in user.
   useEffect(() => {
     getCurrentUser();
   }, [dispatch, getCurrentUser]);
+
+  if (isInitialLoad) {
+    return (
+      <Loading />
+    );
+  }
 
   return (
     <>
@@ -35,6 +51,7 @@ function App() {
               <Route path="/commands" element={<Commands />} />
               <Route path="/dashboard" element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/manage" element={<ManageGuild />} />
               </Route>
             </Route>
           </Routes>
