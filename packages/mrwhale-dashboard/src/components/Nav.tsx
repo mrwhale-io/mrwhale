@@ -2,7 +2,9 @@ import {
   Avatar,
   Box,
   Container,
+  Divider,
   IconButton,
+  ListItemIcon,
   Menu,
   MenuItem,
   Tooltip,
@@ -17,6 +19,7 @@ import { Link as RouterLink } from "react-router-dom";
 
 import { useAuth } from "../hooks/auth";
 import { User } from "../types/user";
+import { Logout, Settings } from "@mui/icons-material";
 
 function Nav(): React.JSX.Element {
   const { user, isAuthenticated } = useAuth();
@@ -193,15 +196,35 @@ function Nav(): React.JSX.Element {
                   open={Boolean(anchorElUser)}
                   onClose={handleCloseUserMenu}
                 >
+                  <MenuItem>
+                    <Avatar
+                      src={getAvatarImage(user)}
+                      sx={{ width: 24, height: 24, mr: 2 }}
+                    />
+                    <Typography textAlign="center">{user.username}</Typography>
+                  </MenuItem>
+                  <Divider />
                   <MenuItem
                     component={RouterLink}
                     to="/dashboard"
                     onClick={handleCloseUserMenu}
                   >
-                    <Typography textAlign="center">Dashboard</Typography>
+                    <ListItemIcon>
+                      <Settings fontSize="small" />
+                    </ListItemIcon>
+                    <Typography textAlign="center">Manage servers</Typography>
                   </MenuItem>
-                  <MenuItem onClick={handleCloseUserMenu}>
-                    <Typography textAlign="center">Logout</Typography>
+                  <MenuItem
+                    component="a"
+                    href="/authorize/logout"
+                    onClick={handleCloseUserMenu}
+                  >
+                    <ListItemIcon>
+                      <Logout color="error" fontSize="small" />
+                    </ListItemIcon>
+                    <Typography color="error" textAlign="center">
+                      Logout
+                    </Typography>
                   </MenuItem>
                 </Menu>
               </>
