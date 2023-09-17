@@ -1,5 +1,8 @@
 import { Box, Button, Container, Stack, Typography } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+
 import "./Home.css";
+import { getInviteUrl } from "../../util/get-invite-url";
 
 const Home = () => {
   return (
@@ -14,7 +17,7 @@ const Home = () => {
         >
           <Container maxWidth="sm">
             <Typography
-              component="h1"
+              component="h2"
               variant="h2"
               align="center"
               color="text.primary"
@@ -37,8 +40,16 @@ const Home = () => {
               spacing={2}
               justifyContent="center"
             >
-              <Button variant="contained">Add to Discord</Button>
-              <Button variant="outlined">Dashboard</Button>
+              <Button
+                component="a"
+                href={getInviteUrl("414497162261430272")}
+                variant="contained"
+              >
+                Add to Discord
+              </Button>
+              <Button variant="outlined" component={RouterLink} to="/dashboard">
+                Dashboard
+              </Button>
             </Stack>
           </Container>
           <Container sx={{ pt: 4 }}>
@@ -51,7 +62,6 @@ const Home = () => {
             d="M0,100 C150,200 350,0 500,100 L500,00 L0,0 Z"
           ></path>
         </svg>
-
       </div>
 
       <Box
@@ -61,11 +71,9 @@ const Home = () => {
         }}
       >
         <Typography variant="h3" color="text.secondary" paragraph>
-          Levelling
+          🏆Levelling
         </Typography>
-        <Typography>
-          Compete with friends in your server. 
-        </Typography>
+        <Typography>Compete with friends in your server.</Typography>
       </Box>
     </>
   );
