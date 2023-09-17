@@ -9,6 +9,7 @@ import { defaultTheme } from "./theme";
 import { useGetCurrentUserMutation } from "./features/users/usersApi";
 import Home from "./features/home/Home";
 import Dashboard from "./features/dashboard/Dashboard";
+import PrivateRoute from "./shared/PrivateRoute";
 
 function App() {
   const dispatch = useDispatch();
@@ -32,7 +33,7 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/commands" element={<Commands />} />
-              <Route path="/dashboard">
+              <Route path="/dashboard" element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
               </Route>
             </Route>
