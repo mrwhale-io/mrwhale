@@ -4,6 +4,7 @@ import {
   AccordionSummary,
   Box,
   Chip,
+  CircularProgress,
   Divider,
   Stack,
   Typography,
@@ -21,7 +22,11 @@ const Commands = () => {
   return (
     <>
       {isLoading ? (
-        <>Loading...</>
+        <>
+          <Box display="flex" justifyContent="center" minHeight="100vh">
+            <CircularProgress />
+          </Box>
+        </>
       ) : data ? (
         <>
           <Typography
