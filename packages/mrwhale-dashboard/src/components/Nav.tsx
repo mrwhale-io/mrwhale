@@ -20,6 +20,7 @@ import { Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../hooks/auth";
 import { User } from "../types/user";
 import { Logout, Settings } from "@mui/icons-material";
+import { getInviteUrl } from "../util/get-invite-url";
 
 function Nav(): React.JSX.Element {
   const { user, isAuthenticated } = useAuth();
@@ -47,10 +48,6 @@ function Nav(): React.JSX.Element {
 
   const getAvatarImage = (user: User) => {
     return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
-  };
-
-  const getInviteUrl = (clientId: string) => {
-    return `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=2147601408&scope=applications.commands+bot`;
   };
 
   return (
