@@ -8,3 +8,4 @@ export const INTENTS = [
   GatewayIntentBits.DirectMessages,
 ];
 export const DISCORD_URL = "https://discord.com";
+export const PREFIX_MAX_LENGTH = 10;

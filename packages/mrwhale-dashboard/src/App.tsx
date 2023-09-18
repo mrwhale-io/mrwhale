@@ -1,10 +1,4 @@
-import {
-  Box,
-  CircularProgress,
-  CssBaseline,
-  GlobalStyles,
-  ThemeProvider,
-} from "@mui/material";
+import { CssBaseline, GlobalStyles, ThemeProvider } from "@mui/material";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -31,9 +25,7 @@ function App() {
   }, [dispatch, getCurrentUser]);
 
   if (isInitialLoad) {
-    return (
-      <Loading />
-    );
+    return <Loading />;
   }
 
   return (
