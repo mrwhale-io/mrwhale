@@ -3,4 +3,11 @@ export interface Guild {
   name: string;
   icon: string;
   owner: boolean;
+  channels: Channel[];
+  isInvited: boolean;
+}
+
+interface Channel {
+  id: string;
+  name: string;
 }

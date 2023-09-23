@@ -1,9 +1,9 @@
 import { APIGuild } from "discord.js";
 import { request } from "undici";
 
-import { DISCORD_URL } from "../../constants";
-import { DiscordBotClient } from "../../client/discord-bot-client";
 import { Database } from "@mrwhale-io/core";
+import { DISCORD_API_VERSION, DISCORD_URL } from "../../constants";
+import { DiscordBotClient } from "../../client/discord-bot-client";
 
 /**
  * Makes a call to the discord api to fetch the current user's guilds.
@@ -14,11 +14,14 @@ export async function getGuilds(
   tokenType: string,
   accessToken: string
 ): Promise<APIGuild[]> {
-  const guildsResult = await request(`${DISCORD_URL}/api/users/@me/guilds`, {
-    headers: {
-      authorization: `${tokenType} ${accessToken}`,
-    },
-  });
+  const guildsResult = await request(
+    `${DISCORD_URL}/api/${DISCORD_API_VERSION}/users/@me/guilds`,
+    {
+      headers: {
+        authorization: `${tokenType} ${accessToken}`,
+      },
+    }
+  );
 
   return (await guildsResult.body.json()) as APIGuild[];
 }
@@ -37,6 +40,21 @@ export async function setLevelChannelForGuild(
   const settings = botClient.guildSettings.get(guildId);
   if (settings) {
     settings.set("levelChannel", channelId);
+  }
+}
+
+/**
+ * Removes the level channel for the given guild.
+ * @param guildId The identifier of the guild to remove level channel for.
+ * @param botClient The bot client instance.
+ */
+export async function deleteLevelChannelForGuild(
+  guildId: string,
+  botClient: DiscordBotClient
+) {
+  const settings = botClient.guildSettings.get(guildId);
+  if (settings) {
+    settings.remove("levelChannel");
   }
 }
 

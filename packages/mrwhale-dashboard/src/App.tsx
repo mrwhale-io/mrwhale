@@ -10,7 +10,7 @@ import { useGetCurrentUserMutation } from "./features/users/usersApi";
 import Home from "./features/home/Home";
 import Dashboard from "./features/dashboard/Dashboard";
 import PrivateRoute from "./shared/PrivateRoute";
-import ManageGuild from "./features/dashboard/ManageGuild";
+import ManageGuild from "./features/dashboard/manage/ManageGuild";
 import { selectIsInitialLoad } from "./features/auth/authSlice";
 import Loading from "./components/Loading";
 
@@ -43,7 +43,10 @@ function App() {
               <Route path="/commands" element={<Commands />} />
               <Route path="/dashboard" element={<PrivateRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/dashboard/manage" element={<ManageGuild />} />
+                <Route
+                  path="/dashboard/manage/:guildId"
+                  element={<ManageGuild />}
+                />
               </Route>
             </Route>
           </Routes>

@@ -4,7 +4,7 @@ import { request } from "undici";
 import { HttpStatusCode } from "@mrwhale-io/core";
 import { encodeBase64 } from "../../util/encode-base64";
 import { OAuthTokenResponse } from "../../types/oauth-token-response";
-import { DISCORD_URL } from "../../constants";
+import { DISCORD_API_VERSION, DISCORD_URL } from "../../constants";
 import { getDiscordUser } from "../services/user";
 
 export const authRouter = express.Router();
@@ -72,16 +72,19 @@ async function getOAuthToken(
     scope: "identify",
   });
 
-  const tokenResponseData = await request(`${DISCORD_URL}/api/oauth2/token`, {
-    method: "POST",
-    body: params.toString(),
-    headers: {
-      Authorization: `Basic ${encodeBase64(
-        `${req.botClient.client.user.id}:${req.botClient.clientSecret}`
-      )}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-  });
+  const tokenResponseData = await request(
+    `${DISCORD_URL}/api/${DISCORD_API_VERSION}/oauth2/token`,
+    {
+      method: "POST",
+      body: params.toString(),
+      headers: {
+        Authorization: `Basic ${encodeBase64(
+          `${req.botClient.client.user.id}:${req.botClient.clientSecret}`
+        )}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    }
+  );
 
   return (await tokenResponseData.body.json()) as OAuthTokenResponse;
 }

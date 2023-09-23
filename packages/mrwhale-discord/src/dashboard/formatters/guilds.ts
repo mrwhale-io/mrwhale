@@ -15,6 +15,7 @@ export function getFormattedGuild(guild: Guild) {
   return {
     id: guild.id,
     name: guild.name,
+    icon: guild.icon,
     channels,
   };
 }

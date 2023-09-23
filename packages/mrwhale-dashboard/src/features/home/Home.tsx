@@ -19,6 +19,7 @@ const Home = () => {
             <Typography
               component="h2"
               variant="h2"
+              fontWeight={700}
               align="center"
               color="text.primary"
               gutterBottom

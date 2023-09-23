@@ -3,7 +3,7 @@ import * as express from "express";
 import { HttpStatusCode } from "@mrwhale-io/core";
 import { ensureAuthenticated } from "../middleware/ensure-authenticated";
 import { getGuilds } from "../services/guild";
-import { APIGuild, Client } from "discord.js";
+import { APIGuild, Client, PermissionsBitField } from "discord.js";
 
 interface MappedGuild extends APIGuild {
   isInvited: boolean;
@@ -29,7 +29,12 @@ async function getUserGuilds(req: express.Request, res: express.Response) {
   }
 
   const guilds = guildData
-    .filter((guild) => guild.owner)
+    .filter((guild) =>
+      new PermissionsBitField(BigInt(guild.permissions)).has(
+        PermissionsBitField.Flags.ManageGuild,
+        true
+      )
+    )
     .map((guild) => mapGuild(guild, req.botClient.client));
 
   return res.json({ guilds });

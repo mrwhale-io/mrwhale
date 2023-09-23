@@ -64,6 +64,6 @@ export default class extends DiscordCommand {
       );
     }
 
-    return interaction.reply(`Could not set the channel to <#${channel.id}`);
+    return interaction.reply(`Could not set the channel to <#${channel.id}>`);
   }
 }
