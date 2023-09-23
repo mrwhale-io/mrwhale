@@ -1,0 +1,26 @@
+@keyframes float {
+  0% {
+    transform: translatey(0px);
+  }
+  50% {
+    transform: translatey(-20px);
+  }
+  100% {
+    transform: translatey(0px);
+  }
+}
+
+.float {
+  transform: translatey(0px);
+  animation: float 3s ease-in-out infinite;
+}
+
+.wave {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-top: -64px;
+  margin-left: -50vw;
+  margin-right: -50vw;
+}

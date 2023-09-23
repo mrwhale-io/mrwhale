@@ -1,7 +1,7 @@
 import { REST, Routes } from "discord.js";
 
 import { clientId, token } from "../config.json";
-import { loadSlashCommands } from "./load-slash-commands";
+import { loadSlashCommands } from "../src/util/load-slash-commands";
 
 const rest = new REST().setToken(token);
 

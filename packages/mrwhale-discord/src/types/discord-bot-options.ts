@@ -18,4 +18,24 @@ export interface DiscordBotOptions extends BotOptions {
    * The discord bot list API key.
    */
   discordBotList?: string;
+
+  /**
+   * The url of the discord OAuth2 redirect.
+   */
+  redirectUrl: string;
+
+  /**
+   * The url of the dashboard.
+   */
+  proxyUrl: string;
+
+  /**
+   * The client id of the OAuth2 discord client.
+   */
+  clientId: string;
+
+  /**
+   * The client secret of the OAuth2 discord client.
+   */
+  clientSecret: string;
 }

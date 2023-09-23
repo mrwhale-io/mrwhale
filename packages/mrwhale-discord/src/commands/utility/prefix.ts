@@ -5,8 +5,7 @@ import {
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
-
-const PREFIX_LENGTH = 10;
+import { PREFIX_MAX_LENGTH } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -42,8 +41,8 @@ export default class extends DiscordCommand {
       return "Please provide a prefix";
     }
 
-    if (prefix.length > PREFIX_LENGTH) {
-      return `Please provide a prefix less than ${PREFIX_LENGTH} characters.`;
+    if (prefix.length > PREFIX_MAX_LENGTH) {
+      return `Please provide a prefix less than ${PREFIX_MAX_LENGTH} characters.`;
     }
 
     const settings = this.botClient.guildSettings.get(guildId);

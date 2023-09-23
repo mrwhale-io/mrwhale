@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "lib",
     "baseUrl": "./",
-    "moduleResolution": "Node"
+    "moduleResolution": "Node",
+    "typeRoots": ["@types"]
   },
   "include": ["src/**/*", "index.ts"],
   "exclude": ["node_modules", "**/__tests__/*"]
