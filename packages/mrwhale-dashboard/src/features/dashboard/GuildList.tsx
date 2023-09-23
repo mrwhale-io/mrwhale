@@ -13,12 +13,14 @@ import { Link as RouterLink } from "react-router-dom";
 import { getGuildIcon } from "../../util/get-guild-icon";
 import { getInviteUrlForGuild } from "../../util/get-invite-url";
 import { Guild } from "../../types/guild";
+import { useClient } from "../../hooks/client";
 
 interface Props {
   guilds: Guild[];
 }
 
 const GuildList = ({ guilds }: Props) => {
+  const { clientId } = useClient();
   return (
     <Container sx={{ py: 8 }} maxWidth="md">
       <Grid container spacing={4}>
@@ -47,7 +49,7 @@ const GuildList = ({ guilds }: Props) => {
               <CardActions>
                 {!guild.isInvited ? (
                   <Button
-                    href={getInviteUrlForGuild("414497162261430272", guild.id)}
+                    href={getInviteUrlForGuild(clientId, guild.id)}
                     size="small"
                   >
                     Invite

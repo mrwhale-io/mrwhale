@@ -1,6 +1,7 @@
 import * as express from "express";
 
 import { HttpStatusCode } from "@mrwhale-io/core";
+import { getTotalMemberCount } from "../services/client";
 
 export const clientRouter = express.Router();
 
@@ -15,6 +16,7 @@ async function getClientInfo(req: express.Request, res: express.Response) {
       avatar: user.displayAvatarURL({ extension: "png", size: 512 }),
     },
     clientId: req.botClient.clientId,
+    userCount: getTotalMemberCount(req.botClient),
     version: req.botClient.version,
   };
 

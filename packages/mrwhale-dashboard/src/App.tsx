@@ -13,16 +13,19 @@ import PrivateRoute from "./shared/PrivateRoute";
 import ManageGuild from "./features/dashboard/manage/ManageGuild";
 import { selectIsInitialLoad } from "./features/auth/authSlice";
 import Loading from "./components/Loading";
+import { useGetClientInfoMutation } from "./features/client/clientApi";
 
 function App() {
   const dispatch = useDispatch();
   const isInitialLoad = useSelector(selectIsInitialLoad);
   const [getCurrentUser] = useGetCurrentUserMutation();
+  const [getClientInfo] = useGetClientInfoMutation();
 
   // Here we are fetching the logged in user.
   useEffect(() => {
+    getClientInfo();
     getCurrentUser();
-  }, [dispatch, getCurrentUser]);
+  }, [dispatch, getClientInfo, getCurrentUser]);
 
   if (isInitialLoad) {
     return <Loading />;

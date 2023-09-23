@@ -21,9 +21,11 @@ import { useAuth } from "../hooks/auth";
 import { User } from "../types/user";
 import { Logout, Settings } from "@mui/icons-material";
 import { getInviteUrl } from "../util/get-invite-url";
+import { useClient } from "../hooks/client";
 
 function Nav(): React.JSX.Element {
   const { user, isAuthenticated } = useAuth();
+  const { clientId } = useClient();
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
   );
@@ -110,7 +112,7 @@ function Nav(): React.JSX.Element {
             >
               <MenuItem
                 component="a"
-                href={getInviteUrl("414497162261430272")}
+                href={getInviteUrl(clientId)}
                 onClick={handleCloseNavMenu}
               >
                 <Typography textAlign="center">Invite</Typography>
@@ -154,7 +156,7 @@ function Nav(): React.JSX.Element {
             <Button
               component="a"
               color="inherit"
-              href={getInviteUrl("414497162261430272")}
+              href={getInviteUrl(clientId)}
               sx={{ my: 1, mx: 1.5 }}
             >
               Invite
