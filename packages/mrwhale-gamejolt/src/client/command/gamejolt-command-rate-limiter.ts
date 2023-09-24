@@ -2,9 +2,6 @@ import { Message } from "@mrwhale-io/gamejolt-client";
 import { CommandRateLimit, CommandRateLimiter } from "@mrwhale-io/core";
 
 export class GameJoltCommandRateLimiter extends CommandRateLimiter {
-  readonly limit: number;
-  readonly duration: number;
-
   private readonly rateLimits: Map<number, Map<number, CommandRateLimit>>;
 
   constructor(limit: number, duration: number) {

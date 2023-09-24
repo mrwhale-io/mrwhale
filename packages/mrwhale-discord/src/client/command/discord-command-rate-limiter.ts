@@ -2,9 +2,6 @@ import { CommandRateLimit, CommandRateLimiter } from "@mrwhale-io/core";
 import { ChatInputCommandInteraction, Message } from "discord.js";
 
 export class DiscordCommandRateLimiter extends CommandRateLimiter {
-  readonly limit: number;
-  readonly duration: number;
-
   private readonly rateLimits: Map<string, Map<string, CommandRateLimit>>;
 
   constructor(limit?: number, duration?: number) {
