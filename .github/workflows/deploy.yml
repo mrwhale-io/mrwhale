@@ -12,7 +12,7 @@ jobs:
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USERNAME }}
-          passphrase: ${{ secrets.PRODUCTION_PASSPHRASE }}
+          passphrase: ${{ secrets.PRODUCTION_PASSWORD }}
           script: |
             cd /var/www/mrwhale.io/mrwhale
             git pull origin master
