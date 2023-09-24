@@ -9,8 +9,14 @@ export function loadCommands(): DiscordCommand[] {
   const files: any[] = [];
   for (const directory of COMMAND_TYPE_NAMES) {
     files.push(
-      ...glob.sync(`${path.join(__dirname, `../commands/${directory}`)}/*.ts`)
+      ...glob.sync(`${path.join(__dirname, `../commands/${directory}`)}/*.js`)
     );
+
+    if (process[Symbol.for("ts-node.register.instance")]) {
+      files.push(
+        ...glob.sync(`${path.join(__dirname, `../commands/${directory}`)}/*.ts`)
+      );
+    }
   }
 
   for (const file of files) {
