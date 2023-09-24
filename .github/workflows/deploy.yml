@@ -1,0 +1,20 @@
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to production
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USERNAME }}
+          password: ${{ secrets.PRODUCTION_PASSWORD }}
+          script: |
+            cd /var/www/mrwhale.io/mrwhale
+            git pull origin master
+            yarn install && yarn run build
+            pm2 reload all
