@@ -61,7 +61,7 @@ function Nav(): React.JSX.Element {
             sx={{ display: { xs: "none", md: "flex" }, mr: 2 }}
             component={RouterLink}
             to="/"
-            src="/src/assets/mrwhale_avatar.png"
+            src="/assets/mrwhale_avatar.png"
           />
           <Typography
             variant="h6"
@@ -131,7 +131,7 @@ function Nav(): React.JSX.Element {
             sx={{ display: { xs: "flex", md: "none" }, mr: 2 }}
             component={RouterLink}
             to="/"
-            src="/src/assets/mrwhale_avatar.png"
+            src="/assets/mrwhale_avatar.png"
           />
           <Typography
             variant="h5"

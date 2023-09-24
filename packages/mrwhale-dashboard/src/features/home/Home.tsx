@@ -13,20 +13,20 @@ const features: FeatureItemProps[] = [
     title: "🏆 Level up",
     description:
       "Compete with friends in your server by gaining EXP and levelling up in the leaderboards.",
-    imageSrc: "/src/assets/level-advance.png",
+    imageSrc: "/assets/level-advance.png",
     imageAlt: "Level up",
   },
   {
     title: "💯 Rank Cards",
     description:
       "Discover how you rank up with your very own ranking card. This shows your current progress and includes your rank, level and EXP.",
-    imageSrc: "/src/assets/rank.png",
+    imageSrc: "/assets/rank.png",
     imageAlt: "Rank card",
   },
   {
     title: "📈 Leaderboards",
     description: "Mr. Whale supports both global and server leaderboards.",
-    imageSrc: "/src/assets/leaderboard.png",
+    imageSrc: "/assets/leaderboard.png",
     imageAlt: "Leaderboard",
     list: [
       {
@@ -107,7 +107,7 @@ const Home = () => {
             </Stack>
           </Container>
           <Container sx={{ pt: 4 }}>
-            <img src="/src/assets/mrwhale.svg" className="float" />
+            <img src="/assets/mrwhale.svg" className="float" />
           </Container>
         </Box>
         <svg viewBox="0 0 500 150" preserveAspectRatio="xMinYMin meet">
