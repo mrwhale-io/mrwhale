@@ -38,6 +38,10 @@ const footers = [
       { title: "GitHub", href: "https://github.com/mrwhale-io/mrwhale" },
     ],
   },
+  {
+    title: "Legal",
+    description: [{ title: "Privacy Policy", href: "/privacy" }],
+  },
 ];
 
 const MainLayout = () => {
@@ -64,7 +68,7 @@ const MainLayout = () => {
       >
         <Grid container spacing={4} justifyContent="space-evenly">
           {footers.map((footer) => (
-            <Grid item xs={4} sm={3} key={footer.title}>
+            <Grid item xs={6} sm={3} key={footer.title}>
               <Typography variant="h6" color="text.primary" gutterBottom>
                 {footer.title}
               </Typography>
