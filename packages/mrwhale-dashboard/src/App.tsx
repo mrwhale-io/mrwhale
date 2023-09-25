@@ -14,6 +14,7 @@ import ManageGuild from "./features/dashboard/manage/ManageGuild";
 import { selectIsInitialLoad } from "./features/auth/authSlice";
 import Loading from "./components/Loading";
 import { useGetClientInfoMutation } from "./features/client/clientApi";
+import PrivacyPolicy from "./features/legal/PrivacyPolicy";
 
 function App() {
   const dispatch = useDispatch();
@@ -51,6 +52,7 @@ function App() {
                   element={<ManageGuild />}
                 />
               </Route>
+              <Route path="/privacy" element={<PrivacyPolicy />} />
             </Route>
           </Routes>
         </BrowserRouter>
