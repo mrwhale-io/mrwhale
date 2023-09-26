@@ -1,7 +1,7 @@
 {
   "name": "@mrwhale-io/dashboard",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Mr. Whale dashboard.",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "type": "module",

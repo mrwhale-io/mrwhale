@@ -1,6 +1,6 @@
 {
   "name": "@mrwhale-io/gamejolt-client",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Client that allows you to easily interact with the Game Jolt chat and site API.",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
   "homepage": "https://github.com/mrwhale-io/mrwhale/tree/main/packages/mrwhale-gamejolt-client#readme",
