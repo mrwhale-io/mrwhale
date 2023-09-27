@@ -26,6 +26,7 @@ Some basic features include:
 - 🤖 Have conversations with cleverbot.
 - 📣 Announce when users enter and leave chat.
 - 🏆 EXP system for levelling up in group chats.
+- ⚙️ Web Dashboard for managing Discord server configurations.
 
 Mr. Whale has a lot of commands, with 6 main categories:
 
@@ -37,7 +38,7 @@ Mr. Whale has a lot of commands, with 6 main categories:
 - 👑 **Owner**: `eval`, `reload` and `cleverbot`!
 - 🏆 **Level**: `rank`, `leaderboard`
 
-[See the full command list](https://www.mrwhale.io/docs/commands)
+[See the full command list](https://www.mrwhale.io/commands)
 
 ## Integrations
 

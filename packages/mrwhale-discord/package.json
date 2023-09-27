@@ -29,6 +29,7 @@
     "@mrwhale-io/commands": "^1.0.2",
     "@mrwhale-io/core": "^1.2.0",
     "axios": "^0.21.1",
+    "canvacord": "^5.4.10",
     "canvas": "^2.11.2",
     "connect-session-sequelize": "^7.1.7",
     "copyfiles": "^2.4.1",
