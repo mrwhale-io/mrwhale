@@ -1,10 +1,19 @@
 {
   "token": "",
-  "prefix": "!",
-  "database: "database.sqlite",
+  "clientId": "",
+  "guildId": "",
+  "clientSecret": "",
+  "sessionSecret": "",
+  "redirectUrl": "http://localhost:53134/authorize/callback",
+  "proxyUrl": "http://localhost:5173",
+  "port": 53134,
+  "discordBotList": "",
+  "prefix": "jr",
+  "database": "database.sqlite",
   "ownerId": "",
   "cleverbot": "",
   "youtube": "",
   "pastebin": "",
   "openWeather": "",
+  "discordServer": ""
 }

@@ -61,7 +61,7 @@ export default class extends DiscordCommand {
           value: this.botClient.version,
         },
         {
-          name: "Server",
+          name: "Servers",
           value: `${this.botClient.client.guilds.cache.size}`,
         },
         {
