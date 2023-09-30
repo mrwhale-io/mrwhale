@@ -11,16 +11,19 @@ import {
   Events,
   Guild,
   GuildBasedChannel,
+  GuildMember,
+  TextBasedChannel,
   User,
 } from "discord.js";
+import { createDjsClient } from "discordbotlist";
 
 import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
 import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
-import { EMBED_COLOR } from "../constants";
+import { EMBED_COLOR, THEME } from "../constants";
 import { DiscordBotOptions } from "../types/discord-bot-options";
-import { createDjsClient } from "discordbotlist";
+import { Greeting } from "../image/greeting";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -162,6 +165,10 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
           value: "https://github.com/mrwhale-io/mrwhale",
         },
         {
+          name: "Website",
+          value: "https://www.mrwhale.io",
+        },
+        {
           name: "Version",
           value: this.version,
         },
@@ -183,12 +190,59 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
   }
 
+  @on(Events.GuildMemberAdd)
+  private async onGuildMemberAdd(guildMember: GuildMember) {
+    const greeting = await new Greeting()
+      .setGuild(guildMember.guild.name)
+      .setAvatarUrl(
+        guildMember.displayAvatarURL({ extension: "png", size: 512 })
+      )
+      .setUsername(guildMember.user.username)
+      .setMessage("Whalecome to {guild.name}, {user.username}!")
+      .setMemberCount(guildMember.guild.memberCount)
+      .setBackgroundColour(THEME.backgroundColour)
+      .setMessageColour(THEME.primaryTextColour)
+      .setAvatarColour(THEME.primaryTextColour)
+      .setMemberCountColour(THEME.secondaryTextColour)
+      .setSecondaryBackgroundColour(THEME.secondaryBackgroundColour)
+      .build();
+    const channel = await this.getGreetingsChannel(guildMember.guild);
+    if (channel && channel.isTextBased()) {
+      channel.send({ files: [greeting] });
+    }
+  }
+
+  private async getGreetingsChannel(guild: Guild): Promise<TextBasedChannel> {
+    const firstChannel = this.getFirstTextChannel(guild) as TextBasedChannel;
+
+    if (!firstChannel) {
+      return null;
+    }
+
+    if (!this.guildSettings.has(guild.id)) {
+      return firstChannel;
+    }
+
+    const settings = this.guildSettings.get(guild.id);
+    const channelId = await settings.get("greetingChannel", firstChannel.id);
+
+    try {
+      const channel = this.client.channels.cache.has(channelId)
+        ? (this.client.channels.cache.get(channelId) as TextBasedChannel)
+        : ((await this.client.channels.fetch(channelId)) as TextBasedChannel);
+
+      return channel;
+    } catch {
+      return firstChannel;
+    }
+  }
+
   private getFirstTextChannel(guild: Guild): GuildBasedChannel {
     const channels = guild.channels.cache;
     return channels.find(
       (c) =>
         c.type === ChannelType.GuildText &&
-        c.permissionsFor(guild.members.me).has("SendMessages")
+        c.permissionsFor(guild.members.me).has(["SendMessages", "AttachFiles"])
     );
   }
 }
