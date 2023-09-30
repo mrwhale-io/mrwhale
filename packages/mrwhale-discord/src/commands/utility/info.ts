@@ -53,6 +53,10 @@ export default class extends DiscordCommand {
           value: "https://github.com/mrwhale-io/mrwhale",
         },
         {
+          name: "Website",
+          value: "https://www.mrwhale.io",
+        },
+        {
           name: "Version",
           value: this.botClient.version,
         },
