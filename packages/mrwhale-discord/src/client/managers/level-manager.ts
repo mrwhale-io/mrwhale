@@ -98,11 +98,17 @@ export class LevelManager {
     const settings = this.bot.guildSettings.get(message.guildId);
     const channelId = await settings.get("levelChannel", message.channel.id);
 
-    return this.bot.client.channels.cache.has(channelId)
-      ? (this.bot.client.channels.cache.get(channelId) as TextBasedChannel)
-      : ((await this.bot.client.channels.fetch(
-          channelId
-        )) as TextBasedChannel);
+    try {
+      const channel = this.bot.client.channels.cache.has(channelId)
+        ? (this.bot.client.channels.cache.get(channelId) as TextBasedChannel)
+        : ((await this.bot.client.channels.fetch(
+            channelId
+          )) as TextBasedChannel);
+
+      return channel;
+    } catch {
+      return message.channel;
+    }
   }
 
   protected async onMessage(message: Message): Promise<void> {

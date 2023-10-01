@@ -23,6 +23,7 @@
     "@mrwhale-io/gamejolt-client": "^1.1.0",
     "ascii-table": "^0.0.9",
     "axios": "^0.21.1",
+    "canvacord": "^5.4.10",
     "canvas": "^2.11.2",
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
