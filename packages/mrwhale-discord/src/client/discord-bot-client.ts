@@ -192,6 +192,14 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   @on(Events.GuildMemberAdd)
   private async onGuildMemberAdd(guildMember: GuildMember) {
+    const isGreetingsEnabled = await this.isGreetingsEnabled(
+      guildMember.guild.id
+    );
+  
+    if (!isGreetingsEnabled) {
+      return;
+    }
+
     const greeting = await new Greeting()
       .setGuild(guildMember.guild.name)
       .setAvatarUrl(
@@ -244,5 +252,15 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
         c.type === ChannelType.GuildText &&
         c.permissionsFor(guild.members.me).has(["SendMessages", "AttachFiles"])
     );
+  }
+
+  private async isGreetingsEnabled(guildId: string): Promise<boolean> {
+    if (!this.guildSettings.has(guildId)) {
+      return false;
+    }
+
+    const settings = this.guildSettings.get(guildId);
+
+    return await settings.get("greetings", false);
   }
 }

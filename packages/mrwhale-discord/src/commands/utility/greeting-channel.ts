@@ -42,14 +42,14 @@ export default class extends DiscordCommand {
 
   slashCommandAction(
     interaction: ChatInputCommandInteraction<CacheType>
-  ): Promise<unknown> {
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const channel = interaction.options.getChannel("channel");
 
     if (channel.type !== ChannelType.GuildText) {
       return interaction.reply("You must pass a text based channel.");
     }
 
-    this.setGreetingChannel(interaction, channel);
+    return this.setGreetingChannel(interaction, channel);
   }
 
   private async setGreetingChannel(
