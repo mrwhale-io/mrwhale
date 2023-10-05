@@ -62,6 +62,8 @@ export class DiscordCommandDispatcher {
       return;
     }
 
+    command.invokedWith = commandName;
+
     if (!this.checkRateLimits(message, command)) {
       return;
     }

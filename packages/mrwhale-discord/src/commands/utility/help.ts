@@ -51,6 +51,7 @@ export default class extends DiscordCommand {
         const info = new EmbedBuilder().setColor(EMBED_COLOR).addFields([
           { name: "Name", value: cmd.name },
           { name: "Description", value: cmd.description },
+          { name: "Usage", value: cmd.usage.replace(/<prefix>/g, prefix) },
           { name: "Type", value: cmd.type },
           {
             name: "Cooldown",
@@ -62,7 +63,10 @@ export default class extends DiscordCommand {
           info.addFields([
             {
               name: "Examples",
-              value: `${cmd.examples.join(", ").replace(/<prefix>/g, prefix)}`,
+              value: `${cmd.examples
+                .map((example) => `\`${example}\``)
+                .join(", ")
+                .replace(/<prefix>/g, prefix)}`,
             },
           ]);
         }

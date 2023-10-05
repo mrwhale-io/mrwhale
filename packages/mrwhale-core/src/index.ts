@@ -27,9 +27,20 @@ export { CommandRateLimiter } from "./client/command/command-rate-limiter";
 export { levelToExp, getLevelFromExp, getRemainingExp } from "./helpers/levels";
 export { HangmanGame } from "./types/hangman-game";
 export { GuessingGame } from "./types/guessing-game";
+export { MinesweeperGame } from "./types/minesweeper-game";
+export { MinesweeperOptions } from "./types/minesweeper-options";
 export { getCommandName, getCommandArgs, dispatch } from "./helpers/command";
+export { createMinesweeperGame } from "./helpers/minesweeper";
 export { eyes } from "./data/eyes";
 export { genres, goals, items, environments, rules } from "./data/game-idea";
+export {
+  minesweeperLostMessages,
+  minesweeperWonMessages,
+  minesweeperErrorMessages,
+  minesweeperEasy,
+  minesweeperMedium,
+  minesweeperHard,
+} from "./data/minesweeper";
 export {
   bold,
   code,
