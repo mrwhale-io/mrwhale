@@ -15,6 +15,7 @@ import { selectIsInitialLoad } from "./features/auth/authSlice";
 import Loading from "./components/Loading";
 import { useGetClientInfoMutation } from "./features/client/clientApi";
 import PrivacyPolicy from "./features/legal/PrivacyPolicy";
+import Terms from "./features/legal/Terms";
 
 function App() {
   const dispatch = useDispatch();
@@ -53,6 +54,7 @@ function App() {
                 />
               </Route>
               <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
             </Route>
           </Routes>
         </BrowserRouter>

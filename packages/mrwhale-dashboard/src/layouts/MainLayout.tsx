@@ -30,7 +30,8 @@ const footers = [
     description: [
       { title: "Commands", href: "/commands" },
       { title: "Dashboard", href: "/dashboard" },
-      { title: "Privacy Policy", href: "/privacy" },
+      { title: "Terms", href: "/terms" },
+      { title: "Privacy", href: "/privacy" },
     ],
   },
   {
