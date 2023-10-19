@@ -1,10 +1,11 @@
 import axios from "axios";
 import { createCanvas, Canvas, loadImage } from "canvas";
 
+import { RankCardTheme } from "@mrwhale-io/core";
 import { PlayerInfo } from "../types/player-info";
 import { applyText } from "../util/apply-text";
 import { ProgressBar } from "./progress-bar";
-import { CardTheme } from "../types/card-theme";
+import { DEFAULT_RANK_THEME } from "../constants";
 
 /**
  * Draws a user ranking card.
@@ -14,12 +15,13 @@ import { CardTheme } from "../types/card-theme";
  */
 export async function createPlayerCard(
   player: PlayerInfo,
-  theme: CardTheme
+  theme: RankCardTheme
 ): Promise<Canvas> {
   const canvas = createCanvas(800, 200);
   const ctx = canvas.getContext("2d");
+  const font = "28px sans-serif";
 
-  ctx.fillStyle = theme.fillColor;
+  ctx.fillStyle = theme.fillColour || DEFAULT_RANK_THEME.fillColour;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw player username.
@@ -30,7 +32,8 @@ export async function createPlayerCard(
     `@${player.user.username}`,
     "sans-serif"
   );
-  ctx.fillStyle = theme.secondaryTextColor;
+  ctx.fillStyle =
+    theme.secondaryTextColour || DEFAULT_RANK_THEME.secondaryTextColour;
   ctx.fillText(
     `@${player.user.username}`,
     canvas.width / 3.5,
@@ -38,13 +41,15 @@ export async function createPlayerCard(
   );
 
   // Draw player rank
-  ctx.font = theme.font;
-  ctx.fillStyle = theme.primaryTextColor;
+  ctx.font = font;
+  ctx.fillStyle =
+    theme.primaryTextColour || DEFAULT_RANK_THEME.primaryTextColour;
   ctx.fillText(`RANK #${player.rank}`, canvas.width / 1.8, canvas.height / 3.5);
 
   // Draw player level
-  ctx.font = theme.font;
-  ctx.fillStyle = theme.secondaryTextColor;
+  ctx.font = font;
+  ctx.fillStyle =
+    theme.secondaryTextColour || DEFAULT_RANK_THEME.secondaryTextColour;
   ctx.fillText(
     `LEVEL ${player.level}`,
     canvas.width / 1.3,
@@ -59,14 +64,16 @@ export async function createPlayerCard(
     height: 40,
     canvas,
     percentage: Math.floor((player.remainingExp / player.levelExp) * 100),
-    color: theme.progressColor,
-    backgroundColor: theme.progressFillColor,
+    color: theme.progressColour || DEFAULT_RANK_THEME.progressColour,
+    backgroundColor:
+      theme.progressFillColour || DEFAULT_RANK_THEME.progressFillColour,
   });
   progressBar.draw();
 
   // Draw player exp
-  ctx.font = theme.font;
-  ctx.fillStyle = theme.primaryTextColor;
+  ctx.font = font;
+  ctx.fillStyle =
+    theme.primaryTextColour || DEFAULT_RANK_THEME.primaryTextColour;
   ctx.fillText(
     `${player.remainingExp}/${player.levelExp} EXP`,
     canvas.width / 1.4,

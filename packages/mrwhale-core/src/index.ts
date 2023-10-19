@@ -13,6 +13,7 @@ export { Time } from "./types/time";
 export { CommandOptions } from "./types/command-options";
 export { CommandTypes } from "./types/command-types";
 export { HttpStatusCode } from "./types/http-status-code";
+export { RankCardTheme } from "./types/rank-card-theme";
 export {
   COMMAND_TYPE_NAMES,
   WHALE_REGEX,

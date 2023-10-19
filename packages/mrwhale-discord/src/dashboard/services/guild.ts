@@ -1,9 +1,10 @@
 import { APIGuild } from "discord.js";
 import { request } from "undici";
 
-import { Database } from "@mrwhale-io/core";
+import { Database, RankCardTheme } from "@mrwhale-io/core";
 import { DISCORD_API_VERSION, DISCORD_URL } from "../../constants";
 import { DiscordBotClient } from "../../client/discord-bot-client";
+import { RankCard, RankCardInstance } from "../../database/models/rank-card";
 
 /**
  * Makes a call to the discord api to fetch the current user's guilds.
@@ -118,4 +119,33 @@ async function isLevelsEnabled(guildId: string, botClient: DiscordBotClient) {
   const settings = botClient.guildSettings.get(guildId);
 
   return await settings.get("levels", true);
+}
+
+/**
+ * Gets the guild rank card theme settings from the database.
+ * @param guildId The identifier of the guild.
+ */
+export async function getRankCardTheme(
+  guildId: string
+): Promise<RankCardInstance> {
+  return await RankCard.findOne({
+    where: {
+      guildId,
+    },
+  });
+}
+
+/**
+ * Updates or creates a rank card theme.
+ * @param guildId The identifier of the guild.
+ * @param card The card theme colours.
+ */
+export async function updateRankCard(
+  guildId: string,
+  cardTheme: RankCardTheme
+) {
+  RankCard.upsert({
+    guildId,
+    ...cardTheme,
+  });
 }

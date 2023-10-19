@@ -1,19 +1,30 @@
 import * as express from "express";
 
-import { HttpStatusCode } from "@mrwhale-io/core";
+import {
+  HttpStatusCode,
+  RankCardTheme,
+  getLevelFromExp,
+  getRemainingExp,
+  levelToExp,
+} from "@mrwhale-io/core";
 import { ensureAuthenticated } from "../middleware/ensure-authenticated";
 import { validate } from "../middleware/validators/shared";
-import { guildSetPrefixValidators } from "../middleware/validators/guilds";
+import { guildGetRankCardValidators, guildSetPrefixValidators } from "../middleware/validators/guilds";
 import {
   deleteLevelChannelForGuild,
   getGuildSettings,
+  getRankCardTheme,
   setLevelChannelForGuild,
   setPrefixForGuild,
   toggleLevelsForGuild,
+  updateRankCard,
 } from "../services/guild";
 import { getFormattedGuild } from "../formatters/guilds";
 import { asyncRequestHandler } from "../middleware/async";
 import { userCanManageGuild } from "../middleware/guilds";
+import { createPlayerCard } from "../../image/create-player-card";
+import { PlayerInfo } from "../../types/player-info";
+import { DEFAULT_RANK_THEME } from "../../constants";
 
 interface GuildLevelChannel {
   channelId: string;
@@ -49,6 +60,19 @@ guildsRouter.patch(
   ensureAuthenticated(),
   asyncRequestHandler(userCanManageGuild),
   setGuildLevelChannel
+);
+guildsRouter.get(
+  "/:guildId/card",
+  ensureAuthenticated(),
+  asyncRequestHandler(userCanManageGuild),
+  getRankCard
+);
+guildsRouter.post(
+  "/:guildId/card",
+  ensureAuthenticated(),
+  asyncRequestHandler(userCanManageGuild),
+  validate(guildGetRankCardValidators),
+  editRankCard
 );
 
 async function getGuild(req: express.Request, res: express.Response) {
@@ -93,6 +117,49 @@ async function setGuildPrefix(req: express.Request, res: express.Response) {
   const { prefix }: GuildPrefix = req.body;
 
   await setPrefixForGuild(prefix, req.params.guildId, req.botClient);
+
+  return res.status(HttpStatusCode.OK).end();
+}
+
+async function getRankCard(req: express.Request, res: express.Response) {
+  const exp = 100;
+  const level = getLevelFromExp(exp);
+  const info: PlayerInfo = {
+    user: await req.botClient.client.users.fetch(req.user.id),
+    totalExp: exp,
+    levelExp: levelToExp(level),
+    remainingExp: getRemainingExp(exp / 2),
+    level,
+    rank: 1,
+  };
+  const { guildId } = req.params;
+  const rankCard = await getRankCardTheme(guildId);
+  const canvas = await createPlayerCard(info, rankCard || DEFAULT_RANK_THEME);
+  const image = canvas.toBuffer();
+
+  return res
+    .writeHead(HttpStatusCode.OK, {
+      "Content-Type": "image/png",
+      "Content-Length": image.length,
+    })
+    .end(image);
+}
+
+async function editRankCard(req: express.Request, res: express.Response) {
+  const { guildId } = req.params;
+  const rankCard: RankCardTheme = {
+    fillColour: req.body.fillColour || DEFAULT_RANK_THEME.fillColour,
+    primaryTextColour:
+      req.body.primaryTextColour || DEFAULT_RANK_THEME.primaryTextColour,
+    secondaryTextColour:
+      req.body.secondaryTextColour || DEFAULT_RANK_THEME.secondaryTextColour,
+    progressFillColour:
+      req.body.progressFillColour || DEFAULT_RANK_THEME.progressFillColour,
+    progressColour:
+      req.body.progressColour || DEFAULT_RANK_THEME.progressColour,
+  };
+
+  await updateRankCard(guildId, rankCard);
 
   return res.status(HttpStatusCode.OK).end();
 }

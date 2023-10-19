@@ -8,17 +8,9 @@ import { getLevelFromExp, getRemainingExp, levelToExp } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { LevelManager } from "../../client/managers/level-manager";
 import { PlayerInfo } from "../../types/player-info";
-import { CardTheme } from "../../types/card-theme";
 import { createPlayerCard } from "../../image/create-player-card";
-
-const THEME: CardTheme = {
-  fillColor: "#001625",
-  primaryTextColor: "#ffffff",
-  secondaryTextColor: "#88f9ba",
-  progressFillColor: "#002b3d",
-  progressColor: "#71b8ce",
-  font: "28px sans-serif",
-};
+import { DEFAULT_RANK_THEME } from "../../constants";
+import { getRankCardTheme } from "../../dashboard/services/guild";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -64,7 +56,11 @@ export default class extends DiscordCommand {
         level,
         rank,
       };
-      const canvas = await createPlayerCard(info, THEME);
+      const rankCard = await getRankCardTheme(message.guildId);
+      const canvas = await createPlayerCard(
+        info,
+        rankCard || DEFAULT_RANK_THEME
+      );
       const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
         name: "rank-image.png",
       });
@@ -105,7 +101,11 @@ export default class extends DiscordCommand {
         level,
         rank,
       };
-      const canvas = await createPlayerCard(info, THEME);
+      const rankCard = await getRankCardTheme(interaction.guildId);
+      const canvas = await createPlayerCard(
+        info,
+        rankCard || DEFAULT_RANK_THEME
+      );
       const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
         name: "rank-image.png",
       });
