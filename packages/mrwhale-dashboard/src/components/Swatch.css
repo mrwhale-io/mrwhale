@@ -1,0 +1,17 @@
+.swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70px;
+  height: 50px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.colourPicker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 105px;
+}
