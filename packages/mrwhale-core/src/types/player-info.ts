@@ -1,7 +1,6 @@
-import { User } from "discord.js";
-
 export interface PlayerInfo {
-  user: User;
+  username: string;
+  avatarUrl: string;
   totalExp: number;
   levelExp: number;
   remainingExp: number;

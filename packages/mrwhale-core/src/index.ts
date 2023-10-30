@@ -14,6 +14,9 @@ export { CommandOptions } from "./types/command-options";
 export { CommandTypes } from "./types/command-types";
 export { HttpStatusCode } from "./types/http-status-code";
 export { RankCardTheme } from "./types/rank-card-theme";
+export { PlayerInfo } from "./types/player-info";
+export { createPlayerRankCard } from "./image/create-player-rank-card";
+export { ProgressBar } from "./image/progress-bar";
 export {
   COMMAND_TYPE_NAMES,
   WHALE_REGEX,
@@ -41,3 +44,4 @@ export {
   orderedList,
 } from "./util/markdown-helpers";
 export { InfoBuilder } from "./util/info-builder";
+export { applyText } from "./util/apply-text";

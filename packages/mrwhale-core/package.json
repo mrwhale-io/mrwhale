@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@discordjs/collection": "^1.5.3",
+    "canvas": "^2.11.2",
     "jest": "^27.2.1",
     "sequelize": "^6.9.0",
     "winston": "^3.3.3"

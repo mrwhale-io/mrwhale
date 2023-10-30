@@ -4,11 +4,15 @@ import {
   AttachmentBuilder,
 } from "discord.js";
 
-import { getLevelFromExp, getRemainingExp, levelToExp } from "@mrwhale-io/core";
+import {
+  PlayerInfo,
+  createPlayerRankCard,
+  getLevelFromExp,
+  getRemainingExp,
+  levelToExp,
+} from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { LevelManager } from "../../client/managers/level-manager";
-import { PlayerInfo } from "../../types/player-info";
-import { createPlayerCard } from "../../image/create-player-card";
 import { DEFAULT_RANK_THEME } from "../../constants";
 import { getRankCardTheme } from "../../dashboard/services/guild";
 
@@ -49,7 +53,8 @@ export default class extends DiscordCommand {
       const level = getLevelFromExp(score.exp);
       const rank = playerSorted.findIndex((p) => p.userId === user.id) + 1;
       const info: PlayerInfo = {
-        user,
+        username: user.username,
+        avatarUrl: user.displayAvatarURL({ extension: "png" }),
         totalExp: score.exp,
         levelExp: levelToExp(level),
         remainingExp: getRemainingExp(score.exp),
@@ -57,10 +62,11 @@ export default class extends DiscordCommand {
         rank,
       };
       const rankCard = await getRankCardTheme(message.guildId);
-      const canvas = await createPlayerCard(
-        info,
-        rankCard || DEFAULT_RANK_THEME
-      );
+      const canvas = await createPlayerRankCard({
+        player: info,
+        theme: rankCard,
+        defaultTheme: DEFAULT_RANK_THEME,
+      });
       const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
         name: "rank-image.png",
       });
@@ -94,7 +100,8 @@ export default class extends DiscordCommand {
       const level = getLevelFromExp(score.exp);
       const rank = playerSorted.findIndex((p) => p.userId === user.id) + 1;
       const info: PlayerInfo = {
-        user,
+        username: user.username,
+        avatarUrl: user.displayAvatarURL({ extension: "png" }),
         totalExp: score.exp,
         levelExp: levelToExp(level),
         remainingExp: getRemainingExp(score.exp),
@@ -102,10 +109,11 @@ export default class extends DiscordCommand {
         rank,
       };
       const rankCard = await getRankCardTheme(interaction.guildId);
-      const canvas = await createPlayerCard(
-        info,
-        rankCard || DEFAULT_RANK_THEME
-      );
+      const canvas = await createPlayerRankCard({
+        player: info,
+        theme: rankCard,
+        defaultTheme: DEFAULT_RANK_THEME,
+      });
       const attachment = new AttachmentBuilder(canvas.toBuffer("image/png"), {
         name: "rank-image.png",
       });

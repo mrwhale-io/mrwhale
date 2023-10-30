@@ -7,7 +7,7 @@ import {
 } from "canvas";
 import { AttachmentBuilder } from "discord.js";
 
-import { applyText } from "../util/apply-text";
+import { applyText } from "@mrwhale-io/core";
 
 /**
  * A builder for creating a creating image for when user's join a guild.

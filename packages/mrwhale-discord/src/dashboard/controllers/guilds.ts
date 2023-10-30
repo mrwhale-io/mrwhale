@@ -2,14 +2,19 @@ import * as express from "express";
 
 import {
   HttpStatusCode,
+  PlayerInfo,
   RankCardTheme,
+  createPlayerRankCard,
   getLevelFromExp,
   getRemainingExp,
   levelToExp,
 } from "@mrwhale-io/core";
 import { ensureAuthenticated } from "../middleware/ensure-authenticated";
 import { validate } from "../middleware/validators/shared";
-import { guildGetRankCardValidators, guildSetPrefixValidators } from "../middleware/validators/guilds";
+import {
+  guildGetRankCardValidators,
+  guildSetPrefixValidators,
+} from "../middleware/validators/guilds";
 import {
   deleteLevelChannelForGuild,
   getGuildSettings,
@@ -22,8 +27,6 @@ import {
 import { getFormattedGuild } from "../formatters/guilds";
 import { asyncRequestHandler } from "../middleware/async";
 import { userCanManageGuild } from "../middleware/guilds";
-import { createPlayerCard } from "../../image/create-player-card";
-import { PlayerInfo } from "../../types/player-info";
 import { DEFAULT_RANK_THEME } from "../../constants";
 
 interface GuildLevelChannel {
@@ -76,10 +79,12 @@ guildsRouter.post(
 );
 
 async function getGuild(req: express.Request, res: express.Response) {
-  const settings = await getGuildSettings(req.params.guildId);
+  const { guildId } = req.params;
+  const settings = await getGuildSettings(guildId);
   const formattedGuild = getFormattedGuild(req.guild);
+  const rankCard = await getRankCardTheme(guildId);
 
-  return res.json({ guild: formattedGuild, settings });
+  return res.json({ guild: formattedGuild, settings, rankCard });
 }
 
 async function setGuildLevels(req: express.Request, res: express.Response) {
@@ -124,8 +129,10 @@ async function setGuildPrefix(req: express.Request, res: express.Response) {
 async function getRankCard(req: express.Request, res: express.Response) {
   const exp = 100;
   const level = getLevelFromExp(exp);
+  const user = await req.botClient.client.users.fetch(req.user.id);
   const info: PlayerInfo = {
-    user: await req.botClient.client.users.fetch(req.user.id),
+    username: user.username,
+    avatarUrl: user.displayAvatarURL({ extension: "png" }),
     totalExp: exp,
     levelExp: levelToExp(level),
     remainingExp: getRemainingExp(exp / 2),
@@ -133,8 +140,12 @@ async function getRankCard(req: express.Request, res: express.Response) {
     rank: 1,
   };
   const { guildId } = req.params;
-  const rankCard = await getRankCardTheme(guildId);
-  const canvas = await createPlayerCard(info, rankCard || DEFAULT_RANK_THEME);
+  const theme = await getRankCardTheme(guildId);
+  const canvas = await createPlayerRankCard({
+    player: info,
+    theme,
+    defaultTheme: DEFAULT_RANK_THEME,
+  });
   const image = canvas.toBuffer();
 
   return res
@@ -157,6 +168,7 @@ async function editRankCard(req: express.Request, res: express.Response) {
       req.body.progressFillColour || DEFAULT_RANK_THEME.progressFillColour,
     progressColour:
       req.body.progressColour || DEFAULT_RANK_THEME.progressColour,
+    font: DEFAULT_RANK_THEME.font,
   };
 
   await updateRankCard(guildId, rankCard);

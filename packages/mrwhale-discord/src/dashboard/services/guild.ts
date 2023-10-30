@@ -4,7 +4,7 @@ import { request } from "undici";
 import { Database, RankCardTheme } from "@mrwhale-io/core";
 import { DISCORD_API_VERSION, DISCORD_URL } from "../../constants";
 import { DiscordBotClient } from "../../client/discord-bot-client";
-import { RankCard, RankCardInstance } from "../../database/models/rank-card";
+import { RankCard } from "../../database/models/rank-card";
 
 /**
  * Makes a call to the discord api to fetch the current user's guilds.
@@ -127,12 +127,14 @@ async function isLevelsEnabled(guildId: string, botClient: DiscordBotClient) {
  */
 export async function getRankCardTheme(
   guildId: string
-): Promise<RankCardInstance> {
-  return await RankCard.findOne({
+): Promise<RankCardTheme> {
+  const rankCardTheme = await RankCard.findOne({
     where: {
       guildId,
     },
   });
+
+  return { ...rankCardTheme, font: "sans-serif" };
 }
 
 /**
