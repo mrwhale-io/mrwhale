@@ -1,7 +1,7 @@
-import { Message } from "@mrwhale-io/gamejolt-client";
 import { createCanvas, loadImage } from "canvas";
-import * as jimp from "jimp";
+import * as canvacord from "canvacord";
 
+import { Message } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { uploadImage } from "../../image/upload-image";
 
@@ -19,13 +19,10 @@ export default class extends GameJoltCommand {
   async action(message: Message): Promise<void> {
     const user = message.firstMentionOrAuthor;
     const responseMsg = await message.reply("Processing please wait...");
-    const image = await jimp.read(user.img_avatar);
-    image.blur(5);
-    const buffer = await image.getBufferAsync(jimp.MIME_PNG);
-    const blurred = await loadImage(buffer);
-    const canvas = createCanvas(image.getWidth(), image.getHeight());
+    const image = await loadImage(await canvacord.Canvas.blur(user.img_avatar));
+    const canvas = createCanvas(image.width, image.height);
     const ctx = canvas.getContext("2d");
-    ctx.drawImage(blurred, 0, 0);
+    ctx.drawImage(image, 0, 0);
 
     return uploadImage(canvas, responseMsg);
   }

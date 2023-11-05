@@ -1,11 +1,11 @@
-import { truncate } from "@mrwhale-io/core";
-import { Message } from "@mrwhale-io/gamejolt-client";
-import axios from "axios";
 import { createCanvas, loadImage } from "canvas";
 import * as path from "path";
 
+import { truncate } from "@mrwhale-io/core";
+import { Message } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { uploadImage } from "../../image/upload-image";
+import { fetchImageFromUrl } from "../../util/fetch-image-from-url";
 
 export default class extends GameJoltCommand {
   constructor() {
@@ -21,16 +21,13 @@ export default class extends GameJoltCommand {
   async action(message: Message): Promise<void> {
     const user = message.firstMentionOrAuthor;
     const responseMsg = await message.reply("Processing please wait...");
-    const avatarFile = await axios.get(user.img_avatar, {
-      responseType: "arraybuffer",
-    });
     const userCard = await loadImage(
       path.join(__dirname, "..", "..", "..", "images", "verified.png")
     );
     const badge = await loadImage(
       path.join(__dirname, "..", "..", "..", "images", "verified-badge.png")
     );
-    const avatar = await loadImage(avatarFile.data);
+    const avatar = await fetchImageFromUrl(user.img_avatar);
     const canvas = createCanvas(userCard.width, userCard.height);
     const ctx = canvas.getContext("2d");
     const radius = 70;
@@ -58,6 +55,8 @@ export default class extends GameJoltCommand {
     );
 
     ctx.beginPath();
+    ctx.lineWidth = 13;
+    ctx.strokeStyle = "#302B27";
     ctx.arc(
       canvas.width / 2,
       canvas.height / 3.5,
@@ -66,6 +65,7 @@ export default class extends GameJoltCommand {
       Math.PI * 2,
       true
     );
+    ctx.stroke();
     ctx.closePath();
     ctx.clip();
 

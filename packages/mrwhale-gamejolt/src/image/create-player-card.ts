@@ -1,18 +1,20 @@
-import axios from "axios";
-import { createCanvas, Canvas, loadImage } from "canvas";
+import { createCanvas, Canvas } from "canvas";
 
 import { PlayerInfo } from "../types/player-info";
 import { applyText } from "../util/apply-text";
 import { ProgressBar } from "./progress-bar";
-import { CardTheme } from '../types/card-theme';
+import { CardTheme } from "../types/card-theme";
+import { fetchImageFromUrl } from "../util/fetch-image-from-url";
 
 /**
  * Draws a user ranking card.
- * 
  * @param player The player info.
  * @param theme The card theme.
  */
-export async function createPlayerCard(player: PlayerInfo, theme: CardTheme): Promise<Canvas> {
+export async function createPlayerCard(
+  player: PlayerInfo,
+  theme: CardTheme
+): Promise<Canvas> {
   const canvas = createCanvas(920, 250);
   const ctx = canvas.getContext("2d");
 
@@ -64,16 +66,13 @@ export async function createPlayerCard(player: PlayerInfo, theme: CardTheme): Pr
     canvas.height / 1.7
   );
 
-  // Draw user avatar.
   ctx.beginPath();
   ctx.arc(125, 125, 100, 0, Math.PI * 2, true);
   ctx.closePath();
   ctx.clip();
 
-  const avatarFile = await axios.get(player.user.img_avatar, {
-    responseType: "arraybuffer",
-  });
-  const avatar = await loadImage(avatarFile.data);
+  // Draw user avatar.
+  const avatar = await fetchImageFromUrl(player.user.img_avatar);
   ctx.drawImage(avatar, 25, 25, 200, 200);
 
   return canvas;
