@@ -12,6 +12,7 @@ import {
   Room,
   RoomType,
   Client,
+  UserCollection,
 } from "@mrwhale-io/gamejolt-client";
 import { GameJolt } from "joltite.js";
 
@@ -19,7 +20,6 @@ import { GameJoltBotOptions } from "../types/bot-options";
 import { FriendRequestManager } from "./managers/friend-request-manager";
 import { ReplyManager } from "./managers/reply-manager";
 import { CleverbotManager } from "./managers/cleverbot-manager";
-import { Timer } from "../util/timer";
 import { UrlManager } from "./managers/url-manager";
 import { LevelManager } from "./managers/level-manager";
 import { Policer } from "./managers/policer";
@@ -46,10 +46,24 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   readonly client: Client;
 
   /**
+   * Get the Game Jolt chat client.
+   */
+  get chat() {
+    return this.client.chat;
+  }
+
+  /**
+   * Get the clients friend list.
+   */
+  get friendsList(): UserCollection {
+    return this.chat.friendsList;
+  }
+
+  /**
    * Returns the chat client uptime.
    */
   get uptime(): number {
-    return Date.now() - this.client.grid.chat.startTime;
+    return Date.now() - this.chat.startTime;
   }
 
   /**
@@ -127,14 +141,14 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   protected async onClientReady(): Promise<void> {
     this.startTime = Date.now();
     this.logger.info(
-      `Client ready! Connected as @${this.client.grid.chat.currentUser.username}`
+      `Client ready! Connected as @${this.chat.currentUser.username}`
     );
   }
 
   @on("notification")
   protected onNotification(message: Message): void {
     // Join the room channel if haven't joined already.
-    if (message && !this.client.grid.chat.roomChannels[message.room_id]) {
+    if (message && !this.chat.roomChannels[message.room_id]) {
       this.joinRoom(message.room_id).receive("ok", () => {
         this.client.emit("message", message);
       });
@@ -143,7 +157,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     // Accept chat invite.
     if (message && message.type === "invite") {
       const invite = JSON.parse(message.content);
-      this.client.grid.chat.acceptInvite(invite.content[0].attrs.id);
+      this.chat.acceptInvite(invite.content[0].attrs.id);
     }
   }
 
@@ -159,7 +173,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
           `${prefix}help`
         )} for a list of commands.`;
 
-        this.client.grid.chat.sendMessage(message, friend.room_id);
+        this.chat.sendMessage(message, friend.room_id);
       });
     }
   }
@@ -173,7 +187,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
           `${prefix}help`
         )} for a list of commands.`;
 
-        this.client.grid.chat.sendMessage(message, group.id);
+        this.chat.sendMessage(message, group.id);
       });
       this.logger.info(`Added to a group chat with id: ${group.id}`);
     }
@@ -181,7 +195,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
 
   @on("member_add")
   protected onMemberAdd(data: { room_id: number; members: User[] }): void {
-    const room = this.client.grid.chat.activeRooms[data.room_id];
+    const room = this.chat.activeRooms[data.room_id];
 
     if (data.members && room && room.type === RoomType.ClosedGroup) {
       const members = data.members
@@ -191,7 +205,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
       const content = new Content().insertText(
         `👋 ${members.join(" ")} was just added to the group.`
       );
-      this.client.grid.chat.sendMessage(content, data.room_id);
+      this.chat.sendMessage(content, data.room_id);
       this.logger.info(
         `${members.join(",")} were added to group chat with id: ${data.room_id}`
       );
@@ -200,14 +214,14 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
 
   @on("member_leave")
   protected onMemberLeave(data: { room_id: number; member: User }): void {
-    const room = this.client.grid.chat.activeRooms[data.room_id];
+    const room = this.chat.activeRooms[data.room_id];
 
     if (data.member && room && room.type === RoomType.ClosedGroup) {
       const content = new Content().insertText(
         `@${data.member.username} just left the group.`
       );
 
-      this.client.grid.chat.sendMessage(content, data.room_id);
+      this.chat.sendMessage(content, data.room_id);
       this.logger.info(
         `${data.member.username} (${data.member.id}) left group chat with id: ${data.room_id}`
       );
@@ -216,14 +230,14 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
 
   @on("owner_sync")
   protected onOwnerSync(data: { room_id: number; owner_id: number }): void {
-    const room = this.client.grid.chat.activeRooms[data.room_id];
+    const room = this.chat.activeRooms[data.room_id];
 
     if (room && room.owner) {
       const content = new Content().insertText(
         `👑 @${room.owner.username} just became the group owner.`
       );
 
-      this.client.grid.chat.sendMessage(content, data.room_id);
+      this.chat.sendMessage(content, data.room_id);
       this.logger.info(
         `${room.owner.username} (${room.owner.id}) became owner of group chat with id: ${data.room_id}`
       );
@@ -281,7 +295,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   }
 
   private joinRoom(roomId: number) {
-    return this.client.grid.chat.joinRoom(roomId).receive("ok", () => {
+    return this.chat.joinRoom(roomId).receive("ok", () => {
       this.roomStorageLoader.loadRoomSettings(roomId);
     });
   }

@@ -1,4 +1,4 @@
-import { TimeUtilities, InfoBuilder } from '@mrwhale-io/core';
+import { TimeUtilities, InfoBuilder } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
 
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
@@ -22,15 +22,12 @@ export default class extends GameJoltCommand {
   async action(message: Message): Promise<Message> {
     const memoryUsage = process.memoryUsage().heapUsed / MEM_UNIT / MEM_UNIT;
     const groupIds =
-      this.botClient.client.grid.chat.groupIds ||
-      this.botClient.client.grid.chat.groups.map((group) => group.id);
+      this.botClient.chat.groupIds ||
+      this.botClient.chat.groups.map((group) => group.id);
     const response = new InfoBuilder()
       .addField("Version", version)
       .addField("Group chats", `${groupIds.length}`)
-      .addField(
-        "Friends",
-        `${this.botClient.client.grid.chat.friendsList.collection.length}`
-      )
+      .addField("Friends", `${this.botClient.friendsList.collection.length}`)
       .addField("Discord support", `https://discord.com/invite/wjBnkR4AUZ`)
       .addField("Loaded commands", `${this.botClient.commands.size}`)
       .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)} MB`)

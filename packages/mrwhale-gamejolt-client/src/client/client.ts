@@ -41,10 +41,17 @@ export class Client extends events.EventEmitter {
    */
   rateLimitRequests: number;
 
-  /**
+  /**F  
    * The max duration of rate limiting.
    */
   rateLimitDuration: number;
+
+  /**
+   * Get the chat client.
+   */
+  get chat(): ChatManager {
+    return this.grid.chat;
+  }
 
   /**
    * @param options The client options.

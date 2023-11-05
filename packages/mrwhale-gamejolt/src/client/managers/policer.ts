@@ -46,8 +46,8 @@ export class Policer {
   @on("message")
   private async onMessage(message: Message) {
     if (
-      message.user.id === this.bot.client.grid.chat.currentUser.id ||
-      this.bot.client.grid.chat.friendsList.getByRoom(message.room_id)
+      message.user.id === this.bot.chat.currentUser.id ||
+      this.bot.friendsList.getByRoom(message.room_id)
     ) {
       return;
     }

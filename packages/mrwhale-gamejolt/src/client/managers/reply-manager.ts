@@ -31,7 +31,7 @@ export class ReplyManager {
 
   @on("message")
   protected async onMessage(message: Message): Promise<void> {
-    if (message.user.id === this.bot.client.grid.chat.currentUser.id) {
+    if (message.user.id === this.bot.chat.currentUser.id) {
       return;
     }
 

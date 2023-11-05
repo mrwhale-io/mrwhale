@@ -23,9 +23,5 @@ export class Room {
 
   constructor(data: Partial<Room> = {}) {
     Object.assign(this, data);
-
-    if (data.members) {
-      this.members = data.members.map((member) => new User(member));
-    }
   }
 }
