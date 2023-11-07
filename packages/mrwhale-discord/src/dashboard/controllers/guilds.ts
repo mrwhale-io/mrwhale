@@ -14,6 +14,7 @@ import {
 import { getFormattedGuild } from "../formatters/guilds";
 import { asyncRequestHandler } from "../middleware/async";
 import { userCanManageGuild } from "../middleware/guilds";
+import { LevelManager } from "../../client/managers/level-manager";
 
 interface GuildLevelChannel {
   channelId: string;
@@ -30,6 +31,12 @@ guildsRouter.get(
   ensureAuthenticated(),
   asyncRequestHandler(userCanManageGuild),
   getGuild
+);
+guildsRouter.delete(
+  "/:guildId",
+  ensureAuthenticated(),
+  asyncRequestHandler(userCanManageGuild),
+  deleteGuildData
 );
 guildsRouter.patch(
   "/:guildId/prefix",
@@ -93,6 +100,19 @@ async function setGuildPrefix(req: express.Request, res: express.Response) {
   const { prefix }: GuildPrefix = req.body;
 
   await setPrefixForGuild(prefix, req.params.guildId, req.botClient);
+
+  return res.status(HttpStatusCode.OK).end();
+}
+
+async function deleteGuildData(req: express.Request, res: express.Response) {
+  const guildId = req.params.guildId;
+  const botClient = req.botClient;
+
+  if (botClient.guildSettings.has(guildId)) {
+    await botClient.deleteGuildSettings(guildId);
+    await botClient.createGuildSettings(guildId);
+  }
+  await LevelManager.removeAllScoresForGuild(guildId);
 
   return res.status(HttpStatusCode.OK).end();
 }

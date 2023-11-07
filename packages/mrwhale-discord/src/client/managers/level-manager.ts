@@ -63,6 +63,30 @@ export class LevelManager {
     });
   }
 
+  /**
+   * Removes all the leaderboard scores for a given guild id.
+   * @param guildId The guild id to remove scores for.
+   */
+  static async removeAllScoresForGuild(guildId: string): Promise<number> {
+    return await Score.destroy({
+      where: {
+        guildId,
+      },
+    });
+  }
+
+  /**
+   * Removes all the leaderboard scores for a given user id.
+   * @param userId The user id to remove scores for.
+   */
+  static async removeAllScoresForUser(userId: string): Promise<number> {
+    return await Score.destroy({
+      where: {
+        userId,
+      },
+    });
+  }
+
   private isTimeForExp(guildId: string, userId: string) {
     if (!this.lastMessages[guildId]) {
       this.lastMessages[guildId] = {};
