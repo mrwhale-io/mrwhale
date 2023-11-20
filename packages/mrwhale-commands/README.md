@@ -54,7 +54,6 @@
 | Name          | Description                              | Usage                |
 | ------------- | ---------------------------------------- | -------------------- |
 | **cleverbot** | Toggle cleverbot on/off.                 | cleverbot            |
-| **eval**      | Evaluate JavaScript code and execute it. | eval [code]          |
 | **reload**    | Reload a command.                        | reload [command|all] |
 
 ## License

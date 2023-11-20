@@ -35,7 +35,7 @@ Mr. Whale has a lot of commands, with 6 main categories:
 - 🖨️ **Useful**: `calculator`, `translate`, `hastebin`, `wiki`, `advice` and `newyear`!
 - 🔧 **Utility**: `help`, `info`, `langs`, `whois` and **3** more!
 - 🎨 **Image** : `chocolatemilk`, `avatar`, `gun`, `avatarfusion`
-- 👑 **Owner**: `eval`, `reload` and `cleverbot`!
+- 👑 **Owner**: `reload` and `cleverbot`!
 - 🏆 **Level**: `rank`, `leaderboard`
 
 [See the full command list](https://www.mrwhale.io/commands)
