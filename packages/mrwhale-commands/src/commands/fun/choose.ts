@@ -15,14 +15,6 @@ export const responses = [
   "There's no comparison to <<CHOICE>>",
 ];
 
-function multiDecide(options: string[]): string {
-  const selected = options[Math.floor(Math.random() * options.length)];
-  if (!selected) {
-    return this.multiDecide(options);
-  }
-  return selected;
-}
-
 export const data: CommandOptions = {
   name: "choose",
   description: "Choose between one or multiple choices.",
@@ -52,4 +44,12 @@ export function action(args: string[]): string {
   } else {
     return "Please pass two or more choices.";
   }
+}
+
+function multiDecide(options: string[]): string {
+  const selected = options[Math.floor(Math.random() * options.length)];
+  if (!selected) {
+    return this.multiDecide(options);
+  }
+  return selected;
 }

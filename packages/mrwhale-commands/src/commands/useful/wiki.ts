@@ -1,9 +1,10 @@
 import wiki from "wikijs";
-import { CommandOptions, truncate } from "@mrwhale-io/core";
+
+import { CommandOptions } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
   name: "wiki",
-  description: "Search for a Wiki page.",
+  description: "Search for a Wikipedia page.",
   type: "useful",
   usage: "<prefix>wiki <query>",
   examples: ["<prefix>wiki whale"],
@@ -20,7 +21,7 @@ export async function action(query: string): Promise<string> {
     const page = await wiki().page(search.results[0]);
     const summary = await page.summary();
 
-    return truncate(980, summary);
+    return summary;
   } catch {
     return "I couldn't search for this wiki.";
   }

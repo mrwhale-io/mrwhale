@@ -35,4 +35,11 @@ describe("conchshell", () => {
 
     expect(result).toBe("🐚 Nothing.");
   });
+
+  it("should answer '🐚 Neither.' when NEITHER_REGEX is matched", () => {
+    const question = "Should I have the spaghetti or the turkey?";
+    const result = conchshell.action(question);
+
+    expect(result).toBe("🐚 Neither.");
+  });
 });

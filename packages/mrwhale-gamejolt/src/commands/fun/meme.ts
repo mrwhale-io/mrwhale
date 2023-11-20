@@ -1,7 +1,7 @@
 import axios from "axios";
+
 import { meme } from "@mrwhale-io/commands";
 import { Message, Content, MediaItem } from "@mrwhale-io/gamejolt-client";
-
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 export default class extends GameJoltCommand {
@@ -16,10 +16,7 @@ export default class extends GameJoltCommand {
     this.init();
   }
 
-  private memes: {
-    id: string;
-    url: string;
-  }[] = [];
+  private memes: meme.RedditPost[] = [];
   private cachedMediaItems: { [id: string]: MediaItem } = {};
   private previous: MediaItem;
 

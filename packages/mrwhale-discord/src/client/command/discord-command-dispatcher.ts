@@ -36,6 +36,7 @@ export class DiscordCommandDispatcher {
     this.bot = bot;
     this.bot.client.on("interactionCreate", (interaction) => {
       this.handleInteraction(interaction);
+      this.handleAutocomplete(interaction);
     });
 
     this.bot.client.on("messageCreate", (message) => {
@@ -128,6 +129,18 @@ export class DiscordCommandDispatcher {
     this.bot.logger.info(
       `${interaction.user.username}#${interaction.user.discriminator} ran command ${command.name}`
     );
+  }
+
+  private async handleAutocomplete(interaction: Interaction) {
+    if (!interaction.isAutocomplete() || !this._ready) {
+      return;
+    }
+    const commandName = interaction.commandName.toLowerCase();
+    const command = this.bot.commands.findByNameOrAlias(commandName);
+
+    await command
+      .autocomplete(interaction)
+      .catch((e) => this.bot.logger.error(e));
   }
 
   private checkRateLimits(

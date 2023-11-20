@@ -1,13 +1,15 @@
-import { define } from "@mrwhale-io/commands";
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   InteractionResponse,
-  Message
+  Message,
+  escapeMarkdown,
 } from "discord.js";
 
+import { define } from "@mrwhale-io/commands";
+import { truncate } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
-import { EMBED_COLOR } from "../../constants";
+import { EMBED_COLOR, MAX_EMBED_DESCRIPTION_LENGTH } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -21,9 +23,7 @@ export default class extends DiscordCommand {
   }
 
   async action(message: Message, [phrase]: [string]): Promise<Message> {
-    const embed = new EmbedBuilder()
-      .setColor(EMBED_COLOR)
-      .setDescription(await define.action(phrase));
+    const embed = await this.getDefinitionEmbed(phrase);
 
     return message.reply({ embeds: [embed] });
   }
@@ -31,11 +31,22 @@ export default class extends DiscordCommand {
   async slashCommandAction(
     interaction: ChatInputCommandInteraction
   ): Promise<InteractionResponse<boolean>> {
-    const question = interaction.options.getString("phrase");
-    const embed = new EmbedBuilder()
-      .setColor(EMBED_COLOR)
-      .setDescription(await define.action(question));
+    const phrase = interaction.options.getString("phrase");
+    const embed = await this.getDefinitionEmbed(phrase);
 
     return interaction.reply({ embeds: [embed] });
+  }
+
+  private async getDefinitionEmbed(phrase: string): Promise<EmbedBuilder> {
+    const definition = truncate(
+      MAX_EMBED_DESCRIPTION_LENGTH - 3,
+      await define.action(phrase)
+    );
+
+    const embed = new EmbedBuilder()
+      .setColor(EMBED_COLOR)
+      .setDescription(escapeMarkdown(definition));
+
+    return embed;
   }
 }

@@ -17,3 +17,5 @@ export const THEME = {
   secondaryTextColour: "#88f9ba",
   font: "28px sans-serif",
 };
+export const MAX_EMBED_DESCRIPTION_LENGTH = 4096;
+export const MAX_EMBED_FIELD_VALUE_LENGTH = 1024;

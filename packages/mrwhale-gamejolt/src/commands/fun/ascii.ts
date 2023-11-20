@@ -1,5 +1,4 @@
-import * as profanity from "profanity-util";
-
+import { purifyText } from "@mrwhale-io/core";
 import { ascii } from "@mrwhale-io/commands";
 import { Message } from "@mrwhale-io/gamejolt-client";
 
@@ -11,8 +10,9 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, [text]: [string]): Promise<Message> {
-    const asciiResult = await ascii.action(profanity.purify(text)[0]);
-
+    const purifiedText = purifyText(text);
+    const asciiResult = await ascii.action(purifiedText);
+  
     return message.reply(`${asciiResult}`);
   }
 }

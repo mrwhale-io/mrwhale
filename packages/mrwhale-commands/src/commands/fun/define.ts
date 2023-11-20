@@ -1,10 +1,10 @@
-import axios from "axios";
-import * as profanity from "profanity-util";
-import { CommandOptions, truncate } from "@mrwhale-io/core";
+import axios, { AxiosResponse } from "axios";
+
+import { CommandOptions, purifyText } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
   name: "define",
-  description: "Define a word or phrase.",
+  description: "Define a word or phrase using Urban Dictionary.",
   type: "fun",
   usage: "<prefix>define <word>",
   examples: ["<prefix>define whale"],
@@ -12,20 +12,32 @@ export const data: CommandOptions = {
   cooldown: 3000,
 };
 
-export async function action(phrase: string): Promise<string> {
-  const url = `https://api.urbandictionary.com/v0/define?page=1&term=${phrase}`;
+interface UrbanDictionaryResponse {
+  list?: { definition: string }[];
+}
 
+const URBAN_DICTIONARY_URL = "https://api.urbandictionary.com/v0/define";
+
+export async function action(phrase: string): Promise<string> {
   if (!phrase) {
     return "You must pass a word or phrase to define.";
   }
 
+  const url = `${URBAN_DICTIONARY_URL}?page=1&term=${encodeURIComponent(
+    phrase
+  )}`;
+
   try {
-    const { data } = await axios.get(url);
-    if (!data.list || !data.list[0]) {
+    const response: AxiosResponse<UrbanDictionaryResponse> = await axios.get(
+      url
+    );
+
+    if (!response.data.list || response.data.list.length === 0) {
       return "Could not define this.";
     }
-    const definition = data.list[0].definition;
-    return truncate(997, profanity.purify(`${phrase} - ${definition}`)[0]);
+
+    const definition = response.data.list[0].definition;
+    return purifyText(`${phrase} - ${definition}`);
   } catch {
     return "Could not fetch this definition.";
   }

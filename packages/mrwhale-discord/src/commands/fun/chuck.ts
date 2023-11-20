@@ -12,10 +12,7 @@ export default class extends DiscordCommand {
     super(chuck.data);
   }
 
-  async action(
-    message: Message,
-    [firstName, lastName, category]: [string, string, string]
-  ): Promise<Message> {
+  async action(message: Message): Promise<Message> {
     return message.reply(await chuck.action());
   }
 

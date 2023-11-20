@@ -1,4 +1,5 @@
 import * as d20 from "d20";
+
 import { CommandOptions } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {

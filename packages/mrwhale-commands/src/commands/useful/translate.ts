@@ -1,10 +1,11 @@
 import * as translate from "translate-google";
+
 import { CommandOptions } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
   name: "translate",
   description:
-    "Translate to specified language. Use 'translate langs' for supported languages.",
+    "Translate text to a specified language. Use 'translate langs' for supported languages.",
   type: "useful",
   usage: "<prefix>translate <lang>, <text>",
   examples: [
@@ -15,7 +16,9 @@ export const data: CommandOptions = {
   cooldown: 3000,
 };
 
-export function langs(): any {
+export function languages(): {
+  [key: string]: string;
+} {
   return translate.languages;
 }
 
@@ -28,8 +31,10 @@ export async function action(
   }
 
   try {
-    return translate(toTranslate, { to: lang || "en" });
+    const translatedText = await translate(toTranslate, { to: lang || "en" });
+
+    return `Translated text: ${translatedText}`;
   } catch {
-    return "Couldn't find specified language. Use lang command for available languages.";
+    return "Translation of text failed.";
   }
 }

@@ -22,6 +22,6 @@ describe("chuck", () => {
 
     const result = await chuck.action();
 
-    expect(result).toEqual("Could not fetch chuck norris joke.");
+    expect(result).toEqual("Could not fetch Chuck Norris joke.");
   });
 });
