@@ -44,7 +44,6 @@
 | Name          | Description                                                                 | Usage                    |
 | ------------- | --------------------------------------------------------------------------- | ------------------------ |
 | **advice**    | Get advice.                                                                 | advice                   |
-| **calculate** | A calculator.                                                               | calculate [calculation]  |
 | **hastebin**  | Upload text to hastebin.                                                    | hastebin [paste]         |
 | **translate** | Translate to specified language. Use langs command for supported languages. | translate [lang], [text] |
 | **wiki**      | Search for a Wiki page.                                                     | wiki [search]            |
