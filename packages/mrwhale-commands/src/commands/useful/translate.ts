@@ -28,7 +28,9 @@ export async function action(
   }
 
   try {
-    return translate(toTranslate, { to: lang || "en" });
+    const translatedText = await translate(toTranslate, { to: lang || "en" });
+
+    return `Translated text: ${translatedText}`;
   } catch {
     return "Couldn't find specified language. Use lang command for available languages.";
   }
