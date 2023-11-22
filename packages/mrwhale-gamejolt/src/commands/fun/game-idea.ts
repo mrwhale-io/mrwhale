@@ -1,7 +1,6 @@
 import { gameIdea } from "@mrwhale-io/commands";
 import { InfoBuilder } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
-
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 export default class extends GameJoltCommand {

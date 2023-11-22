@@ -24,7 +24,7 @@ export default class extends GameJoltCommand {
     const info = new InfoBuilder()
       .addField("☁️ Weather", data.weather[0].description)
       .addField("🌡️ Temperature", `${data.main.temp}°C`)
-      .addField("💧 Humidity", data.main.humidity);
+      .addField("💧 Humidity", `${data.main.humidity}`);
 
     if (data.clouds) {
       info.addField("☁️ Clouds", `${data.clouds.all}% cloudiness`);
