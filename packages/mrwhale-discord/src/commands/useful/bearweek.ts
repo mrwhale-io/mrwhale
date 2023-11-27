@@ -30,10 +30,7 @@ export default class extends DiscordCommand {
     interaction: ChatInputCommandInteraction | Message
   ): Promise<Message<boolean>> | Promise<InteractionResponse<boolean>> {
     const now = new Date();
-    let nextBearWeekYear = now.getFullYear();
-    if (now >= new Date(`${nextBearWeekYear}-08-19T00:00:00.000Z`)) {
-      nextBearWeekYear++;
-    }
+    const nextBearWeekYear = bearweek.getBearWeekYear(now);
 
     const embed = new EmbedBuilder()
       .setTitle(`Bear week ${nextBearWeekYear} countdown!`)
