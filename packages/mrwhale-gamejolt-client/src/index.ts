@@ -3,6 +3,7 @@ export { FriendRequest } from "./structures/friend-request";
 export { Message, MessageType } from "./structures/message";
 export { Room, RoomType } from "./structures/room";
 export { User } from "./structures/user";
+export { UserTheme } from "./structures/user-theme";
 export { Game } from "./structures/game";
 export { MediaItem } from "./structures/media-item";
 export { Comment } from "./structures/comment";
