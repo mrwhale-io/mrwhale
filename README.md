@@ -34,7 +34,7 @@ Mr. Whale has a lot of commands, with 6 main categories:
 - 🎲 **Game**: `hangman`, `rockpaper` and `guess`!
 - 🖨️ **Useful**: `translate`, `wiki`, `advice` and `newyear`!
 - 🔧 **Utility**: `help`, `info`, `langs`, `whois` and **3** more!
-- 🎨 **Image** : `chocolatemilk`, `avatar`, `gun`, `avatarfusion`
+- 🎨 **Image** : `chocolatemilk`, `avatar`, `gun`, `avatarfusion` and **15** more!
 - 👑 **Owner**: `reload` and `cleverbot`!
 - 🏆 **Level**: `rank`, `leaderboard`
 
