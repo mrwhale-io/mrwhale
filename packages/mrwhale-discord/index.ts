@@ -33,13 +33,16 @@ bot.client.login(config.token);
 
 bot.client.once(Events.ClientReady, () => {
   bot.commandDispatcher.ready = true;
-  setInterval(() => {
-    bot.client.user.setActivity(`in ${bot.client.guilds.cache.size} servers`);
-  }, SET_ACTIVITY_INTERVAL);
+  setActivity();
+  setInterval(setActivity, SET_ACTIVITY_INTERVAL);
 });
 
 process.on("unhandledRejection", (err) => {
   console.error(err);
 });
+
+function setActivity() {
+  bot.client.user.setActivity(`in ${bot.client.guilds.cache.size} servers`);
+}
 
 startServer(bot);
