@@ -4,15 +4,11 @@ import { meme } from "@mrwhale-io/commands";
 import { Message, Content, MediaItem } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
+const FETCH_INTERVAL = 60 * 60 * 1000;
+
 export default class extends GameJoltCommand {
   constructor() {
-    super({
-      name: "meme",
-      description: "Get a random meme from reddit.",
-      type: "fun",
-      usage: "<prefix>meme",
-      cooldown: 3000,
-    });
+    super(meme.data);
     this.init();
   }
 
@@ -59,7 +55,7 @@ export default class extends GameJoltCommand {
     this.memes = await meme.fetchMemes();
     setInterval(
       async () => (this.memes = await meme.fetchMemes()),
-      60 * 60 * 1000
+      FETCH_INTERVAL
     );
   }
 }

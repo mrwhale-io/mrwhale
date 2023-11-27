@@ -35,15 +35,24 @@ export default class extends DiscordCommand {
   }
 
   private async getWikiEmbed(query: string): Promise<EmbedBuilder> {
+    const wikiPageResult = await wiki.action(query);
+    const embed = new EmbedBuilder().setColor(EMBED_COLOR);
+
+    if (typeof wikiPageResult === "string") {
+      embed.setDescription(wikiPageResult);
+      return embed;
+    }
+
     const wikiSummary = truncate(
       MAX_EMBED_DESCRIPTION_LENGTH - 3,
-      await wiki.action(query)
+      wikiPageResult.summary
     );
 
-    const embed = new EmbedBuilder()
-      .setColor(EMBED_COLOR)
+    embed
       .setTitle(`Wikipedia page for ${query}`)
-      .setDescription(escapeMarkdown(wikiSummary));
+      .setImage(wikiPageResult.image)
+      .setDescription(escapeMarkdown(wikiSummary))
+      .setURL(wikiPageResult.url);
 
     return embed;
   }

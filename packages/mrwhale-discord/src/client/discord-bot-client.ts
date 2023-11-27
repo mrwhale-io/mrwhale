@@ -23,7 +23,7 @@ import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
 import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
-import { EMBED_COLOR, THEME } from "../constants";
+import { AVATAR_OPTIONS, EMBED_COLOR, THEME } from "../constants";
 import { DiscordBotOptions } from "../types/discord-bot-options";
 import { Greeting } from "../image/greeting";
 
@@ -253,7 +253,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     const greeting = await new Greeting()
       .setGuild(guildMember.guild.name)
       .setAvatarUrl(
-        guildMember.displayAvatarURL({ extension: "png", size: 512 })
+        guildMember.displayAvatarURL(AVATAR_OPTIONS)
       )
       .setUsername(guildMember.user.username)
       .setMessage("Whalecome to {guild.name}, {user.username}!")

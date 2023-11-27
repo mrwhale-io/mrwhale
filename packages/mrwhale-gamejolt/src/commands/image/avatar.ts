@@ -1,6 +1,6 @@
 import axios from "axios";
-import { Content, Message } from "@mrwhale-io/gamejolt-client";
 
+import { Content, Message } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 export default class extends GameJoltCommand {

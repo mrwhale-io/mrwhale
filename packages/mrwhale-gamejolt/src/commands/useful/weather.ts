@@ -1,7 +1,6 @@
 import { InfoBuilder } from "@mrwhale-io/core";
 import { weather } from "@mrwhale-io/commands";
 import { Message } from "@mrwhale-io/gamejolt-client";
-
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import * as config from "../../../config.json";
 

@@ -1,6 +1,6 @@
 # `@mrwhale-io/gamejolt`
 
-> This is the [Game Jolt](https://gamejolt.com) integration of Mr. Whale used in over 4000 group chats 
+> This is the [Game Jolt](https://gamejolt.com) integration of Mr. Whale used in over 9000 group chats 
 
 ## Table of Contents
 - [Features](#features)
@@ -18,15 +18,15 @@ Some basic features include:
 
 Mr. Whale has a lot of commands, with 6 main categories:
 
-- 👻 **Fun**: `ascii`, `choose`, `conchshell`, `ship`, `gameidea`, `meme` and **7** more!
+- 👻 **Fun**: `ascii`, `choose`, `conchshell`, `ship`, `gameidea`, `meme` and **6** more!
 - 🎲 **Game**: `hangman`, `rockpaper` and `guess`!
-- 🖨️ **Useful**: `translate`, `hastebin`, `wiki`, `advice` and `newyear`!
-- 🔧 **Utility**: `help`, `info`, `langs`, `whois` and **3** more!
-- 🎨 **Image** : `chocolatemilk`, `avatar`, `gun`, `avatarfusion`
+- 🖨️ **Useful**: `translate`, `wiki`, `advice`, `newyear` and `weather`!
+- 🔧 **Utility**: `help`, `info`, `langs`, `whois` and **5** more!
+- 🎨 **Image** : `chocolatemilk`, `avatar`, `gun`, `avatarfusion` and **15** more!
 - 👑 **Owner**: `eval`, `reload` and `cleverbot`!
 - 🏆 **Level**: `rank`, `leaderboard`
 
-[See the full command list](https://www.mrwhale.io/docs/commands)
+[See the full command list](https://www.mrwhale.io/commands)
 
 ## Links
 *   [Website](https://www.mrwhale.io/)

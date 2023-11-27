@@ -8,6 +8,7 @@ import { createCanvas, loadImage } from "canvas";
 import * as path from "path";
 
 import { DiscordCommand } from "../../client/command/discord-command";
+import { AVATAR_OPTIONS } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -25,7 +26,7 @@ export default class extends DiscordCommand {
   async action(message: Message): Promise<Message<boolean>> {
     const responseMsg = await message.reply("Processing please wait...");
     const attachment = await this.generateImage(
-      message.author.displayAvatarURL({ extension: "png", size: 512 })
+      message.author.displayAvatarURL(AVATAR_OPTIONS)
     );
     return responseMsg.edit({ files: [attachment], content: null });
   }
@@ -35,7 +36,7 @@ export default class extends DiscordCommand {
   ): Promise<void> {
     await interaction.deferReply();
     const attachment = await this.generateImage(
-      interaction.user.displayAvatarURL({ extension: "png", size: 512 })
+      interaction.user.displayAvatarURL(AVATAR_OPTIONS)
     );
 
     interaction.editReply({ files: [attachment] });

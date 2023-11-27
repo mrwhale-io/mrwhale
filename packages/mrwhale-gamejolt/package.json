@@ -29,6 +29,7 @@
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
     "copyfiles": "^2.4.1",
+    "date-fns": "^2.30.0",
     "jimp": "^0.16.1",
     "joltite.js": "^1.0.1",
     "moment": "^2.27.0",

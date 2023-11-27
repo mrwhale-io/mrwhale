@@ -10,8 +10,17 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, [query]: [string]): Promise<Message> {
-    return message.reply(
-      truncate(MAX_MESSAGE_LENGTH - 3, await wiki.action(query))
+    const wikiPageResult = await wiki.action(query);
+
+    if (typeof wikiPageResult === "string") {
+      return message.reply(wikiPageResult);
+    }
+
+    const wikiSummary = truncate(
+      MAX_MESSAGE_LENGTH - 3,
+      wikiPageResult.summary
     );
+
+    return message.reply(wikiSummary);
   }
 }

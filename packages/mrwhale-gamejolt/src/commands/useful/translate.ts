@@ -1,7 +1,6 @@
 import { translate } from "@mrwhale-io/commands";
 import { truncate } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
-
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { MAX_MESSAGE_LENGTH } from "../../constants";
 

@@ -4,7 +4,7 @@
 
 ## Commands
 
-### Fun (11 commands)
+### Fun (12 commands)
 
 | Name            | Description                             | Usage                                 |
 | --------------- | --------------------------------------- | ------------------------------------- |
@@ -39,16 +39,15 @@
 | **rank**  | Get your current rank.                              | rank             |
 | **whois** | Get information about a user.                       | whois [@user]    |
 
-### Useful (6 commands)
+### Useful (3 commands)
 
 | Name          | Description                                                                 | Usage                    |
 | ------------- | --------------------------------------------------------------------------- | ------------------------ |
 | **advice**    | Get advice.                                                                 | advice                   |
-| **hastebin**  | Upload text to hastebin.                                                    | hastebin [paste]         |
 | **translate** | Translate to specified language. Use langs command for supported languages. | translate [lang], [text] |
 | **wiki**      | Search for a Wiki page.                                                     | wiki [search]            |
 
-### Admin (3 commands)
+### Admin (2 commands)
 
 | Name          | Description                              | Usage                |
 | ------------- | ---------------------------------------- | -------------------- |
