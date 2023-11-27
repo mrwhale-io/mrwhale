@@ -115,7 +115,7 @@ export class DiscordCommandDispatcher {
         !interaction.inGuild()
       );
     } catch (error) {
-      return interaction.reply(error);
+      return interaction.reply({ content: error, ephemeral: true });
     }
 
     if (!hasPermission) {
@@ -175,7 +175,10 @@ export class DiscordCommandDispatcher {
       ).toString();
 
       if (timeLeft) {
-        interaction.reply(`Command cooldown. Try again in ${timeLeft}.`);
+        interaction.reply({
+          content: `Command cooldown. Try again in ${timeLeft}.`,
+          ephemeral: true,
+        });
       }
     }
 
