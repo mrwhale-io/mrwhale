@@ -41,7 +41,7 @@ export class Client extends events.EventEmitter {
    */
   rateLimitRequests: number;
 
-  /**F  
+  /**
    * The max duration of rate limiting.
    */
   rateLimitDuration: number;
@@ -73,12 +73,11 @@ export class Client extends events.EventEmitter {
   /**
    * Send a request to the site api to fetch the client user's friend requests.
    */
-  fetchFriendRequests(): Promise<void> {
-    return this.api.getFriendRequests().then((requests) => {
-      if (requests) {
-        this.emit("friend_requests", requests);
-      }
-    });
+  async fetchFriendRequests(): Promise<void> {
+    const requests = await this.api.getFriendRequests();
+    if (requests) {
+      this.emit("friend_requests", requests);
+    }
   }
 
   on(event: "message", listener: (data: Message) => void): this;

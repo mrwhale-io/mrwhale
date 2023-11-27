@@ -1,4 +1,5 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
+
 import { CommandOptions } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
@@ -10,16 +11,29 @@ export const data: CommandOptions = {
   cooldown: 3000,
 };
 
-export async function action(): Promise<string> {
-  let url = `https://api.chucknorris.io/jokes/random`;
+const CHUCK_NORRIS_API = `https://api.chucknorris.io/jokes/random`;
 
+interface ChuckNorrisJoke {
+  value: string;
+}
+
+async function fetchChuckNorrisJoke(): Promise<ChuckNorrisJoke | undefined> {
   try {
-    const { data } = await axios.get(url);
-    if (!data.value || !data.value) {
-      return "Could not fetch chuck norris joke.";
-    }
-    return data.value;
+    const response: AxiosResponse<ChuckNorrisJoke> = await axios.get(
+      CHUCK_NORRIS_API
+    );
+    return response.data;
   } catch {
-    return "Could not fetch chuck norris joke.";
+    return undefined;
   }
+}
+
+export async function action(): Promise<string> {
+  const chuckNorrisJoke = await fetchChuckNorrisJoke();
+
+  if (!chuckNorrisJoke || !chuckNorrisJoke.value) {
+    return "Could not fetch Chuck Norris joke.";
+  }
+
+  return chuckNorrisJoke.value;
 }

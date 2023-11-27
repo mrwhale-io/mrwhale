@@ -1,4 +1,5 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
+
 import { CommandOptions } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
@@ -9,16 +10,24 @@ export const data: CommandOptions = {
   cooldown: 3000,
 };
 
+interface DadJokeResponse {
+  joke: string;
+}
+
 const DAD_JOKE_URL = `https://icanhazdadjoke.com/`;
+const HEADERS = {
+  accept: "application/json",
+  "User-Agent": "axios 0.21.1",
+};
 
 export async function action(): Promise<string> {
   try {
-    const result = await axios.get(DAD_JOKE_URL, {
-      headers: {
-        accept: "application/json",
-        "User-Agent": "axios 0.21.1",
-      },
-    });
+    const result: AxiosResponse<DadJokeResponse> = await axios.get(
+      DAD_JOKE_URL,
+      {
+        headers: HEADERS,
+      }
+    );
     return result.data.joke;
   } catch {
     return "Could not fetch dad joke.";

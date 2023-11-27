@@ -15,7 +15,7 @@ export class ListenerDecorators {
    * @param emitter The event listener to register.
    * @param [listenerSrc] Listener source.
    */
-  static registerListeners(emitter: EventEmitter, listenerSrc?: unknown): void {
+  static registerListeners(emitter: unknown, listenerSrc?: unknown): void {
     const listenerTarget = listenerSrc ? listenerSrc : emitter;
 
     for (const listener of <ListenerMetaData[]>(

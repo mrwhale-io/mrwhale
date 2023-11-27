@@ -1,48 +1,62 @@
-import { CommandOptions } from "@mrwhale-io/core";
+import { CommandOptions, capitalise } from "@mrwhale-io/core";
+
+enum Choices {
+  Rock = "rock",
+  Paper = "paper",
+  Scissors = "scissors",
+}
 
 export const data: CommandOptions = {
   name: "rockpaper",
-  description: "Rock. Paper. Scissors.",
+  description: "Play a game of Rock. Paper. Scissors.",
   type: "game",
   usage: "<prefix>rockpaper <rock|paper|scissors>",
   examples: ["<prefix>rockpaper scissors"],
   aliases: ["rps"],
 };
 
-function compare(first: string, second: string) {
-  if (first === second) {
-    return "It's a tie!";
-  } else if (first === "scissors") {
-    if (second === "paper") return "Scissors wins! ✌";
-    else return "Rock wins! 👊";
-  } else if (first === "rock") {
-    if (second === "scissors") return "Rock wins! 👊";
-    else return "Paper wins! ✋";
-  } else if (first === "paper") {
-    if (second === "rock") return "Paper wins! ✋";
-    else return "Scissors wins! ✌";
-  }
-}
-
 export function action(choice: string): string {
   const validChoices = /\b(rock|paper|scissors)\b/;
-  if (!choice || choice === "" || choice.match(validChoices)) {
-    return "Please pass rock, paper, scissors.";
+  if (!choice || !choice.match(validChoices)) {
+    return "Please pass a valid choice: rock, paper, or scissors.";
   }
 
   const userChoice = choice.trim().toLowerCase();
-  const compChoice = Math.random();
-  let compChoiceStr = "";
+  const compChoice = getRandomChoice();
+  const result = compare(userChoice, compChoice);
 
-  if (compChoice < 0.34) {
-    compChoiceStr = "rock";
-  } else if (compChoice <= 0.67) {
-    compChoiceStr = "paper";
-  } else {
-    compChoiceStr = "scissors";
+  return `${compChoice}. ${result}`;
+}
+
+function compare(first: string, second: string): string {
+  if (first === second) {
+    return "It's a tie!";
   }
 
-  const result = compare(userChoice, compChoiceStr);
+  const choices: Record<string, string> = {
+    [Choices.Rock]: Choices.Scissors,
+    [Choices.Paper]: Choices.Rock,
+    [Choices.Scissors]: Choices.Paper,
+  };
 
-  return `${compChoiceStr}. ${result}`;
+  if (choices[first] === second) {
+    return `${capitalise(first)} wins! ${getEmoji(first)}`;
+  } else {
+    return `${capitalise(second)} wins! ${getEmoji(second)}`;
+  }
+}
+
+function getRandomChoice(): string {
+  const choices = Object.values(Choices);
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+
+function getEmoji(choice: string): string {
+  const emojis: Record<string, string> = {
+    [Choices.Rock]: "👊",
+    [Choices.Paper]: "✋",
+    [Choices.Scissors]: "✌",
+  };
+
+  return emojis[choice];
 }

@@ -1,5 +1,10 @@
 import { Command, DEFAULT_COMMAND_RATE_LIMIT } from "@mrwhale-io/core";
-import { ChatInputCommandInteraction, Message, PermissionResolvable } from "discord.js";
+import {
+  AutocompleteInteraction,
+  ChatInputCommandInteraction,
+  Message,
+  PermissionResolvable,
+} from "discord.js";
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 import { DiscordCommandRateLimiter } from "./discord-command-rate-limiter";
@@ -59,5 +64,13 @@ export abstract class DiscordCommand extends Command<DiscordBotClient> {
    *
    * @param interaction The interaction that invoked this command.
    */
-  slashCommandAction?(interaction: ChatInputCommandInteraction): Promise<unknown>;
+  slashCommandAction?(
+    interaction: ChatInputCommandInteraction
+  ): Promise<unknown>;
+
+  /**
+   * Handles autocomplete events.
+   * @param interaction The interaction that invoked this event.
+   */
+  autocomplete?(interaction: AutocompleteInteraction): Promise<unknown>;
 }

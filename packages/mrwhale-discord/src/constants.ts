@@ -1,4 +1,4 @@
-import { GatewayIntentBits } from "discord.js";
+import { GatewayIntentBits, ImageURLOptions } from "discord.js";
 
 export const EMBED_COLOR = "#71b8ce";
 export const INTENTS = [
@@ -17,3 +17,6 @@ export const THEME = {
   secondaryTextColour: "#88f9ba",
   font: "28px sans-serif",
 };
+export const MAX_EMBED_DESCRIPTION_LENGTH = 4096;
+export const MAX_EMBED_FIELD_VALUE_LENGTH = 1024;
+export const AVATAR_OPTIONS: ImageURLOptions = { extension: "png", size: 512 };

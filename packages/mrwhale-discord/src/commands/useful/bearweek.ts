@@ -1,4 +1,4 @@
-import { newyear } from "@mrwhale-io/commands";
+import { bearweek } from "@mrwhale-io/commands";
 import {
   ChatInputCommandInteraction,
   EmbedBuilder,
@@ -11,7 +11,7 @@ import { EMBED_COLOR } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
-    super(newyear.data);
+    super(bearweek.data);
   }
 
   async action(
@@ -29,10 +29,13 @@ export default class extends DiscordCommand {
   private replyWithEmbed(
     interaction: ChatInputCommandInteraction | Message
   ): Promise<Message<boolean>> | Promise<InteractionResponse<boolean>> {
+    const now = new Date();
+    const nextBearWeekYear = bearweek.getBearWeekYear(now);
+
     const embed = new EmbedBuilder()
-      .setTitle("New year countdown! 🎉")
+      .setTitle(`Bear week ${nextBearWeekYear} countdown!`)
       .setColor(EMBED_COLOR)
-      .setDescription(newyear.action());
+      .setDescription(bearweek.action());
 
     return interaction.reply({ embeds: [embed] });
   }

@@ -14,6 +14,7 @@ export default class extends DiscordCommand {
       option
         .setName("text")
         .setDescription("The text to convert to ascii.")
+        .setMaxLength(ascii.MAX_ASCII_LENGTH)
         .setRequired(true)
     );
   }
