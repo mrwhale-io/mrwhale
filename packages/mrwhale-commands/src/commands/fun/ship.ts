@@ -1,4 +1,5 @@
 import crypto = require("crypto");
+
 import { CommandOptions } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {

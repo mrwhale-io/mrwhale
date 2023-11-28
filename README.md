@@ -32,10 +32,10 @@ Mr. Whale has a lot of commands, with 6 main categories:
 
 - 👻 **Fun**: `ascii`, `choose`, `conchshell`, `ship`, `gameidea`, `meme` and **7** more!
 - 🎲 **Game**: `hangman`, `rockpaper` and `guess`!
-- 🖨️ **Useful**: `calculator`, `translate`, `hastebin`, `wiki`, `advice` and `newyear`!
+- 🖨️ **Useful**: `translate`, `wiki`, `advice` and `newyear`!
 - 🔧 **Utility**: `help`, `info`, `langs`, `whois` and **3** more!
-- 🎨 **Image** : `chocolatemilk`, `avatar`, `gun`, `avatarfusion`
-- 👑 **Owner**: `eval`, `reload` and `cleverbot`!
+- 🎨 **Image** : `chocolatemilk`, `avatar`, `gun`, `avatarfusion` and **15** more!
+- 👑 **Owner**: `reload` and `cleverbot`!
 - 🏆 **Level**: `rank`, `leaderboard`
 
 [See the full command list](https://www.mrwhale.io/commands)

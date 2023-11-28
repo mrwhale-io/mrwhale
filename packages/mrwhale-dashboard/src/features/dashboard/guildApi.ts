@@ -19,6 +19,12 @@ export const guildsApi = api.injectEndpoints({
     getGuildSettings: build.query<GuildManage, string>({
       query: (id) => `guilds/${id}`,
     }),
+    deleteGuildData: build.mutation<void, { id: string }>({
+      query: ({ id }) => ({
+        url: `guilds/${id}`,
+        method: "DELETE"
+      }),
+    }),
     prefix: build.mutation<void, GuildPrefixPayload>({
       query: ({ id, ...details }) => ({
         url: `guilds/${id}/prefix`,
@@ -46,6 +52,7 @@ export const guildsApi = api.injectEndpoints({
 
 export const {
   useGetGuildSettingsQuery,
+  useDeleteGuildDataMutation,
   useLevelsMutation,
   useLevelChannelMutation,
   usePrefixMutation,

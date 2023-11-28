@@ -1,3 +1,5 @@
+import { UserTheme } from "./user-theme";
+
 export class User {
   id!: number;
   room_id!: number;
@@ -17,6 +19,7 @@ export class User {
   follower_count!: number;
   following_count!: number;
   comment_count!: number;
+  theme?: UserTheme;
 
   constructor(data: Partial<User> = {}) {
     Object.assign(this, data);
@@ -26,6 +29,10 @@ export class User {
       typeof this.created_on === "string"
     ) {
       this.created_on = new Date(this.created_on);
+    }
+
+    if (data.theme) {
+      this.theme = new UserTheme(data.theme);
     }
   }
 }

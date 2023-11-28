@@ -24,14 +24,26 @@ const RESPONSES = [
   },
 ];
 
+const SHUT_UP_REGEX = /(stfu|shut (the (fuck|hell)\W)?up) (@?Mr\.?\W?whale|whale)/gi;
+
+const COMEBACKS = [
+  "Why don't you shut up.",
+  "No I don't think I will.",
+  "No you shut up.",
+  "Nice. Did they teach you that in Anger Management class?",
+  "You're not the boss of me.",
+  "Please lead by example.",
+  "You know you can just disable levels right? 🙄",
+];
+
 export class ReplyManager {
   constructor(private bot: GameJoltBotClient) {
     registerListeners(this.bot.client, this);
   }
 
   @on("message")
-  protected async onMessage(message: Message): Promise<void> {
-    if (message.user.id === this.bot.client.grid.chat.currentUser.id) {
+  protected async onMessage(message: Message): Promise<Message> {
+    if (message.user.id === this.bot.chat.currentUser.id) {
       return;
     }
 
@@ -44,7 +56,16 @@ export class ReplyManager {
     }
 
     if (message.textContent.match(WHALE_REGEX)) {
-      message.reply(message.toString().match(WHALE_REGEX)[0]);
+      return message.reply(message.toString().match(WHALE_REGEX)[0]);
+    } else if (message.textContent.match(SHUT_UP_REGEX)) {
+      const content = new Content();
+      content.insertText(
+        `@${message.user.username} ${
+          COMEBACKS[Math.floor(Math.random() * COMEBACKS.length)]
+        }`
+      );
+
+      return message.reply(content);
     }
   }
 

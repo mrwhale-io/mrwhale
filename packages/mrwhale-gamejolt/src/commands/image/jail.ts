@@ -1,7 +1,7 @@
-import { Message } from "@mrwhale-io/gamejolt-client";
 import * as canvacord from "canvacord";
 import { createCanvas, loadImage } from "canvas";
 
+import { Message } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { uploadImage } from "../../image/upload-image";
 

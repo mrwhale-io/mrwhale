@@ -5,6 +5,7 @@ interface ScoreAttributes {
   userId: number;
   roomId: number;
   exp: number;
+  total?: number;
 }
 
 export interface ScoreInstance

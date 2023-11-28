@@ -18,6 +18,10 @@ interface OwnerSyncPayload {
   owner_id: number;
 }
 
+interface MemberWatchload {
+  members: User[];
+}
+
 export class RoomChannel extends Channel {
   room!: Room;
   roomId: number;

@@ -6,6 +6,7 @@ import {
 import * as canvacord from "canvacord";
 
 import { DiscordCommand } from "../../client/command/discord-command";
+import { AVATAR_OPTIONS } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -48,8 +49,8 @@ export default class extends DiscordCommand {
 
     const responseMsg = await message.reply("Processing please wait...");
     const attachment = await this.generateImage(
-      firstUser.displayAvatarURL({ extension: "png", size: 512 }),
-      secondUser.displayAvatarURL({ extension: "png", size: 512 })
+      firstUser.displayAvatarURL(AVATAR_OPTIONS),
+      secondUser.displayAvatarURL(AVATAR_OPTIONS)
     );
     return responseMsg.edit({ files: [attachment], content: null });
   }
@@ -67,8 +68,8 @@ export default class extends DiscordCommand {
       : interaction.options.getUser("first");
 
     const attachment = await this.generateImage(
-      firstUser.displayAvatarURL({ extension: "png", size: 512 }),
-      secondUser.displayAvatarURL({ extension: "png", size: 512 })
+      firstUser.displayAvatarURL(AVATAR_OPTIONS),
+      secondUser.displayAvatarURL(AVATAR_OPTIONS)
     );
 
     interaction.editReply({ files: [attachment] });

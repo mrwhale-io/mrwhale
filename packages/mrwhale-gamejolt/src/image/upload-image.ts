@@ -21,7 +21,7 @@ export async function uploadImage(
 
   try {
     out.on("finish", async () => {
-      const mediaItem = await responseMsg.client.grid.chat.uploadFile(
+      const mediaItem = await responseMsg.client.chat.uploadFile(
         fs.createReadStream(path),
         responseMsg.room_id
       );

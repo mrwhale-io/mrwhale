@@ -7,11 +7,13 @@ import {
   ChannelType,
   Client,
   ClientOptions,
+  DMChannel,
   EmbedBuilder,
   Events,
   Guild,
   GuildBasedChannel,
   GuildMember,
+  NonThreadGuildBasedChannel,
   TextBasedChannel,
   User,
 } from "discord.js";
@@ -21,7 +23,7 @@ import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
 import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
-import { EMBED_COLOR, THEME } from "../constants";
+import { AVATAR_OPTIONS, EMBED_COLOR, THEME } from "../constants";
 import { DiscordBotOptions } from "../types/discord-bot-options";
 import { Greeting } from "../image/greeting";
 
@@ -126,6 +128,34 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     return user.id === this.ownerId;
   }
 
+  /**
+   * Creates storage settings for the given guild.
+   * @param guildId The guild to create settings for.
+   */
+  async createGuildSettings(guildId: string): Promise<void> {
+    if (!this.guildSettings.has(guildId)) {
+      const storage = new KeyedStorageProvider(
+        this.guildStorageLoader.settingsProvider,
+        guildId
+      );
+
+      await storage.init();
+
+      this.guildSettings.set(guildId, storage);
+    }
+  }
+
+  /**
+   * Deletes storage settings for the given guild.
+   * @param guildId The guild to delete settings for.
+   */
+  async deleteGuildSettings(guildId: string): Promise<void> {
+    if (this.guildSettings.has(guildId)) {
+      await this.guildStorageLoader.settingsProvider.remove(guildId);
+      this.guildSettings.delete(guildId);
+    }
+  }
+
   @once(Events.ClientReady)
   private async onClientReady(): Promise<void> {
     this.guildStorageLoader.loadStorages();
@@ -141,16 +171,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   @on(Events.GuildCreate)
   private async onGuildCreate(guild: Guild): Promise<void> {
-    if (!this.guildSettings.has(guild.id)) {
-      const storage = new KeyedStorageProvider(
-        this.guildStorageLoader.settingsProvider,
-        guild.id
-      );
-
-      await storage.init();
-
-      this.guildSettings.set(guild.id, storage);
-    }
+    await this.createGuildSettings(guild.id);
 
     const channel = this.getFirstTextChannel(guild);
     const avatar = this.client.user.displayAvatarURL();
@@ -190,12 +211,41 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
   }
 
+  @on(Events.GuildDelete)
+  private async onGuildDelete(guild: Guild): Promise<void> {
+    const guildId = guild.id;
+    await this.deleteGuildSettings(guildId);
+    await LevelManager.removeAllScoresForGuild(guildId);
+  }
+
+  @on(Events.ChannelDelete)
+  private async onChannelDelete(
+    channel: DMChannel | NonThreadGuildBasedChannel
+  ): Promise<void> {
+    if (channel.type !== ChannelType.GuildText) {
+      return;
+    }
+
+    const settings = this.guildSettings.get(channel.guildId);
+    if (settings) {
+      const greetingChannelId = await settings.get("greetingChannel");
+      if (greetingChannelId === channel.id) {
+        settings.remove("greetingChannel");
+      }
+
+      const levelChannelId = await settings.get("levelChannel");
+      if (levelChannelId === channel.id) {
+        settings.remove("levelChannel");
+      }
+    }
+  }
+
   @on(Events.GuildMemberAdd)
   private async onGuildMemberAdd(guildMember: GuildMember) {
     const isGreetingsEnabled = await this.isGreetingsEnabled(
       guildMember.guild.id
     );
-  
+
     if (!isGreetingsEnabled) {
       return;
     }
@@ -203,7 +253,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     const greeting = await new Greeting()
       .setGuild(guildMember.guild.name)
       .setAvatarUrl(
-        guildMember.displayAvatarURL({ extension: "png", size: 512 })
+        guildMember.displayAvatarURL(AVATAR_OPTIONS)
       )
       .setUsername(guildMember.user.username)
       .setMessage("Whalecome to {guild.name}, {user.username}!")

@@ -49,8 +49,8 @@ export class Message {
 
   get isRoomOwner(): boolean {
     return (
-      this.client.grid.chat.activeRooms[this.room_id] &&
-      this.user.id === this.client.grid.chat.activeRooms[this.room_id].owner_id
+      this.client.chat.activeRooms[this.room_id] &&
+      this.user.id === this.client.chat.activeRooms[this.room_id].owner_id
     );
   }
 
@@ -86,7 +86,7 @@ export class Message {
    * @param message The content of the message.
    */
   reply(message: string | Content): Promise<Message> {
-    if (this.user.id === this.client.grid.chat.currentUser.id) {
+    if (this.user.id === this.client.chat.currentUser.id) {
       return;
     }
 
@@ -104,11 +104,11 @@ export class Message {
    * @param message The content of the message
    */
   edit(message: string | Content): void {
-    if (this.user.id !== this.client.grid.chat.currentUser.id) {
+    if (this.user.id !== this.client.chat.currentUser.id) {
       return;
     }
 
-    this.client.grid.chat.editMessage(message, this);
+    this.client.chat.editMessage(message, this);
   }
 
   toString(): string {

@@ -1,9 +1,10 @@
-import { Message } from "@mrwhale-io/gamejolt-client";
 import * as canvacord from "canvacord";
 import { createCanvas, loadImage } from "canvas";
 
+import { Message } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { uploadImage } from "../../image/upload-image";
+import { fetchImageFromUrl } from "../../util/fetch-image-from-url";
 
 export default class extends GameJoltCommand {
   constructor() {
@@ -40,7 +41,7 @@ export default class extends GameJoltCommand {
   }
 
   private async circleAvatar(avatarUrl: string) {
-    const avatar = await loadImage(avatarUrl);
+    const avatar = await fetchImageFromUrl(avatarUrl);
     const canvas = createCanvas(avatar.width, avatar.height);
     const ctx = canvas.getContext("2d");
     ctx.beginPath();

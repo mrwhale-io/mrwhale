@@ -74,7 +74,7 @@ const ManageGuildPrefix = ({ guildId, guildData }: Props) => {
         gutterBottom
         sx={{ py: 1 }}
       >
-        Set Prefix
+        Manage Prefix
       </Typography>
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormGroup>

@@ -47,6 +47,13 @@ export class Client extends events.EventEmitter {
   rateLimitDuration: number;
 
   /**
+   * Get the chat client.
+   */
+  get chat(): ChatManager {
+    return this.grid.chat;
+  }
+
+  /**
    * @param options The client options.
    */
   constructor(options: ClientOptions) {
@@ -66,12 +73,11 @@ export class Client extends events.EventEmitter {
   /**
    * Send a request to the site api to fetch the client user's friend requests.
    */
-  fetchFriendRequests(): Promise<void> {
-    return this.api.getFriendRequests().then((requests) => {
-      if (requests) {
-        this.emit("friend_requests", requests);
-      }
-    });
+  async fetchFriendRequests(): Promise<void> {
+    const requests = await this.api.getFriendRequests();
+    if (requests) {
+      this.emit("friend_requests", requests);
+    }
   }
 
   on(event: "message", listener: (data: Message) => void): this;

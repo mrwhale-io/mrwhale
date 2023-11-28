@@ -1,7 +1,6 @@
 import { InfoBuilder } from "@mrwhale-io/core";
 import { weather } from "@mrwhale-io/commands";
 import { Message } from "@mrwhale-io/gamejolt-client";
-
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import * as config from "../../../config.json";
 
@@ -24,7 +23,7 @@ export default class extends GameJoltCommand {
     const info = new InfoBuilder()
       .addField("☁️ Weather", data.weather[0].description)
       .addField("🌡️ Temperature", `${data.main.temp}°C`)
-      .addField("💧 Humidity", data.main.humidity);
+      .addField("💧 Humidity", `${data.main.humidity}`);
 
     if (data.clouds) {
       info.addField("☁️ Clouds", `${data.clouds.all}% cloudiness`);

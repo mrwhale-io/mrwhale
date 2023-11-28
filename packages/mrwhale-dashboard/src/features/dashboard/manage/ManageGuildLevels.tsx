@@ -34,7 +34,7 @@ const ManageGuildLevels = ({ guildId, guildData }: Props) => {
         gutterBottom
         sx={{ py: 1 }}
       >
-        Toggle Levels
+        Manage Levels
       </Typography>
 
       <FormGroup>

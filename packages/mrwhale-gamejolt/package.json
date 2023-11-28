@@ -1,6 +1,6 @@
 {
   "name": "@mrwhale-io/gamejolt",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "private": true,
   "description": "Mr. Whale Game Jolt chat bot integration.",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
@@ -12,15 +12,16 @@
   },
   "scripts": {
     "dev": "ts-node --transpile-only index.ts",
-    "start": "tsc && copyfiles ./images/*.png ./lib && node ./lib/index.js"
+    "start": "rm -rf ./lib && tsc && copyfiles ./images/*.png ./lib && node ./lib/index.js"
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
   },
   "dependencies": {
-    "@mrwhale-io/commands": "^1.0.3",
-    "@mrwhale-io/core": "^1.3.0",
-    "@mrwhale-io/gamejolt-client": "^1.1.0",
+    "@cwasm/webp": "^0.1.5",
+    "@mrwhale-io/commands": "^2.0.0",
+    "@mrwhale-io/core": "^1.4.0",
+    "@mrwhale-io/gamejolt-client": "^1.3.0",
     "ascii-table": "^0.0.9",
     "axios": "^0.21.1",
     "canvacord": "^5.4.10",
@@ -28,6 +29,7 @@
     "chalk": "^4.1.0",
     "cleverbot-node": "^0.3.11",
     "copyfiles": "^2.4.1",
+    "date-fns": "^2.30.0",
     "jimp": "^0.16.1",
     "joltite.js": "^1.0.1",
     "moment": "^2.27.0",

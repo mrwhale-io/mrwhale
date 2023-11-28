@@ -7,8 +7,9 @@ const CONCHSHELL_RESPONSES = [
   `No.`,
 ];
 
-const WHAT_TO_DO_REGEX = /w(?:o|u|ha)t\s(?:do|to|(?:sh|w)ould)[\s\S]*/gi;
-const MARRIED_REGEX = /(will\si\s(?:ever)?\s*get\smarried(\?*))/gi;
+const WHAT_TO_DO_REGEX = /\b(?:w(?:o|u|ha)t)\s(?:do|to|(?:sh|w)ould)\b/gi;
+const MARRIED_REGEX = /\bwill\s(?:I\s(?:ever)?\s*get\s*married\??)\b/gi;
+const NEITHER_REGEX = /\b.+\sor\s.+\b/gi;
 
 export const data: CommandOptions = {
   name: "conchshell",
@@ -32,6 +33,10 @@ export function action(question: string): string {
 
   if (question.match(MARRIED_REGEX)) {
     return "🐚 Maybe someday.";
+  }
+
+  if (question.match(NEITHER_REGEX)) {
+    return "🐚 Neither.";
   }
 
   return `🐚 ${CONCHSHELL_RESPONSES[index]}`;

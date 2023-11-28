@@ -1,10 +1,10 @@
-import { Message } from "@mrwhale-io/gamejolt-client";
-import axios from "axios";
 import { createCanvas, loadImage } from "canvas";
 import * as path from "path";
 
+import { Message } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 import { uploadImage } from "../../image/upload-image";
+import { fetchImageFromUrl } from "../../util/fetch-image-from-url";
 
 export default class extends GameJoltCommand {
   constructor() {
@@ -20,13 +20,10 @@ export default class extends GameJoltCommand {
 
   async action(message: Message): Promise<void> {
     const responseMsg = await message.reply("Processing please wait...");
-    const avatarFile = await axios.get(message.user.img_avatar, {
-      responseType: "arraybuffer",
-    });
     const base = await loadImage(
       path.join(__dirname, "..", "..", "..", "images", "chocolate-milk.png")
     );
-    const avatar = await loadImage(avatarFile.data);
+    const avatar = await fetchImageFromUrl(message.user.img_avatar);
     const canvas = createCanvas(base.width, base.height);
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "rgba(255, 255, 255, 0)";

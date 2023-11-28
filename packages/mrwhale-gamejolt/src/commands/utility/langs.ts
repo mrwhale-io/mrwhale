@@ -1,7 +1,7 @@
 import * as translate from "translate-google";
+
 import { Message } from "@mrwhale-io/gamejolt-client";
 import { unorderedList } from "@mrwhale-io/core";
-
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 export default class extends GameJoltCommand {

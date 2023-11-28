@@ -1,6 +1,6 @@
 import axios from "axios";
-import { Content, Message } from "@mrwhale-io/gamejolt-client";
 
+import { Content, Message } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 export default class extends GameJoltCommand {
@@ -22,7 +22,7 @@ export default class extends GameJoltCommand {
         responseType: "stream",
       });
 
-      const mediaItem = await this.botClient.client.grid.chat.uploadFile(
+      const mediaItem = await this.botClient.chat.uploadFile(
         avatarFile.data,
         message.room_id
       );

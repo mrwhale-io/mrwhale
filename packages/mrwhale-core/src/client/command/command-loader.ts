@@ -13,7 +13,9 @@ export class CommandLoader {
   /**
    * Count of the loaded commands.
    */
-  loadedCommands: number;
+  get loadedCommands(): number {
+    return this._loadedCommands;
+  }
 
   /**
    * The name of the command class to load.
@@ -23,11 +25,12 @@ export class CommandLoader {
   }
 
   private _commandType: string;
+  private _loadedCommands: number;
   private botClient: BotClient;
 
   constructor(bot: BotClient) {
     this.botClient = bot;
-    this.loadedCommands = 0;
+    this._loadedCommands = 0;
     this._commandType = Command.name;
   }
 
@@ -37,7 +40,7 @@ export class CommandLoader {
   loadCommands(): void {
     if (this.botClient.commands.size > 0) {
       this.botClient.commands.clear();
-      this.loadedCommands = 0;
+      this._loadedCommands = 0;
     }
 
     const files = [];
@@ -69,7 +72,7 @@ export class CommandLoader {
         commandLocation
       );
 
-      this.loadedCommands++;
+      this._loadedCommands++;
       this.botClient.logger.info(`Command ${command.name} loaded`);
     }
   }

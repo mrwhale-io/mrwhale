@@ -5,6 +5,7 @@ import { useGetGuildSettingsQuery } from "../guildApi";
 import ManageGuildPrefix from "./ManageGuildPrefix";
 import ManageGuildLevels from "./ManageGuildLevels";
 import { getGuildIcon } from "../../../util/get-guild-icon";
+import ManageGuildData from "./ManageGuildData";
 
 const ManageGuild = () => {
   const { guildId } = useParams<{ guildId: string }>();
@@ -58,6 +59,19 @@ const ManageGuild = () => {
                 }}
               >
                 <ManageGuildLevels guildId={guildId} guildData={data} />
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12} md={6} lg={6}>
+              <Paper
+                square={false}
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <ManageGuildData guildId={guildId} />
               </Paper>
             </Grid>
           </Grid>

@@ -65,6 +65,11 @@ export class ChatManager extends events.EventEmitter {
     return channel.join().receive("ok", (response: { room: Partial<Room> }) => {
       this.roomChannels[roomId] = channel;
       this.activeRooms[roomId] = new Room(response.room);
+      channel
+        .push(Events.MEMBER_WATCH, {})
+        .receive("ok", (response: { members: User[] }) => {
+          this.activeRooms[roomId].members = response.members;
+        });
     });
   }
 

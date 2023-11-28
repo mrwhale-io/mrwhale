@@ -51,10 +51,7 @@ export class GameJoltCommandDispatcher {
       );
     }
 
-    if (
-      command.groupOnly &&
-      this.bot.client.grid.chat.friendsList.getByRoom(message.room_id)
-    ) {
+    if (command.groupOnly && this.bot.friendsList.getByRoom(message.room_id)) {
       return message.reply("This is a group only command.");
     }
 
@@ -62,14 +59,14 @@ export class GameJoltCommandDispatcher {
       return message.reply("This is an admin only command.");
     }
 
-    const room = this.bot.client.grid.chat.activeRooms[message.room_id];
+    const room = this.bot.chat.activeRooms[message.room_id];
 
     if (
       command.owner &&
       !message.isRoomOwner &&
       room &&
       this.bot.client.userId !== room.owner_id &&
-      !this.bot.client.grid.chat.friendsList.getByRoom(message.room_id)
+      !this.bot.friendsList.getByRoom(message.room_id)
     ) {
       return message.reply("You need to be room owner to use this command.");
     }

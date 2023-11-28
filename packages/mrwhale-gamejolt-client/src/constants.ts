@@ -15,6 +15,7 @@ export const Events = {
   GROUP_ADD: "group_add",
   GROUP_LEAVE: "group_leave",
   INVITE_ACCEPT: "invite_accept",
+  MEMBER_WATCH: "member_watch",
 };
 
 export const Endpoints = {

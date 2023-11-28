@@ -1,27 +1,44 @@
 import wiki from "wikijs";
-import { CommandOptions, truncate } from "@mrwhale-io/core";
+
+import { CommandOptions } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
   name: "wiki",
-  description: "Search for a Wiki page.",
+  description: "Search for a Wikipedia page.",
   type: "useful",
   usage: "<prefix>wiki <query>",
   examples: ["<prefix>wiki whale"],
   cooldown: 3000,
 };
 
-export async function action(query: string): Promise<string> {
+interface WikiResult {
+  summary: string;
+  image: string;
+  url: string;
+}
+
+const WIKI_SEARCH_LIMIT = 1;
+
+export async function action(query: string): Promise<WikiResult | string> {
   if (!query) {
     return "Please provide a search.";
   }
 
   try {
-    const search = await wiki().search(query.trim(), 1);
-    const page = await wiki().page(search.results[0]);
-    const summary = await page.summary();
+    const search = await wiki().search(query.trim(), WIKI_SEARCH_LIMIT);
+    if (!search) {
+      return "No results found.";
+    }
 
-    return truncate(980, summary);
+    const page = await wiki().page(search.results[0]);
+    const [summary, image, url] = await Promise.all([
+      page.summary(),
+      page.mainImage(),
+      page.url(),
+    ]);
+
+    return { summary, image, url: url.toString() };
   } catch {
-    return "I couldn't search for this wiki.";
+    return "An error occurred while searching for this wiki.";
   }
 }
