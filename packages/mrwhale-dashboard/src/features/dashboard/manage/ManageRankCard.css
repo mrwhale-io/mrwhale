@@ -1,0 +1,10 @@
+.rank-image {
+  max-width: 100%;
+}
+
+.pallete-container {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+}

@@ -10,6 +10,14 @@ interface GuildLevelChannelPayload extends Payload {
   channelId: string;
 }
 
+interface RankCardPayload extends Payload {
+  fillColour: string;
+  primaryTextColour: string;
+  secondaryTextColour: string;
+  progressFillColour: string;
+  progressColour: string;
+}
+
 interface SetLevelsResponse {
   status: boolean;
 }
@@ -22,7 +30,7 @@ export const guildsApi = api.injectEndpoints({
     deleteGuildData: build.mutation<void, { id: string }>({
       query: ({ id }) => ({
         url: `guilds/${id}`,
-        method: "DELETE"
+        method: "DELETE",
       }),
     }),
     prefix: build.mutation<void, GuildPrefixPayload>({
@@ -46,14 +54,29 @@ export const guildsApi = api.injectEndpoints({
         body: details,
       }),
     }),
+    card: build.mutation<void, RankCardPayload>({
+      query: ({ id, ...details }) => ({
+        url: `guilds/${id}/card`,
+        method: "PUT",
+        body: details,
+      }),
+    }),
+    resetCard: build.mutation<void, { id: string }>({
+      query: ({ id }) => ({
+        url: `guilds/${id}/card`,
+        method: "DELETE",
+      }),
+    }),
   }),
   overrideExisting: false,
 });
 
 export const {
+  useCardMutation,
   useGetGuildSettingsQuery,
   useDeleteGuildDataMutation,
   useLevelsMutation,
   useLevelChannelMutation,
   usePrefixMutation,
+  useResetCardMutation,
 } = guildsApi;
