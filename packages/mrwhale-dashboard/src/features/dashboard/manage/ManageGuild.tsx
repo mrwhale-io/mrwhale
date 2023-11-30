@@ -6,22 +6,26 @@ import ManageGuildPrefix from "./ManageGuildPrefix";
 import ManageGuildLevels from "./ManageGuildLevels";
 import { getGuildIcon } from "../../../util/get-guild-icon";
 import ManageGuildData from "./ManageGuildData";
+import ManageRankCard from "./ManageRankCard";
 
 const ManageGuild = () => {
   const { guildId } = useParams<{ guildId: string }>();
-  const { data, isLoading } = useGetGuildSettingsQuery(guildId ?? "");
+  const {
+    data: guildSettingsData,
+    isLoading: isLoadingGuildSettings,
+  } = useGetGuildSettingsQuery(guildId ?? "");
 
   return (
     <>
-      {isLoading ? (
+      {isLoadingGuildSettings ? (
         <>Loading...</>
-      ) : data ? (
+      ) : guildSettingsData ? (
         <>
           <Box sx={{ display: "flex" }}>
             <Avatar
-              alt={data.guild.name}
+              alt={guildSettingsData.guild.name}
               sx={{ mr: 2 }}
-              src={getGuildIcon(data.guild)}
+              src={getGuildIcon(guildSettingsData.guild)}
             />
             <Typography
               component="h4"
@@ -30,7 +34,7 @@ const ManageGuild = () => {
               color="text.primary"
               gutterBottom
             >
-              Manage {data.guild.name}
+              Manage {guildSettingsData.guild.name}
             </Typography>
           </Box>
           <Grid container spacing={3}>
@@ -44,7 +48,10 @@ const ManageGuild = () => {
                   height: 240,
                 }}
               >
-                <ManageGuildPrefix guildId={guildId} guildData={data} />
+                <ManageGuildPrefix
+                  guildId={guildId}
+                  guildData={guildSettingsData}
+                />
               </Paper>
             </Grid>
 
@@ -58,7 +65,26 @@ const ManageGuild = () => {
                   height: 240,
                 }}
               >
-                <ManageGuildLevels guildId={guildId} guildData={data} />
+                <ManageGuildLevels
+                  guildId={guildId}
+                  guildData={guildSettingsData}
+                />
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12} md={12} lg={12}>
+              <Paper
+                square={false}
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <ManageRankCard
+                  guildId={guildId}
+                  rankCardTheme={guildSettingsData.settings.rankCard}
+                />
               </Paper>
             </Grid>
 

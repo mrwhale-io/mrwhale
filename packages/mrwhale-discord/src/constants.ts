@@ -1,7 +1,5 @@
 import { GatewayIntentBits, ImageURLOptions } from "discord.js";
 
-import { RankCardTheme } from "@mrwhale-io/core";
-
 export const EMBED_COLOR = "#71b8ce";
 export const INTENTS = [
   GatewayIntentBits.Guilds,
@@ -17,13 +15,6 @@ export const THEME = {
   primaryTextColour: "#ffffff",
   secondaryTextColour: "#88f9ba",
   font: "28px sans-serif",
-};
-export const DEFAULT_RANK_THEME: RankCardTheme = {
-  fillColour: "#001625",
-  primaryTextColour: "#ffffff",
-  secondaryTextColour: "#88f9ba",
-  progressFillColour: "#002b3d",
-  progressColour: "#71b8ce",
 };
 export const HEX_COLOUR_REGEX = /^#[0-9A-F]{6}$/i;
 export const MAX_EMBED_DESCRIPTION_LENGTH = 4096;

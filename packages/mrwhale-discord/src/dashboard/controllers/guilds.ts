@@ -1,33 +1,31 @@
 import * as express from "express";
 
 import {
+  DEFAULT_RANK_THEME,
   HttpStatusCode,
-  PlayerInfo,
   RankCardTheme,
   createPlayerRankCard,
-  getLevelFromExp,
-  getRemainingExp,
-  levelToExp,
 } from "@mrwhale-io/core";
 import { ensureAuthenticated } from "../middleware/ensure-authenticated";
 import { validate } from "../middleware/validators/shared";
 import {
-  guildGetRankCardValidators,
+  guildRankCardThemeValidators,
   guildSetPrefixValidators,
 } from "../middleware/validators/guilds";
 import {
   deleteLevelChannelForGuild,
   getGuildSettings,
-  getRankCardTheme,
   setLevelChannelForGuild,
   setPrefixForGuild,
   toggleLevelsForGuild,
-  updateRankCard,
+  setRankCardThemeForGuild,
 } from "../services/guild";
-import { getFormattedGuild } from "../formatters/guilds";
+import {
+  getFormattedGuild,
+  getFormattedPlayerInfo,
+} from "../formatters/guilds";
 import { asyncRequestHandler } from "../middleware/async";
 import { userCanManageGuild } from "../middleware/guilds";
-import { DEFAULT_RANK_THEME } from "../../constants";
 import { LevelManager } from "../../client/managers/level-manager";
 
 interface GuildLevelChannel {
@@ -77,21 +75,26 @@ guildsRouter.get(
   asyncRequestHandler(userCanManageGuild),
   getRankCard
 );
-guildsRouter.post(
+guildsRouter.put(
   "/:guildId/card",
   ensureAuthenticated(),
   asyncRequestHandler(userCanManageGuild),
-  validate(guildGetRankCardValidators),
-  editRankCard
+  validate(guildRankCardThemeValidators),
+  setRankCardTheme
+);
+guildsRouter.delete(
+  "/:guildId/card",
+  ensureAuthenticated(),
+  asyncRequestHandler(userCanManageGuild),
+  ressetRankCardTheme
 );
 
 async function getGuild(req: express.Request, res: express.Response) {
   const { guildId } = req.params;
   const settings = await getGuildSettings(guildId);
   const formattedGuild = getFormattedGuild(req.guild);
-  const rankCard = await getRankCardTheme(guildId);
 
-  return res.json({ guild: formattedGuild, settings, rankCard });
+  return res.json({ guild: formattedGuild, settings });
 }
 
 async function setGuildLevels(req: express.Request, res: express.Response) {
@@ -134,23 +137,13 @@ async function setGuildPrefix(req: express.Request, res: express.Response) {
 }
 
 async function getRankCard(req: express.Request, res: express.Response) {
-  const exp = 100;
-  const level = getLevelFromExp(exp);
-  const user = await req.botClient.client.users.fetch(req.user.id);
-  const info: PlayerInfo = {
-    username: user.username,
-    avatarUrl: user.displayAvatarURL({ extension: "png" }),
-    totalExp: exp,
-    levelExp: levelToExp(level),
-    remainingExp: getRemainingExp(exp / 2),
-    level,
-    rank: 1,
-  };
   const { guildId } = req.params;
-  const theme = await getRankCardTheme(guildId);
+  const guildSettings = await getGuildSettings(guildId);
+  const user = await req.botClient.client.users.fetch(req.user.id);
+  const info = await getFormattedPlayerInfo(user);
   const canvas = await createPlayerRankCard({
     player: info,
-    theme,
+    theme: guildSettings.rankCard,
     defaultTheme: DEFAULT_RANK_THEME,
   });
   const image = canvas.toBuffer();
@@ -163,9 +156,10 @@ async function getRankCard(req: express.Request, res: express.Response) {
     .end(image);
 }
 
-async function editRankCard(req: express.Request, res: express.Response) {
+async function setRankCardTheme(req: express.Request, res: express.Response) {
   const { guildId } = req.params;
-  const rankCard: RankCardTheme = {
+  const botClient = req.botClient;
+  const rankCardTheme: RankCardTheme = {
     fillColour: req.body.fillColour || DEFAULT_RANK_THEME.fillColour,
     primaryTextColour:
       req.body.primaryTextColour || DEFAULT_RANK_THEME.primaryTextColour,
@@ -178,7 +172,19 @@ async function editRankCard(req: express.Request, res: express.Response) {
     font: DEFAULT_RANK_THEME.font,
   };
 
-  await updateRankCard(guildId, rankCard);
+  await setRankCardThemeForGuild(guildId, rankCardTheme, botClient);
+
+  return res.status(HttpStatusCode.OK).end();
+}
+
+async function ressetRankCardTheme(
+  req: express.Request,
+  res: express.Response
+) {
+  const { guildId } = req.params;
+  const botClient = req.botClient;
+
+  await setRankCardThemeForGuild(guildId, DEFAULT_RANK_THEME, botClient);
 
   return res.status(HttpStatusCode.OK).end();
 }

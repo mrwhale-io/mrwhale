@@ -1,10 +1,10 @@
 import { APIGuild } from "discord.js";
 import { request } from "undici";
 
-import { Database, RankCardTheme } from "@mrwhale-io/core";
+import { Database, GuildSettings, RankCardTheme } from "@mrwhale-io/core";
 import { DISCORD_API_VERSION, DISCORD_URL } from "../../constants";
 import { DiscordBotClient } from "../../client/discord-bot-client";
-import { RankCard } from "../../database/models/rank-card";
+import { getFormattedGuildSettings } from "../formatters/guilds";
 
 /**
  * Makes a call to the discord api to fetch the current user's guilds.
@@ -37,7 +37,7 @@ export async function setLevelChannelForGuild(
   guildId: string,
   channelId: string,
   botClient: DiscordBotClient
-) {
+): Promise<void> {
   const settings = botClient.guildSettings.get(guildId);
   if (settings) {
     settings.set("levelChannel", channelId);
@@ -52,7 +52,7 @@ export async function setLevelChannelForGuild(
 export async function deleteLevelChannelForGuild(
   guildId: string,
   botClient: DiscordBotClient
-) {
+): Promise<void> {
   const settings = botClient.guildSettings.get(guildId);
   if (settings) {
     settings.remove("levelChannel");
@@ -67,7 +67,7 @@ export async function deleteLevelChannelForGuild(
 export async function toggleLevelsForGuild(
   guildId: string,
   botClient: DiscordBotClient
-) {
+): Promise<boolean> {
   let enabled = await isLevelsEnabled(guildId, botClient);
   enabled = !enabled;
 
@@ -90,7 +90,7 @@ export async function setPrefixForGuild(
   prefix: string,
   guildId: string,
   botClient: DiscordBotClient
-) {
+): Promise<void> {
   const settings = botClient.guildSettings.get(guildId);
 
   settings.set("prefix", prefix);
@@ -100,7 +100,9 @@ export async function setPrefixForGuild(
  * Get all the settings for the given guild.
  * @param guildId The identifier of the guild.
  */
-export async function getGuildSettings(guildId: string) {
+export async function getGuildSettings(
+  guildId: string
+): Promise<Partial<GuildSettings>> {
   const settings = await Database.connection.model("guild_settings").findOne({
     where: {
       key: guildId,
@@ -108,7 +110,7 @@ export async function getGuildSettings(guildId: string) {
     attributes: ["value"],
   });
 
-  return JSON.parse(settings["value"]);
+  return getFormattedGuildSettings(JSON.parse(settings["value"]));
 }
 
 async function isLevelsEnabled(guildId: string, botClient: DiscordBotClient) {
@@ -118,36 +120,22 @@ async function isLevelsEnabled(guildId: string, botClient: DiscordBotClient) {
 
   const settings = botClient.guildSettings.get(guildId);
 
-  return await settings.get("levels", true);
+  return (await settings.get("levels", true)) as boolean;
 }
 
 /**
- * Gets the guild rank card theme settings from the database.
+ * Set a rank card theme for the given guild.
  * @param guildId The identifier of the guild.
+ * @param cardTheme The card theme settings.
+ * @param botClient The bot client instance.
  */
-export async function getRankCardTheme(
-  guildId: string
-): Promise<RankCardTheme> {
-  const rankCardTheme = await RankCard.findOne({
-    where: {
-      guildId,
-    },
-  });
-
-  return { ...rankCardTheme, font: "sans-serif" };
-}
-
-/**
- * Updates or creates a rank card theme.
- * @param guildId The identifier of the guild.
- * @param card The card theme colours.
- */
-export async function updateRankCard(
+export async function setRankCardThemeForGuild(
   guildId: string,
-  cardTheme: RankCardTheme
-) {
-  RankCard.upsert({
-    guildId,
-    ...cardTheme,
-  });
+  cardTheme: RankCardTheme,
+  botClient: DiscordBotClient
+): Promise<void> {
+  const settings = botClient.guildSettings.get(guildId);
+  if (settings) {
+    settings.set("rankCard", cardTheme);
+  }
 }

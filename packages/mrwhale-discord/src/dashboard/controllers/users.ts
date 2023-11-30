@@ -1,9 +1,9 @@
 import * as express from "express";
+import { APIGuild, Client, PermissionsBitField } from "discord.js";
 
 import { HttpStatusCode } from "@mrwhale-io/core";
 import { ensureAuthenticated } from "../middleware/ensure-authenticated";
 import { getGuilds } from "../services/guild";
-import { APIGuild, Client, PermissionsBitField } from "discord.js";
 
 interface MappedGuild extends APIGuild {
   isInvited: boolean;

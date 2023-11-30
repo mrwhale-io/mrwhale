@@ -17,6 +17,7 @@ export { CommandTypes } from "./types/command-types";
 export { HttpStatusCode } from "./types/http-status-code";
 export { RankCardTheme } from "./types/rank-card-theme";
 export { PlayerInfo } from "./types/player-info";
+export { GuildSettings } from "./types/guild-settings";
 export { createPlayerRankCard } from "./image/create-player-rank-card";
 export { ProgressBar } from "./image/progress-bar";
 export {
@@ -24,6 +25,7 @@ export {
   WHALE_REGEX,
   DEFAULT_COMMAND_RATE_LIMIT,
   DEFAULT_COMMAND_COOLDOWN_DURATION,
+  DEFAULT_RANK_THEME,
 } from "./constants";
 export { BotClient } from "./client/bot-client";
 export { Command } from "./client/command/command";

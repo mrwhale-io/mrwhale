@@ -1,12 +1,13 @@
 import { Box, Popover, PopoverProps, Typography, styled } from "@mui/material";
-import React, { useState } from "react";
-import { HexColorPicker } from "react-colorful";
+import React from "react";
+import { HexColorPicker, HexColorInput } from "react-colorful";
 
 import "./Swatch.css";
 
 interface Props {
   title: string;
-  defaultColour: string;
+  colour: string;
+  onChange: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const SwatchPopover = styled(Popover)<PopoverProps>(() => ({
@@ -15,8 +16,7 @@ const SwatchPopover = styled(Popover)<PopoverProps>(() => ({
   overflow: "hidden",
 }));
 
-const Swatch = ({ title, defaultColour }: Props) => {
-  const [color, setColor] = useState(defaultColour);
+const Swatch = ({ title, colour, onChange }: Props) => {
   const [anchorEl, setAnchorEl] = React.useState<HTMLDivElement | null>(null);
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -34,7 +34,7 @@ const Swatch = ({ title, defaultColour }: Props) => {
       <div
         className="swatch"
         onClick={handleClick}
-        style={{ backgroundColor: color }}
+        style={{ backgroundColor: colour }}
       />
       <SwatchPopover
         id={id}
@@ -57,8 +57,13 @@ const Swatch = ({ title, defaultColour }: Props) => {
         >
           <HexColorPicker
             style={{ width: "220px", height: "150px" }}
-            color={color}
-            onChange={setColor}
+            color={colour}
+            onChange={onChange}
+          />
+          <HexColorInput
+            className="colourPickerInput"
+            color={colour}
+            onChange={onChange}
           />
         </Box>
       </SwatchPopover>

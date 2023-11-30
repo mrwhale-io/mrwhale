@@ -12,7 +12,7 @@ export const guildSetPrefixValidators = [
     .withMessage(`Prefix must be less than ${PREFIX_MAX_LENGTH} characters.`),
 ];
 
-export const guildGetRankCardValidators = [
+export const guildRankCardThemeValidators = [
   body("fillColour")
     .matches(HEX_COLOUR_REGEX)
     .withMessage(`Fill colour must be valid hex colour.`),

@@ -9,6 +9,9 @@ const themeOptions: ThemeOptions = {
     secondary: {
       main: "#81f9bf",
     },
+    error: {
+      main: "#ff4205",
+    },
   },
 };
 
