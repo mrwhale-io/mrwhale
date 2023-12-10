@@ -11,6 +11,7 @@ import { Score } from "../database/models/score";
 import { EMBED_COLOR } from "../constants";
 
 const HIGHSCORE_PAGE_LIMIT = 10;
+const HIGHSCORE_MAX_LIMIT = 100;
 
 export interface ScoreResult {
   scores: MappedScores[];
@@ -33,6 +34,7 @@ export async function createLeaderboardTable(
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
     .setTitle(title)
+    .setTimestamp()
     .setFooter({ text: `Page ${page}/${scoreResult.pages}` });
   if (scoreResult.scores.length < 1) {
     return embed.setDescription("No one is ranked.");
@@ -56,11 +58,14 @@ export async function getGuildScores(
   message: Message | ChatInputCommandInteraction,
   page: number
 ): Promise<ScoreResult> {
-  const scoreCount = await Score.count({
-    where: {
-      guildId: message.guildId,
-    },
-  });
+  const scoreCount = (
+    await Score.findAll({
+      where: {
+        guildId: message.guildId,
+      },
+      limit: HIGHSCORE_MAX_LIMIT,
+    })
+  ).length;
   const pages = Math.ceil(scoreCount / HIGHSCORE_PAGE_LIMIT);
   const offset = HIGHSCORE_PAGE_LIMIT * (page - 1);
   const scores = await Score.findAll({
@@ -93,6 +98,7 @@ export async function getGlobalScores(
   const scoreCount = (
     await Score.findAll({
       group: ["Score.userId"],
+      limit: HIGHSCORE_MAX_LIMIT,
     })
   ).length;
   const pages = Math.ceil(scoreCount / HIGHSCORE_PAGE_LIMIT);
