@@ -9,13 +9,17 @@ describe("define", () => {
   it("should define a word", async () => {
     const definition =
       "noun; a wealthy [patron] to a [casino], gets paid special attention by a casino host so the patron will feel comfortable to [gamble] more money.";
-    const response = { data: { list: [{ definition }] } };
+    const example =
+      "[My whale] just walked in. He is [hosting] the [Ferrari] convention downstairs.";
     const phrase = "whale";
+    const response = {
+      data: { list: [{ word: phrase, definition, example }] },
+    };
     mockedAxios.get.mockResolvedValue(response);
 
     const result = await define.action(phrase);
 
-    expect(result).toEqual(`${phrase} - ${definition}`);
+    expect(result).toEqual([{ word: phrase, definition, example }]);
   });
 
   it("should return error string when failed", async () => {

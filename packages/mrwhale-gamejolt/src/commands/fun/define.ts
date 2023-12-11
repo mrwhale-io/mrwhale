@@ -10,11 +10,20 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, [phrase]: [string]): Promise<Message> {
-    const definition = await define.action(phrase);
+    const definitionResult = await define.action(phrase);
+
+    if (typeof definitionResult === "string") {
+      return message.reply(definitionResult);
+    }
+
+    const firstDefinition = definitionResult[0];
     const content = new Content().insertText(
-      truncate(MAX_MESSAGE_LENGTH - 3, definition)
+      truncate(
+        MAX_MESSAGE_LENGTH - 3,
+        `${firstDefinition.word} - ${definitionResult[0].definition}`
+      )
     );
-  
+
     return message.reply(content);
   }
 }

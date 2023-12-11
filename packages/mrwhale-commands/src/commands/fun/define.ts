@@ -13,12 +13,18 @@ export const data: CommandOptions = {
 };
 
 interface UrbanDictionaryResponse {
-  list?: { definition: string }[];
+  list?: { definition: string; example: string }[];
+}
+
+interface DefineResult {
+  word: string;
+  definition: string;
+  example: string;
 }
 
 const URBAN_DICTIONARY_URL = "https://api.urbandictionary.com/v0/define";
 
-export async function action(phrase: string): Promise<string> {
+export async function action(phrase: string): Promise<string | DefineResult[]> {
   if (!phrase) {
     return "You must pass a word or phrase to define.";
   }
@@ -36,8 +42,11 @@ export async function action(phrase: string): Promise<string> {
       return "Could not define this.";
     }
 
-    const definition = response.data.list[0].definition;
-    return purifyText(`${phrase} - ${definition}`);
+    return response.data.list.map((list) => ({
+      word: purifyText(phrase),
+      definition: purifyText(list.definition),
+      example: purifyText(list.example),
+    }));
   } catch {
     return "Could not fetch this definition.";
   }
