@@ -19,7 +19,6 @@ export class CommandStorage<
 
   /**
    * Add a new loaded command to the collection.
-   *
    * @param client The bot client.
    * @param command The command object to register.
    * @param key The key to register command under.
@@ -43,7 +42,7 @@ export class CommandStorage<
           (c) => c.aliases.includes(alias) && c !== cmd
         );
         if (duplicates.size > 0) {
-          throw new Error(`Command may may not share aliases`);
+          throw new Error(`Command may not share aliases.`);
         }
       }
     }
@@ -53,7 +52,6 @@ export class CommandStorage<
 
   /**
    * Finds a command by name or alias.
-   *
    * @param text The command name or alias.
    */
   findByNameOrAlias(text: string): C {
@@ -64,10 +62,9 @@ export class CommandStorage<
 
   /**
    * Finds commands by type and returns a collection of found commands.
-   *
    * @param text The command type.
    */
-  findByType(text: string): Collection<string, C> {
-    return this.filter((c) => c.type === text);
+  findByType(type: string): Collection<string, C> {
+    return this.filter((c) => c.type === type);
   }
 }

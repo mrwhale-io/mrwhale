@@ -13,6 +13,7 @@ const SET_ACTIVITY_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const bot = new DiscordBotClient(
   {
     commandsDir: path.join(__dirname, "./src/commands"),
+    selectMenuDir: path.join(__dirname, "./src/select-menus"),
     prefix: config.prefix,
     ownerId: config.ownerId,
     discordServer: config.discordServer,
@@ -33,6 +34,7 @@ bot.client.login(config.token);
 
 bot.client.once(Events.ClientReady, () => {
   bot.commandDispatcher.ready = true;
+  bot.discordSelectMenuHandler.ready = true;
   setActivity();
   setInterval(setActivity, SET_ACTIVITY_INTERVAL);
 });

@@ -26,6 +26,9 @@ import { LevelManager } from "./managers/level-manager";
 import { AVATAR_OPTIONS, EMBED_COLOR, THEME } from "../constants";
 import { DiscordBotOptions } from "../types/discord-bot-options";
 import { Greeting } from "../image/greeting";
+import { DiscordSelectMenu } from "./menu/discord-select-menu";
+import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
+import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -36,9 +39,14 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly client: Client;
 
   /**
-   * The bot command dispatcher.
+   * An instance of the bot command dispatcher.
    */
   readonly commandDispatcher: DiscordCommandDispatcher;
+
+  /**
+   * An instance of the discord select menu handler.
+   */
+  readonly discordSelectMenuHandler: DiscordSelectMenuHandler;
 
   /**
    * The guild settings.
@@ -76,11 +84,22 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly clientSecret: string;
 
   /**
+   * The directory of the discord select menus.
+   */
+  readonly selectMenuDir: string;
+
+  /**
+   * Contains discord select menus.
+   */
+  readonly menus: Map<string, DiscordSelectMenu>;
+
+  /**
    * The discord bot list API key.
    */
   private readonly discordBotList?: string;
   private readonly levelManager: LevelManager;
   private readonly guildStorageLoader: GuildStorageLoader;
+  private readonly discordSelectMenuLoader: DiscordSelectMenuLoader;
 
   constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
@@ -91,11 +110,16 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.proxyUrl = botOptions.proxyUrl;
     this.clientId = botOptions.clientId;
     this.clientSecret = botOptions.clientSecret;
+    this.selectMenuDir = botOptions.selectMenuDir;
+    this.menus = new Map<string, DiscordSelectMenu>();
     this.guildSettings = new Map<string, KeyedStorageProvider>();
     this.commandLoader.commandType = DiscordCommand.name;
     this.commandLoader.loadCommands();
+    this.discordSelectMenuLoader = new DiscordSelectMenuLoader(this);
+    this.discordSelectMenuLoader.loadMenus();
     this.levelManager = new LevelManager(this);
     this.commandDispatcher = new DiscordCommandDispatcher(this);
+    this.discordSelectMenuHandler = new DiscordSelectMenuHandler(this);
     this.guildStorageLoader = new GuildStorageLoader(this);
     this.guildStorageLoader.init();
     if (botOptions.discordBotList) {
@@ -252,9 +276,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     const greeting = await new Greeting()
       .setGuild(guildMember.guild.name)
-      .setAvatarUrl(
-        guildMember.displayAvatarURL(AVATAR_OPTIONS)
-      )
+      .setAvatarUrl(guildMember.displayAvatarURL(AVATAR_OPTIONS))
       .setUsername(guildMember.user.username)
       .setMessage("Whalecome to {guild.name}, {user.username}!")
       .setMemberCount(guildMember.guild.memberCount)
