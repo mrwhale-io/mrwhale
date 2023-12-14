@@ -1,25 +1,42 @@
-import { TimeUtilities, unorderedList, code } from "@mrwhale-io/core";
 import {
+  ActionRowBuilder,
   ChatInputCommandInteraction,
   EmbedBuilder,
   Message,
   InteractionResponse,
+  StringSelectMenuBuilder,
+  AutocompleteInteraction,
+  CacheType,
+  ApplicationCommandOptionChoiceData,
 } from "discord.js";
 
+import {
+  TimeUtilities,
+  unorderedList,
+  code,
+  capitalise,
+  CommandTypes,
+} from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
+import { SelectMenus } from "../../types/select-menus";
+import { getCommandsByTypeEmbed } from "../../util/help";
 
 export default class extends DiscordCommand {
   constructor() {
     super({
       name: "help",
-      description: "Get command help.",
+      description: "Get detailed information about commands and their usage.",
       type: "utility",
       usage: "<prefix>help <type|cmd>",
       cooldown: 5000,
     });
     this.slashCommandData.addStringOption((option) =>
-      option.setName("name").setDescription("The type or name of the command.")
+      option
+        .setName("name")
+        .setDescription("The name of the command.")
+        .setRequired(false)
+        .setAutocomplete(true)
     );
   }
 
@@ -28,11 +45,36 @@ export default class extends DiscordCommand {
     this.getHelpInfo(message, typeOrCmdName, prefix);
   }
 
-  async slashCommandAction(
-    interaction: ChatInputCommandInteraction
-  ): Promise<void> {
+  async autocomplete(interaction: AutocompleteInteraction<CacheType>) {
+    const focusedValue = interaction.options.getFocused();
+    if (!focusedValue) {
+      return await interaction.respond([]);
+    }
+    const commands = this.getCommandOptions();
+    const filtered = commands.filter((choice) =>
+      choice.name.toLowerCase().startsWith(focusedValue.toLowerCase())
+    );
+    await interaction.respond(filtered);
+  }
+
+  async slashCommandAction(interaction: ChatInputCommandInteraction) {
     const name = interaction.options.getString("name");
-    this.getHelpInfo(interaction, name, "/");
+
+    if (name) {
+      this.getHelpInfo(interaction, name, "/");
+    }
+
+    const commandTypesMenu = this.botClient.menus.get(SelectMenus.CommandTypes);
+    const commandTypesMenuBuilder = commandTypesMenu.getSelectMenuBuilder() as StringSelectMenuBuilder;
+    const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      commandTypesMenuBuilder
+    );
+    const embed = await getCommandsByTypeEmbed("fun", this.botClient);
+
+    return await interaction.reply({
+      embeds: [embed],
+      components: [row],
+    });
   }
 
   private async getHelpInfo(
@@ -98,5 +140,12 @@ export default class extends DiscordCommand {
     return message.reply(
       unorderedList(types.map((type) => `${prefix}help ${type}`))
     );
+  }
+
+  private getCommandOptions(): ApplicationCommandOptionChoiceData[] {
+    return this.botClient.commands.map((cmd) => ({
+      name: capitalise(cmd.name),
+      value: cmd.name,
+    }));
   }
 }
