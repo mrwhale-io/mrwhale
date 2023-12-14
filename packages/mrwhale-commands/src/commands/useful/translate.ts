@@ -4,8 +4,7 @@ import { CommandOptions } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
   name: "translate",
-  description:
-    "Translate text to a specified language. Use 'translate langs' for supported languages.",
+  description: "Translate text to a specified language.",
   type: "useful",
   usage: "<prefix>translate <lang>, <text>",
   examples: [
