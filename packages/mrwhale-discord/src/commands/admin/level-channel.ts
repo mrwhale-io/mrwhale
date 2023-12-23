@@ -15,7 +15,7 @@ export default class extends DiscordCommand {
     super({
       name: "levelchannel",
       description: "Set the level up message channel.",
-      type: "utility",
+      type: "admin",
       usage: "<prefix>levelchannel <channel>",
       guildOnly: true,
       callerPermissions: ["Administrator"],

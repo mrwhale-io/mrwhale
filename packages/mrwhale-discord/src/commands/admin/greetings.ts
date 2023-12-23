@@ -11,7 +11,7 @@ import {
       super({
         name: "greetings",
         description: "Toggle greetings on and off.",
-        type: "utility",
+        type: "admin",
         usage: "<prefix>greetings",
         guildOnly: true,
         callerPermissions: ["Administrator"],
