@@ -10,13 +10,7 @@ import {
   ApplicationCommandOptionChoiceData,
 } from "discord.js";
 
-import {
-  TimeUtilities,
-  unorderedList,
-  code,
-  capitalise,
-  CommandTypes,
-} from "@mrwhale-io/core";
+import { TimeUtilities, capitalise } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
 import { SelectMenus } from "../../types/select-menus";
@@ -40,9 +34,28 @@ export default class extends DiscordCommand {
     );
   }
 
-  async action(message: Message, [typeOrCmdName]: [string]): Promise<void> {
+  async action(
+    message: Message,
+    [name]: [string]
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const prefix = await this.botClient.getPrefix(message.guildId);
-    this.getHelpInfo(message, typeOrCmdName, prefix);
+    if (name) {
+      return this.getHelpInfo(message, name, prefix);
+    }
+
+    const commandTypesMenu = this.botClient.menus.get(SelectMenus.CommandTypes);
+    const commandTypesMenuBuilder = commandTypesMenu.getSelectMenuBuilder(
+      message.author.id
+    ) as StringSelectMenuBuilder;
+    const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      commandTypesMenuBuilder
+    );
+    const embed = await getCommandsByTypeEmbed("fun", this.botClient);
+
+    return await message.reply({
+      embeds: [embed],
+      components: [row],
+    });
   }
 
   async autocomplete(interaction: AutocompleteInteraction<CacheType>) {
@@ -57,15 +70,19 @@ export default class extends DiscordCommand {
     await interaction.respond(filtered);
   }
 
-  async slashCommandAction(interaction: ChatInputCommandInteraction) {
+  async slashCommandAction(
+    interaction: ChatInputCommandInteraction
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const name = interaction.options.getString("name");
 
     if (name) {
-      this.getHelpInfo(interaction, name, "/");
+      return this.getHelpInfo(interaction, name);
     }
 
     const commandTypesMenu = this.botClient.menus.get(SelectMenus.CommandTypes);
-    const commandTypesMenuBuilder = commandTypesMenu.getSelectMenuBuilder() as StringSelectMenuBuilder;
+    const commandTypesMenuBuilder = commandTypesMenu.getSelectMenuBuilder(
+      interaction.user.id
+    ) as StringSelectMenuBuilder;
     const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
       commandTypesMenuBuilder
     );
@@ -79,72 +96,55 @@ export default class extends DiscordCommand {
 
   private async getHelpInfo(
     message: Message | ChatInputCommandInteraction,
-    typeOrCmdName: string,
-    prefix: string
+    name: string,
+    prefix: string = "/"
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
-    const types = ["fun", "utility", "useful", "level", "game", "image"];
     if (prefix.length > 1) {
       prefix = prefix + " ";
     }
-    if (typeOrCmdName) {
-      const cmd = this.botClient.commands.findByNameOrAlias(typeOrCmdName);
 
-      if (cmd) {
-        const info = new EmbedBuilder().setColor(EMBED_COLOR).addFields([
-          { name: "Name", value: cmd.name },
-          { name: "Description", value: cmd.description },
-          { name: "Type", value: cmd.type },
-          {
-            name: "Cooldown",
-            value: `${TimeUtilities.convertMs(cmd.rateLimiter.duration)}`,
-          },
-        ]);
+    const cmd = this.botClient.commands.findByNameOrAlias(
+      name.toLowerCase().trim()
+    );
 
-        if (cmd.examples.length > 0) {
-          info.addFields([
-            {
-              name: "Examples",
-              value: `${cmd.examples.join(", ").replace(/<prefix>/g, prefix)}`,
-            },
-          ]);
-        }
-
-        if (cmd.aliases.length > 0) {
-          info.addFields([
-            {
-              name: "Aliases",
-              value: `${cmd.aliases.join(", ")}`,
-            },
-          ]);
-        }
-
-        return message.reply({ embeds: [info] });
-      }
-
-      if (types.includes(typeOrCmdName.toLowerCase())) {
-        const commands = this.botClient.commands.findByType(typeOrCmdName);
-
-        return message.reply(
-          unorderedList(
-            commands.map(
-              (command) =>
-                `${code(prefix + command.name)} - ${command.description}`
-            )
-          )
-        );
-      }
-
-      return message.reply("Could not find this command or type.");
+    if (!cmd) {
+      return message.reply("Could not find this command.");
     }
 
-    return message.reply(
-      unorderedList(types.map((type) => `${prefix}help ${type}`))
-    );
+    const info = new EmbedBuilder().setColor(EMBED_COLOR).addFields([
+      { name: "Name", value: cmd.name },
+      { name: "Description", value: cmd.description },
+      { name: "Type", value: capitalise(cmd.type) },
+      {
+        name: "Cooldown",
+        value: `${TimeUtilities.convertMs(cmd.rateLimiter.duration)}`,
+      },
+    ]);
+
+    if (cmd.examples.length > 0) {
+      info.addFields([
+        {
+          name: "Examples",
+          value: `${cmd.examples.join(", ").replace(/<prefix>/g, prefix)}`,
+        },
+      ]);
+    }
+
+    if (cmd.aliases.length > 0) {
+      info.addFields([
+        {
+          name: "Aliases",
+          value: `${cmd.aliases.join(", ")}`,
+        },
+      ]);
+    }
+
+    return message.reply({ embeds: [info] });
   }
 
   private getCommandOptions(): ApplicationCommandOptionChoiceData[] {
     return this.botClient.commands.map((cmd) => ({
-      name: capitalise(cmd.name),
+      name: cmd.name,
       value: cmd.name,
     }));
   }
