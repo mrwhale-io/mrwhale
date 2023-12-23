@@ -37,7 +37,7 @@ export abstract class DiscordSelectMenu {
   abstract action(interaction: AnySelectMenuInteraction): Promise<unknown>;
 
   /**
-   * Registers a new instance of this command
+   * Registers a new instance of this menu.
    * @param client The bot instance.
    */
   register(client: DiscordBotClient): void {
@@ -49,6 +49,9 @@ export abstract class DiscordSelectMenu {
 
   /**
    * Get an instance of the select menu builder.
+   * @param userId The identifier of the discord user that requested the select menu.
    */
-  getSelectMenuBuilder?(): BaseSelectMenuBuilder<APISelectMenuComponent>;
+  getSelectMenuBuilder?(
+    userId: string
+  ): BaseSelectMenuBuilder<APISelectMenuComponent>;
 }

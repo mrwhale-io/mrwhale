@@ -28,10 +28,16 @@ export class DiscordSelectMenuHandler {
     if (!interaction.isAnySelectMenu() || !this._ready) {
       return;
     }
-    const selectMenu = this.bot.menus.get(interaction.customId);
+
+    const userId = interaction.user.id;
+    const customId = interaction.customId.replace(userId, "");
+    const selectMenu = this.bot.menus.get(customId);
 
     if (!selectMenu) {
-      return;
+      return await interaction.reply({
+        content: "You cannot select this menu option.",
+        ephemeral: true,
+      });
     }
 
     await selectMenu.action(interaction).catch((e) => this.bot.logger.error(e));

@@ -30,9 +30,9 @@ export default class extends DiscordSelectMenu {
     return await interaction.message.edit({ embeds: [embed] });
   }
 
-  getSelectMenuBuilder(): StringSelectMenuBuilder {
+  getSelectMenuBuilder(id: string): StringSelectMenuBuilder {
     const selectCategoryMenu = new StringSelectMenuBuilder()
-      .setCustomId(this.name)
+      .setCustomId(`${this.name}${id}`)
       .setPlaceholder("Make a selection")
       .setMinValues(1)
       .setMaxValues(1);
