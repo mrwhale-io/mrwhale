@@ -15,7 +15,7 @@ export default class extends DiscordCommand {
     super({
       name: "greetingchannel",
       description: "Set the channel used to greet newly joined guild members.",
-      type: "utility",
+      type: "admin",
       usage: "<prefix>greetingchannel <channel>",
       guildOnly: true,
       callerPermissions: ["Administrator"],

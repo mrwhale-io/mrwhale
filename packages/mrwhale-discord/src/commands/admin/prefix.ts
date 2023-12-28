@@ -12,7 +12,7 @@ export default class extends DiscordCommand {
     super({
       name: "prefix",
       description: "Sets the bot prefix.",
-      type: "utility",
+      type: "admin",
       usage: "<prefix>prefix <prefix>",
       callerPermissions: ["Administrator"],
     });

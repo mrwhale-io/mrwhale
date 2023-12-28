@@ -38,4 +38,9 @@ export interface DiscordBotOptions extends BotOptions {
    * The client secret of the OAuth2 discord client.
    */
   clientSecret: string;
+
+  /**
+   * The directory of the discord menus.
+   */
+  selectMenuDir: string;
 }

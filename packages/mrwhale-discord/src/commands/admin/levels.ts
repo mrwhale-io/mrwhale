@@ -11,7 +11,7 @@ export default class extends DiscordCommand {
     super({
       name: "levels",
       description: "Toggle levels on and off.",
-      type: "utility",
+      type: "admin",
       usage: "<prefix>levels",
       guildOnly: true,
       callerPermissions: ["Administrator"],
