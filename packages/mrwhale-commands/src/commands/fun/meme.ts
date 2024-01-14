@@ -7,35 +7,44 @@ export const data: CommandOptions = {
   description: "Get a random meme from Reddit.",
   type: "fun",
   usage: "<prefix>meme",
-  cooldown: 3000,
+  cooldown: 5000,
 };
 
-const SUBREDDITS = {
-  meme: ["dankmemes", "memes", "shitposting", "formuladank", "blursedimages"],
+export const SUBREDDITS = {
+  meme: [
+    "dankmemes",
+    "memes",
+    "shitposting",
+    "formuladank",
+    "blursedimages",
+    "me_irl",
+  ],
   anime: ["Animemes", "anime_irl", "animenocontext", "goodanimemes"],
   cats: ["MEOW_IRL"],
   comics: ["comics"],
   programming: ["ProgrammerHumor", "linuxmemes"],
 };
 
-const BASE_REDDIT_URL = "https://www.reddit.com/r";
-const SORT_PARAMETER = "top";
-const TIME_PARAMETER = "week";
+const BASE_MEME_URL = "https://meme-api.com/gimme";
+const LIMIT = 25;
 
 type MemeCategory = keyof typeof SUBREDDITS;
 
 export interface RedditPost {
-  id: string;
+  postLink: string;
+  subreddit: string;
   title: string;
   author: string;
   url: string;
-  subreddit_name_prefixed: string;
-  permalink: string;
-  thumbnail: string;
   ups: number;
-  downs: number;
-  over_18: boolean;
-  is_video: boolean;
+  spoiler: boolean;
+  nsfw: boolean;
+  preview: string[];
+}
+
+interface ApiResponse {
+  count: number;
+  memes: RedditPost[];
 }
 
 export async function fetchMemes(
@@ -46,19 +55,17 @@ export async function fetchMemes(
   }
 
   const subreddit = getRandomSubreddit(category);
-  const url = `${BASE_REDDIT_URL}/${subreddit}.json?sort=${SORT_PARAMETER}&t=${TIME_PARAMETER}`;
+  const url = `${BASE_MEME_URL}/${subreddit}/${LIMIT}`;
 
   try {
-    const response = await axios.get(url);
-    return response.data.data.children
-      .map((post: { data: RedditPost }) => post.data)
-      .filter((post: RedditPost) => !post.over_18 && !post.is_video);
+    const { data } = await axios.get<ApiResponse>(url);
+    return data.memes.filter((meme) => !meme.nsfw);
   } catch {
     throw new Error("Could not fetch memes.");
   }
 }
 
-function isValidCategory(category: string): category is MemeCategory {
+export function isValidCategory(category: string): category is MemeCategory {
   return SUBREDDITS[category] !== undefined;
 }
 

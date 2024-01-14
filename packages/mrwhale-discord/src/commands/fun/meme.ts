@@ -4,7 +4,14 @@ import { meme } from "@mrwhale-io/commands";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
 
+const TIME_TO_FETCH = 60 * 60 * 1000;
+
+interface MemeCache {
+  [subreddit: string]: { memes: meme.RedditPost[]; lastFetch: number };
+}
+
 export default class extends DiscordCommand {
+  private memeCache: MemeCache = {};
   constructor() {
     super(meme.data);
     this.slashCommandData.addStringOption((option) =>
@@ -23,7 +30,7 @@ export default class extends DiscordCommand {
 
   async action(message: Message): Promise<void> {
     try {
-      const memes = await meme.fetchMemes();
+      const memes = await this.fetchMemes();
       await this.replyWithMeme(message, memes);
     } catch {
       await message.reply("Could not fetch memes.");
@@ -35,25 +42,52 @@ export default class extends DiscordCommand {
   ): Promise<void> {
     try {
       const category = interaction.options.getString("category") ?? "meme";
-      const memes = await meme.fetchMemes(category);
+      const memes = await this.fetchMemes(category);
+
       await this.replyWithMeme(interaction, memes);
     } catch {
       await interaction.reply("Could not fetch memes.");
     }
   }
 
+  private isTimeToFetch(subreddit: string) {
+    if (!this.memeCache[subreddit]) {
+      this.memeCache[subreddit] = { memes: [], lastFetch: -Infinity };
+    }
+
+    const lastFetchTimestamp = this.memeCache[subreddit].lastFetch;
+
+    return Date.now() - lastFetchTimestamp >= TIME_TO_FETCH;
+  }
+
   private setupEmbed(post: meme.RedditPost): EmbedBuilder {
     return new EmbedBuilder()
       .setTitle(post.title)
-      .setURL(`https://www.reddit.com${post.permalink}`)
+      .setURL(post.url)
       .setColor(EMBED_COLOR)
       .setDescription(
         `Posted by ${post.author} | :small_red_triangle: ${post.ups} upvotes`
       )
       .setImage(post.url)
       .setFooter({
-        text: `Posted in ${post.subreddit_name_prefixed}`,
+        text: `Posted in ${post.subreddit}`,
       });
+  }
+
+  private async fetchMemes(category: string = "meme") {
+    const timeForFetch = this.isTimeToFetch(category);
+
+    let memeCache = this.memeCache[category];
+
+    if (timeForFetch) {
+      const memes = await meme.fetchMemes(category);
+      this.memeCache[category].memes = memes;
+      this.memeCache[category].lastFetch = Date.now();
+
+      return memes;
+    }
+
+    return memeCache.memes;
   }
 
   private async replyWithMeme(
