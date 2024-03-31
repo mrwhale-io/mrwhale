@@ -1,5 +1,6 @@
 import {
   BotClient,
+  Fish,
   KeyedStorageProvider,
   ListenerDecorators,
 } from "@mrwhale-io/core";
@@ -29,6 +30,7 @@ import { Greeting } from "../image/greeting";
 import { DiscordSelectMenu } from "./menu/discord-select-menu";
 import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
 import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
+import { HungerManager } from "./managers/hunger-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -94,6 +96,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly menus: Map<string, DiscordSelectMenu>;
 
   /**
+   * Contains the hunger manager for Mr. Whale.
+   */
+  private readonly hungerManager: HungerManager;
+
+  /**
    * The discord bot list API key.
    */
   private readonly discordBotList?: string;
@@ -118,6 +125,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.discordSelectMenuLoader = new DiscordSelectMenuLoader(this);
     this.discordSelectMenuLoader.loadMenus();
     this.levelManager = new LevelManager(this);
+    this.hungerManager = new HungerManager(this);
     this.commandDispatcher = new DiscordCommandDispatcher(this);
     this.discordSelectMenuHandler = new DiscordSelectMenuHandler(this);
     this.guildStorageLoader = new GuildStorageLoader(this);
@@ -141,6 +149,25 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     const settings = this.guildSettings.get(guildId);
 
     return await settings.get("prefix", this.defaultPrefix);
+  }
+
+  /**
+   * Increases the health level for the given guild.
+   * This will increase depending on the expWorth of the given fish type.
+   * @param guildId The guild to increase health for.
+   * @param fish The fish to feed Mr. Whale.
+   * @param quantity The number of given fish to feed Mr. Whale.
+   */
+  feed(guildId: string, fish: Fish, quantity: number): void {
+    this.hungerManager.feed(guildId, fish, quantity);
+  }
+
+  /**
+   * Get the hunger level for the given guild.
+   * @param guildId The guild to get the hunger level for.
+   */
+  getGuildHungerLevel(guildId: string): number {
+    return this.hungerManager.getGuildHungerLevel(guildId);
   }
 
   /**

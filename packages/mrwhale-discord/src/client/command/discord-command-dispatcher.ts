@@ -12,6 +12,7 @@ import {
   TextChannel,
   User,
   ChannelType,
+  Events,
 } from "discord.js";
 
 import { DiscordBotClient } from "../discord-bot-client";
@@ -34,12 +35,12 @@ export class DiscordCommandDispatcher {
 
   constructor(bot: DiscordBotClient) {
     this.bot = bot;
-    this.bot.client.on("interactionCreate", (interaction) => {
+    this.bot.client.on(Events.InteractionCreate, (interaction) => {
       this.handleInteraction(interaction);
       this.handleAutocomplete(interaction);
     });
 
-    this.bot.client.on("messageCreate", (message) => {
+    this.bot.client.on(Events.MessageCreate, (message) => {
       this.handleMessage(message);
     });
   }

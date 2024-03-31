@@ -1,10 +1,12 @@
-import { ChannelType, Message, TextBasedChannel } from "discord.js";
-import { getLevelFromExp, getRandomInt } from "@mrwhale-io/core";
+import { ChannelType, Events, Message, TextBasedChannel } from "discord.js";
 
+import { getLevelFromExp, getRandomInt } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
 import { Score, ScoreInstance } from "../../database/models/score";
 
 const TIME_FOR_EXP = 6e4;
+const MIN_EXP_EARNED = 15;
+const MAX_EXP_EARNED = 25;
 
 interface MessageMap {
   [guildId: number]: { [user: number]: number };
@@ -15,7 +17,7 @@ export class LevelManager {
 
   constructor(private bot: DiscordBotClient) {
     this.lastMessages = {};
-    this.bot.client.on("messageCreate", (message: Message) =>
+    this.bot.client.on(Events.MessageCreate, (message: Message) =>
       this.onMessage(message)
     );
   }
@@ -151,7 +153,7 @@ export class LevelManager {
 
     this.lastMessages[message.guildId][message.author.id] = Date.now();
 
-    const expGained = getRandomInt(15, 25);
+    const expGained = getRandomInt(MIN_EXP_EARNED, MAX_EXP_EARNED);
     const score = await this.getScore(message.author.id, message.guildId);
     const level = getLevelFromExp(score.exp);
 

@@ -8,6 +8,7 @@ export const DEFAULT_COMMAND_COOLDOWN_DURATION = 1000;
 
 export const COMMAND_TYPE_NAMES: CommandTypes[] = [
   "admin",
+  "economy",
   "fun",
   "game",
   "utility",

@@ -49,3 +49,7 @@ export {
 } from "./util/markdown-helpers";
 export { InfoBuilder } from "./util/info-builder";
 export { applyText } from "./util/apply-text";
+export { fishTypes } from "./data/fish-types";
+export { Fish } from "./types/fish";
+export { FishTypeNames } from "./types/fish-type-names";
+export { catchFish, getFishByName, FishCaughtResult } from "./helpers/fishing";

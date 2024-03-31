@@ -3,6 +3,7 @@
  */
 export type CommandTypes =
   | "admin"
+  | "economy"
   | "useful"
   | "fun"
   | "utility"

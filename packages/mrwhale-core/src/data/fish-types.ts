@@ -1,0 +1,81 @@
+import { Fish } from "../types/fish";
+
+export const fishTypes: Fish[] = [
+  {
+    name: "Krill",
+    icon: "🦐",
+    worth: 25,
+    expWorth: 1,
+    weight: 75,
+  },
+  {
+    name: "Shrimp",
+    icon: "🦐",
+    worth: 25,
+    expWorth: 1,
+    weight: 70,
+  },
+  {
+    name: "Crab",
+    icon: "🦀",
+    worth: 50,
+    expWorth: 2,
+    weight: 60,
+  },
+  {
+    name: "Lobster",
+    icon: "🦞",
+    worth: 100,
+    expWorth: 4,
+    weight: 55,
+  },
+  {
+    name: "Cod",
+    icon: "🐟",
+    worth: 250,
+    expWorth: 6,
+    weight: 50,
+  },
+  {
+    name: "Cuttlefish",
+    icon: "🐟",
+    worth: 300,
+    expWorth: 8,
+    weight: 45,
+  },
+  {
+    name: "Rockfish",
+    icon: "🐟",
+    worth: 350,
+    expWorth: 10,
+    weight: 40,
+  },
+  {
+    name: "Octopus",
+    icon: "🐙",
+    worth: 500,
+    expWorth: 12,
+    weight: 20,
+  },
+  {
+    name: "Shark",
+    icon: "🦈",
+    worth: 1000,
+    expWorth: 15,
+    weight: 10,
+  },
+  {
+    name: "Giant Squid",
+    icon: "🦑",
+    worth: 1500,
+    expWorth: 18,
+    weight: 5,
+  },
+  {
+    name: "Colossal Squid",
+    icon: "🦑",
+    worth: 2000,
+    expWorth: 20,
+    weight: 1,
+  },
+];

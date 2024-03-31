@@ -1,5 +1,6 @@
-import { CommandRateLimit, CommandRateLimiter } from "@mrwhale-io/core";
 import { ChatInputCommandInteraction, Message } from "discord.js";
+
+import { CommandRateLimit, CommandRateLimiter } from "@mrwhale-io/core";
 
 export class DiscordCommandRateLimiter extends CommandRateLimiter {
   private readonly rateLimits: Map<string, Map<string, CommandRateLimit>>;
