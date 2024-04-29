@@ -1,4 +1,4 @@
-import { FishCaughtResult, FishTypeNames } from "@mrwhale-io/core";
+import { FishTypeNames } from "@mrwhale-io/core";
 import { UserFish, UserFishInstance } from "../database/models/user-fish";
 
 /**
@@ -33,35 +33,22 @@ export async function getUserFishByType(
 /**
  * Create or update a user fish record.
  * @param userId The user to create fish for.
- * @param fishCaught Contains an array of the fish caught.
+ * @param fishType The type of fish caught.
  */
 export async function updateOrCreateUserFish(
   userId: string,
-  fishCaught: Record<string, FishCaughtResult>
+  fishType: FishTypeNames
 ): Promise<void> {
-  const usersFish = await getUserFish(userId);
+  let usersFish = await getUserFishByType(userId, fishType);
 
-  let toInsertOrUpdate = [];
-
-  for (let [key, value] of Object.entries(fishCaught)) {
-    const userFish = usersFish.find((userFish) => userFish.fishName === key);
-
-    if (!userFish) {
-      toInsertOrUpdate.push({
-        userId,
-        fishName: key,
-        quantity: value.quantity,
-      });
-      continue;
-    }
-    toInsertOrUpdate.push({
+  if (!usersFish) {
+    usersFish = UserFish.build({
       userId,
-      fishName: userFish.fishName,
-      quantity: userFish.quantity + value.quantity,
+      fishName: fishType,
+      quantity: 0,
     });
   }
 
-  UserFish.bulkCreate(toInsertOrUpdate, {
-    updateOnDuplicate: ["quantity"],
-  });
+  usersFish.quantity++;
+  usersFish.save();
 }
