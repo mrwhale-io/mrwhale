@@ -1,8 +1,10 @@
 import {
   BotClient,
   Fish,
+  FishTypeNames,
   KeyedStorageProvider,
   ListenerDecorators,
+  getFishByName,
 } from "@mrwhale-io/core";
 import {
   ChannelType,
@@ -14,6 +16,8 @@ import {
   Guild,
   GuildBasedChannel,
   GuildMember,
+  Interaction,
+  Message,
   NonThreadGuildBasedChannel,
   TextBasedChannel,
   User,
@@ -31,6 +35,14 @@ import { DiscordSelectMenu } from "./menu/discord-select-menu";
 import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
 import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
 import { HungerManager } from "./managers/hunger-manager";
+import { getOrCreatetUser } from "../util/user";
+import { getUserFishByType, updateOrCreateUserFish } from "../util/fishing";
+import { UserFish } from "../database/models/user-fish";
+import { FeedResult } from "../types/feed-result";
+import { FishManager } from "./managers/fish-manager";
+import { DiscordButton } from "./button/discord-button";
+import { DiscordButtonLoader } from "./button/discord-button-loader";
+import { DiscordButtonHandler } from "./button/discord-button-handler";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -49,6 +61,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * An instance of the discord select menu handler.
    */
   readonly discordSelectMenuHandler: DiscordSelectMenuHandler;
+
+  /**
+   * An instance of the discord button handler.
+   */
+  readonly discordButtonHandler: DiscordButtonHandler;
 
   /**
    * The guild settings.
@@ -91,14 +108,29 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly selectMenuDir: string;
 
   /**
+   * The directory of the discord buttons.
+   */
+  readonly buttonDir: string;
+
+  /**
    * Contains discord select menus.
    */
   readonly menus: Map<string, DiscordSelectMenu>;
 
   /**
+   * Contains discord select menus.
+   */
+  readonly buttons: Map<string, DiscordButton>;
+
+  /**
    * Contains the hunger manager for Mr. Whale.
    */
   private readonly hungerManager: HungerManager;
+
+  /**
+   * Contains the fish spawning manager for Mr. Whale.
+   */
+  private readonly fishManager: FishManager;
 
   /**
    * The discord bot list API key.
@@ -107,6 +139,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private readonly levelManager: LevelManager;
   private readonly guildStorageLoader: GuildStorageLoader;
   private readonly discordSelectMenuLoader: DiscordSelectMenuLoader;
+  private readonly discordButtonsLoader: DiscordButtonLoader;
 
   constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
@@ -118,16 +151,22 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.clientId = botOptions.clientId;
     this.clientSecret = botOptions.clientSecret;
     this.selectMenuDir = botOptions.selectMenuDir;
+    this.buttonDir = botOptions.buttonsDir;
     this.menus = new Map<string, DiscordSelectMenu>();
+    this.buttons = new Map<string, DiscordButton>();
     this.guildSettings = new Map<string, KeyedStorageProvider>();
     this.commandLoader.commandType = DiscordCommand.name;
     this.commandLoader.loadCommands();
     this.discordSelectMenuLoader = new DiscordSelectMenuLoader(this);
     this.discordSelectMenuLoader.loadMenus();
+    this.discordButtonsLoader = new DiscordButtonLoader(this);
+    this.discordButtonsLoader.loadButtons();
     this.levelManager = new LevelManager(this);
     this.hungerManager = new HungerManager(this);
+    this.fishManager = new FishManager(this);
     this.commandDispatcher = new DiscordCommandDispatcher(this);
     this.discordSelectMenuHandler = new DiscordSelectMenuHandler(this);
+    this.discordButtonHandler = new DiscordButtonHandler(this);
     this.guildStorageLoader = new GuildStorageLoader(this);
     this.guildStorageLoader.init();
     if (botOptions.discordBotList) {
@@ -154,12 +193,81 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   /**
    * Increases the health level for the given guild.
    * This will increase depending on the expWorth of the given fish type.
-   * @param guildId The guild to increase health for.
+   * @param interaction The interaction or message.
    * @param fish The fish to feed Mr. Whale.
    * @param quantity The number of given fish to feed Mr. Whale.
    */
-  feed(guildId: string, fish: Fish, quantity: number): void {
-    this.hungerManager.feed(guildId, fish, quantity);
+  async feed(
+    interaction: Interaction | Message,
+    fishType: FishTypeNames,
+    quantity: number
+  ): Promise<FeedResult> {
+    const userId = interaction.member.user.id;
+    const guildId = interaction.guildId;
+    const user = await getOrCreatetUser(userId);
+    const usersFish = await getUserFishByType(userId, fishType);
+
+    if (!usersFish || usersFish.quantity <= 0) {
+      throw new Error(`You have no ${fishType} in your inventory.`);
+    }
+
+    if (quantity > usersFish.quantity) {
+      throw new Error(
+        `You only have ${usersFish.quantity} ${fishType} in your inventory.`
+      );
+    }
+
+    const fish = getFishByName(usersFish.fishName);
+    const hungerLevel = await this.hungerManager.feed(guildId, fish, quantity);
+
+    const expIncrease = fish.expWorth * quantity;
+    this.levelManager.increaseExp(interaction, expIncrease);
+
+    const reward = fish.worth * quantity;
+    user.balance += reward;
+    user.save();
+
+    usersFish.quantity -= quantity;
+    if (usersFish.quantity <= 0) {
+      UserFish.destroy({
+        where: {
+          userId,
+          fishName: usersFish.fishName,
+        },
+      });
+    }
+
+    usersFish.save();
+
+    return {
+      expGained: expIncrease,
+      reward,
+      newBalance: user.balance,
+      hungerLevel,
+    };
+  }
+
+  /**
+   * Returns all the fish for the given guild.
+   * @param guildId The identifier of the guild.
+   */
+  getGuildFish(guildId: string) {
+    return this.fishManager.getGuildFish(guildId);
+  }
+
+  /**
+   * Catch a fish from the given guild.
+   * @param guildId The identifier of the guild.
+   * @param userId The identifier of the user.
+   */
+  async catchFish(guildId: string, userId: string): Promise<Fish> {
+    const fishCaught = this.fishManager.catchFish(guildId);
+
+    if (fishCaught) {
+      await updateOrCreateUserFish(userId, fishCaught.name);
+    }
+
+    return fishCaught;
   }
 
   /**

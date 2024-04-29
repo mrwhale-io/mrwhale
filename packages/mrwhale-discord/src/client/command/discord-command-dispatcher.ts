@@ -168,20 +168,18 @@ export class DiscordCommandDispatcher {
       return true;
     }
 
-    if (!rateLimit.wasNotified) {
-      rateLimit.setNotified();
-      const timeLeft = TimeUtilities.difference(
-        rateLimit.expires,
-        Date.now()
-      ).toString();
+    const timeLeft = TimeUtilities.difference(rateLimit.expires, Date.now())
+      .toString()
+      .trim();
 
-      if (timeLeft) {
-        interaction.reply({
-          content: `Command cooldown. Try again in ${timeLeft}.`,
-          ephemeral: true,
-        });
-      }
-    }
+    const cooldownMessage = `Command cooldown. Try again${
+      timeLeft ? ` in ${timeLeft}` : ""
+    }.`;
+
+    interaction.reply({
+      content: cooldownMessage,
+      ephemeral: true,
+    });
 
     return false;
   }

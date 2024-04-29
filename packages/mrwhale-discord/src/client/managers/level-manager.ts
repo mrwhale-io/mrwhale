@@ -1,4 +1,10 @@
-import { ChannelType, Events, Message, TextBasedChannel } from "discord.js";
+import {
+  ChannelType,
+  Events,
+  Interaction,
+  Message,
+  TextBasedChannel,
+} from "discord.js";
 
 import { getLevelFromExp, getRandomInt } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
@@ -66,6 +72,25 @@ export class LevelManager {
   }
 
   /**
+   * Get an existing user score record or create if one doesn't exist.
+   * @param userId The identifier of the user.
+   * @param guildId The identifier of the guild.
+   */
+  static async getorCreateScore(userId: string, guildId: string) {
+    let score = await LevelManager.getUserScore(guildId, userId);
+
+    if (!score) {
+      score = Score.build({
+        userId,
+        guildId,
+        exp: 0,
+      });
+    }
+
+    return score;
+  }
+
+  /**
    * Removes all the leaderboard scores for a given guild id.
    * @param guildId The guild id to remove scores for.
    */
@@ -89,6 +114,35 @@ export class LevelManager {
     });
   }
 
+  /**
+   * Increase the EXP for the user by the given amount.
+   * @param interaction The interaction or message.
+   * @param expGained The amount of exp to give.
+   */
+  async increaseExp(
+    interaction: Interaction | Message,
+    expGained: number
+  ): Promise<void> {
+    const score = await LevelManager.getorCreateScore(
+      interaction.member.user.id,
+      interaction.guildId
+    );
+    const level = getLevelFromExp(score.exp);
+
+    score.exp += expGained;
+    score.save();
+
+    const newLevel = getLevelFromExp(score.exp);
+
+    if (newLevel > level) {
+      const channel = await this.getAnnouncementChannel(interaction);
+      channel.send({
+        content: `<@${interaction.member.user.id}> just advanced to level ${newLevel}!`,
+        allowedMentions: { users: [] },
+      });
+    }
+  }
+
   private isTimeForExp(guildId: string, userId: string) {
     if (!this.lastMessages[guildId]) {
       this.lastMessages[guildId] = {};
@@ -100,22 +154,8 @@ export class LevelManager {
     return Date.now() - lastMessageTimestamp >= TIME_FOR_EXP;
   }
 
-  private async getScore(userId: string, guildId: string) {
-    let score = await LevelManager.getUserScore(guildId, userId);
-
-    if (!score) {
-      score = Score.build({
-        userId,
-        guildId,
-        exp: 0,
-      });
-    }
-
-    return score;
-  }
-
   private async getAnnouncementChannel(
-    message: Message
+    message: Interaction | Message
   ): Promise<TextBasedChannel> {
     if (!this.bot.guildSettings.has(message.guildId)) {
       return message.channel;
@@ -154,20 +194,6 @@ export class LevelManager {
     this.lastMessages[message.guildId][message.author.id] = Date.now();
 
     const expGained = getRandomInt(MIN_EXP_EARNED, MAX_EXP_EARNED);
-    const score = await this.getScore(message.author.id, message.guildId);
-    const level = getLevelFromExp(score.exp);
-
-    score.exp += expGained;
-    score.save();
-
-    const newLevel = getLevelFromExp(score.exp);
-
-    if (newLevel > level) {
-      const channel = await this.getAnnouncementChannel(message);
-      channel.send({
-        content: `<@${message.author.id}> just advanced to level ${newLevel}!`,
-        allowedMentions: { users: [] },
-      });
-    }
+    this.increaseExp(message, expGained);
   }
 }

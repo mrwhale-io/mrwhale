@@ -3,7 +3,8 @@ import { Events, Interaction, Message } from "discord.js";
 import { Fish } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
 
-const HUNGER_DECREASE_RATE = 5;
+const HUNGER_DECREASE_RATE = 2;
+const FULL_HUNGER_LEVEL = 100;
 
 interface HungerLevel {
   level: number;
@@ -35,7 +36,6 @@ export class HungerManager {
    * @param guildId The guild to get the hunger level for.
    */
   getGuildHungerLevel(guildId: string): number {
-    this.updateHunger(guildId);
     return this.guildHungerLevels[guildId].level;
   }
 
@@ -46,14 +46,18 @@ export class HungerManager {
    * @param fish The fish to feed Mr. Whale.
    * @param quantity The number of given fish to feed Mr. Whale.
    */
-  feed(guildId: string, fish: Fish, quantity: number): void {
-    this.updateHunger(guildId);
+  async feed(guildId: string, fish: Fish, quantity: number): Promise<number> {
     if (this.guildHungerLevels[guildId]) {
-      this.guildHungerLevels[guildId].level += fish.expWorth * quantity; // Increase hunger level based on fish type
+      const newLevel =
+        this.guildHungerLevels[guildId].level + fish.expWorth * quantity; // Increase hunger level based on fish type
 
-      if (this.guildHungerLevels[guildId].level > 100) {
-        this.guildHungerLevels[guildId].level = 100;
+      if (newLevel > FULL_HUNGER_LEVEL) {
+        throw new Error("I'm too full to eat this.");
       }
+
+      this.guildHungerLevels[guildId].level = newLevel;
+
+      return newLevel;
     }
   }
 
@@ -75,7 +79,7 @@ export class HungerManager {
         this.guildHungerLevels[guildId].level = 0;
       }
     } else {
-      this.guildHungerLevels[guildId] = { level: 100 };
+      this.guildHungerLevels[guildId] = { level: FULL_HUNGER_LEVEL };
     }
 
     this.guildHungerLevels[guildId].lastUpdate = currentTime;

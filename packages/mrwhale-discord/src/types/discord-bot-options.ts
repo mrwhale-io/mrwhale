@@ -43,4 +43,9 @@ export interface DiscordBotOptions extends BotOptions {
    * The directory of the discord menus.
    */
   selectMenuDir: string;
+
+  /**
+   * The directory of the discord buttons.
+   */
+  buttonsDir: string;
 }
