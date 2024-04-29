@@ -1,14 +1,14 @@
 import {
   APIApplicationCommandOptionChoice,
   ChatInputCommandInteraction,
+  EmbedBuilder,
   InteractionResponse,
   Message,
 } from "discord.js";
 
-import { FishTypeNames, fishTypes, getFishByName } from "@mrwhale-io/core";
+import { FishTypeNames, fishTypes } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
-import { getUserFishByType } from "../../util/fishing";
-import { UserFish } from "../../database/models/user-fish";
+import { EMBED_COLOR } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -39,43 +39,40 @@ export default class extends DiscordCommand {
 
   async slashCommandAction(
     interaction: ChatInputCommandInteraction
-  ): Promise<InteractionResponse<boolean>> {
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const fishType = interaction.options.getString("fish") as FishTypeNames;
     const quantity = interaction.options.getInteger("quantity");
-    const guildId = interaction.guildId;
-    const userId = interaction.user.id;
-    const usersFish = await getUserFishByType(userId, fishType);
 
-    if (!usersFish || usersFish.quantity <= 0) {
-      return interaction.reply(`You have no ${fishType} in your inventory.`);
+    try {
+      const result = await this.botClient.feed(interaction, fishType, quantity);
+      const embed = new EmbedBuilder()
+        .setColor(EMBED_COLOR)
+        .addFields([
+          {
+            name: "Coins Rewarded",
+            value: `🪙 ${result.reward}`,
+          },
+          {
+            name: "Your Current Balance",
+            value: `💰 ${result.newBalance}`,
+          },
+          {
+            name: "Exp Gained",
+            value: `💯 ${result.expGained}`,
+          },
+          {
+            name: "Hunger Level",
+            value: `${+result.hungerLevel.toFixed(2)}/100`,
+          },
+        ])
+        .setColor(EMBED_COLOR)
+        .setTitle("Thank you for feeding me, human.")
+        .setDescription("Here is your reward.");
+
+      return interaction.reply({ embeds: [embed] });
+    } catch (error) {
+      return interaction.reply(error.message);
     }
-
-    if (quantity > usersFish.quantity) {
-      return interaction.reply(
-        `You only have ${usersFish.quantity} ${fishType} in your inventory.`
-      );
-    }
-    usersFish.quantity -= quantity;
-
-    if (usersFish.quantity <= 0) {
-      UserFish.destroy({
-        where: {
-          userId,
-          fishName: usersFish.fishName,
-        },
-      });
-    }
-
-    usersFish.save();
-
-    const fishToFeed = getFishByName(usersFish.fishName);
-    this.botClient.feed(guildId, fishToFeed, quantity);
-
-    const hungerLevel = this.botClient.getGuildHungerLevel(interaction.guildId);
-
-    return interaction.reply(
-      `My hunger level is now ${+hungerLevel.toFixed(2)}`
-    );
   }
 
   private getFishTypeOptions(): APIApplicationCommandOptionChoice<string>[] {
