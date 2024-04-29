@@ -3,7 +3,7 @@ import { fishTypes } from "../data/fish-types";
 import { weightedSample } from "../util/weighted-sample";
 import { FishTypeNames } from "../types/fish-type-names";
 
-export interface FishCaughtResult {
+export interface FishSpawnedResult {
   icon: string;
   worth: number;
   quantity: number;
@@ -18,27 +18,44 @@ export function getFishByName(fishName: FishTypeNames) {
 }
 
 /**
- * Catch fish of random types.
- * @param numberOfCasts The number of fish to return.
+ * Spawn fish of random types.
+ * @param count The number of fish to return.
  */
-export function catchFish(
-  numberOfCasts: number = 1
-): Record<string, FishCaughtResult> {
-  const totalFishCaught: Fish[] = [];
-  for (let i = 0; i < numberOfCasts; i++) {
-    const fishCaught = weightedSample(fishTypes);
-    totalFishCaught.push(fishCaught);
+export function spawnFish(
+  count: number = 1
+): Record<string, FishSpawnedResult> {
+  const totalfishSpawned: Fish[] = [];
+  for (let i = 0; i < count; i++) {
+    const fishSpawned = weightedSample(fishTypes);
+    totalfishSpawned.push(fishSpawned);
   }
 
-  return countFishCaught(totalFishCaught);
+  return countFishSpawned(totalfishSpawned);
 }
 
 /**
- * Helper function to count the types of fish caught.
- * @param fishCaught The fish to count.
+ * Returns a random fish from a given collection of fish.
+ * @param catchableFish An array of all the available fish to catch.
  */
-function countFishCaught(fishCaught: Fish[]): Record<string, FishCaughtResult> {
-  return fishCaught.reduce((fish, { name, worth, icon }) => {
+export function catchFish(catchableFish: Fish[]): Fish {
+  let fishCaught = weightedSample(catchableFish);
+  const random = Math.random();
+
+  if (random > 0.5) {
+    return null;
+  }
+
+  return fishCaught;
+}
+
+/**
+ * Helper function to count the types of fish spawned.
+ * @param fishSpawned The fish to count.
+ */
+function countFishSpawned(
+  fishSpawned: Fish[]
+): Record<string, FishSpawnedResult> {
+  return fishSpawned.reduce((fish, { name, worth, icon }) => {
     fish[name] = fish[name] || { icon, worth, quantity: 0 };
     fish[name].quantity++;
     return fish;

@@ -5,5 +5,5 @@ export interface Fish {
   icon: string;
   worth: number;
   expWorth: number;
-  weight: number;
+  probability: number;
 }

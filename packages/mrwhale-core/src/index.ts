@@ -50,6 +50,23 @@ export {
 export { InfoBuilder } from "./util/info-builder";
 export { applyText } from "./util/apply-text";
 export { fishTypes } from "./data/fish-types";
+export {
+  FISH_SPAWNED_ANNOUNCEMENTS,
+  SHARK_SPAWNED_ANNOUNCEMENTS,
+  SQUID_SPAWNED_ANNOUNCEMENTS,
+} from "./data/fish-spawn-announcements";
+export {
+  FISH_DESPAWNED_ANNOUNCEMENTS,
+  SHARK_DESPAWNED_ANNOUNCEMENTS,
+  SQUID_DESPAWNED_ANNOUNCEMENTS,
+} from "./data/fish-despawn-announcements";
+export { NO_FISH_MESSAGES } from "./data/no-fish-messages";
 export { Fish } from "./types/fish";
 export { FishTypeNames } from "./types/fish-type-names";
-export { catchFish, getFishByName, FishCaughtResult } from "./helpers/fishing";
+export { ItemTypes } from "./types/item-types";
+export {
+  catchFish,
+  getFishByName,
+  spawnFish,
+  FishSpawnedResult,
+} from "./helpers/fishing";
