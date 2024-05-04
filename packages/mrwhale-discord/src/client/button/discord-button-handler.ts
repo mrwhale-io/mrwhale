@@ -1,8 +1,8 @@
 import { ButtonInteraction, Events, Interaction } from "discord.js";
 
+import { TimeUtilities } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
 import { DiscordButton } from "./discord-button";
-import { TimeUtilities } from "@mrwhale-io/core";
 
 /**
  * Responsible for handling discord buttons.
@@ -29,10 +29,15 @@ export class DiscordButtonHandler {
     }
 
     const userId = interaction.user.id;
-    const customId = interaction.customId.replace(userId, "");
+    const customId = interaction.customId.replace(/\d/g, "");
     const button = this.bot.buttons.get(customId);
 
     if (!button) {
+      return;
+    }
+
+    const authorId = interaction.customId.replace(/^\D+/g, "");
+    if (authorId && authorId !== userId) {
       return await interaction.reply({
         content: "You cannot select this button.",
         ephemeral: true,

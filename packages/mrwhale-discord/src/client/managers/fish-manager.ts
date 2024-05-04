@@ -1,6 +1,7 @@
-import { Events, Interaction, Message, TextBasedChannel } from "discord.js";
+import { Events, Interaction, Message } from "discord.js";
 
 import {
+  ALL_FISH_CAUGHT_ANNOUNCEMENTS,
   FISH_DESPAWNED_ANNOUNCEMENTS,
   FISH_SPAWNED_ANNOUNCEMENTS,
   Fish,
@@ -17,6 +18,7 @@ import {
 } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
 
+const MAX_NUMBER_OF_FISHING_ATTEMPTS = 5;
 const MIN_NUMBER_OF_FISH = 5;
 const MAX_NUMBER_OF_FISH = 15;
 const NEXT_SPAWN_IN_MILLISECONDS = 3.6e6; // 1 hour
@@ -26,8 +28,13 @@ const SPAWN_CHANCE_THRESHOLD = 0.3;
 interface FishSpawnMap {
   [guildId: string]: {
     lastSpawn?: number;
+    announcementMessage?: Message;
     fish: Record<string, FishSpawnedResult>;
   };
+}
+
+interface RemainingAttemptsMap {
+  [guildId: number]: { [user: number]: number };
 }
 
 /**
@@ -35,9 +42,11 @@ interface FishSpawnMap {
  */
 export class FishManager {
   private guildFishSpawn: FishSpawnMap;
+  private remainingAttempts: RemainingAttemptsMap;
 
   constructor(private bot: DiscordBotClient) {
     this.guildFishSpawn = {};
+    this.remainingAttempts = {};
     this.bot.client.on(Events.MessageCreate, (message: Message) =>
       this.spawnFish(message)
     );
@@ -55,13 +64,64 @@ export class FishManager {
   }
 
   /**
-   * Catch a fish from the given guild.
+   * Returns whether the guild has any  fish.
    * @param guildId The identifier of the guild.
    */
-  catchFish(guildId: string): Fish {
+  hasGuildFish(guildId: string): boolean {
+    const guildFish = this.getGuildFish(guildId);
+
+    return guildFish && Object.keys(guildFish).length > 0;
+  }
+
+  /**
+   * Get the spawn announcement message.
+   * @param guildId The identifier of the guild.
+   */
+  getAnnouncementMessage(guildId: string): Message<boolean> {
+    return this.guildFishSpawn[guildId]?.announcementMessage;
+  }
+
+  /**
+   * Gets the remaining attempts allowed for the user in the given guild.
+   */
+  getRemainingAttempts(guildId: string, userId: string): number {
+    if (this.remainingAttempts[guildId][userId] === undefined) {
+      return MAX_NUMBER_OF_FISHING_ATTEMPTS;
+    }
+
+    return this.remainingAttempts[guildId][userId];
+  }
+
+  /**
+   * Checks whether the user has remaining fishing attempts in the guild.
+   */
+  hasRemainingAttempts(guildId: string, userId: string): boolean {
+    if (!this.remainingAttempts[guildId]) {
+      this.remainingAttempts[guildId] = {};
+    }
+
+    const remainingAttempts = this.getRemainingAttempts(guildId, userId);
+
+    if (this.remainingAttempts[guildId][userId] === undefined) {
+      this.remainingAttempts[guildId][userId] = remainingAttempts;
+    }
+
+    return remainingAttempts > 0;
+  }
+
+  /**
+   * Catch a fish from the given guild.
+   * @param guildId The identifier of the guild.
+   * @param userId The user that used the command.
+   */
+  catchFish(guildId: string, userId: string): Fish {
     const allGuildFish = this.getGuildFish(guildId);
 
     if (!allGuildFish) {
+      return null;
+    }
+
+    if (!this.hasRemainingAttempts) {
       return null;
     }
 
@@ -76,6 +136,15 @@ export class FishManager {
         if (guildFish.quantity <= 0) {
           delete allGuildFish[fishCaught.name];
         }
+      }
+    }
+
+    this.remainingAttempts[guildId][userId]--;
+
+    if (!this.hasGuildFish(guildId)) {
+      const announcementMessage = this.getAnnouncementMessage(guildId);
+      if (announcementMessage) {
+        this.despawnFish(announcementMessage, allGuildFish);
       }
     }
 
@@ -98,55 +167,87 @@ export class FishManager {
   }
 
   private async spawnFish(message: Message | Interaction): Promise<void> {
-    const currentTime = Date.now();
     const { guildId } = message;
-    const lastSpawn = this.guildFishSpawn[guildId]?.lastSpawn || -Infinity;
-    const elapsedTime = currentTime - lastSpawn;
-    const spawnChance = Math.random();
+    const canSpawnFish = this.canSpawnFish(guildId);
 
-    if (
-      elapsedTime >= NEXT_SPAWN_IN_MILLISECONDS &&
-      spawnChance < SPAWN_CHANCE_THRESHOLD
-    ) {
-      const numberOfFish = getRandomInt(MIN_NUMBER_OF_FISH, MAX_NUMBER_OF_FISH);
-      const fish = spawnFish(numberOfFish);
+    if (!canSpawnFish) {
+      return;
+    }
 
+    const currentTime = Date.now();
+    const numberOfFish = getRandomInt(MIN_NUMBER_OF_FISH, MAX_NUMBER_OF_FISH);
+    const fish = spawnFish(numberOfFish);
+
+    try {
       this.guildFishSpawn[guildId] = { lastSpawn: currentTime, fish };
+      const announcementChannel = await this.bot.getFishingAnnouncementChannel(
+        message
+      );
+      const announementMessageText = this.getFishSpawnAnnouncementMessage(fish);
+      const announcementMessage = await announcementChannel.send(
+        announementMessageText
+      );
+      this.guildFishSpawn[guildId].announcementMessage = announcementMessage;
 
-      try {
-        const announcementChannel = await this.getAnnouncementChannel(message);
-        const announementMessage = this.getFishSpawnAnnouncementMessage(fish);
-        const announcement = await announcementChannel.send(announementMessage);
-
-        setTimeout(() => {
-          announcement.delete();
-          this.despawnFish(message);
-        }, NEXT_DESPAWN_IN_MILLISECONDS);
-      } catch (error) {
-        this.bot.logger.error("Error while spawning fish:", error);
-      }
+      setTimeout(() => {
+        const guildFish = this.getGuildFish(guildId);
+        this.despawnFish(message, guildFish);
+      }, NEXT_DESPAWN_IN_MILLISECONDS);
+    } catch (error) {
+      this.bot.logger.error("Error while spawning fish:", error);
     }
   }
 
-  private async despawnFish(message: Message | Interaction): Promise<void> {
-    const announcementChannel = await this.getAnnouncementChannel(message);
+  private canSpawnFish(guildId: string): boolean {
+    const currentTime = Date.now();
+    const lastSpawn = this.guildFishSpawn[guildId]?.lastSpawn || -Infinity;
+    const lastHungerAnnouncement = this.bot.getLastHungerAnnouncementTimestamp(
+      guildId
+    );
+    const elapsedTimeSinceLastHungerMessage =
+      currentTime - lastHungerAnnouncement;
+    const elapsedTimeSinceLastSpawn = currentTime - lastSpawn;
+    const spawnChance = Math.random();
+
+    return (
+      elapsedTimeSinceLastSpawn >= NEXT_SPAWN_IN_MILLISECONDS &&
+      spawnChance < SPAWN_CHANCE_THRESHOLD &&
+      elapsedTimeSinceLastHungerMessage >= 6e4
+    );
+  }
+
+  private async despawnFish(
+    message: Message | Interaction,
+    guildFish: Record<string, FishSpawnedResult>
+  ): Promise<void> {
+    const announcementChannel = await this.bot.getFishingAnnouncementChannel(
+      message
+    );
     const guildId = message.guildId;
-    const fish = this.getGuildFish(guildId);
-    const announementMessage = this.getFishDespawnAnnouncementMessage(fish);
+    const announementMessage = !guildFish
+      ? this.getAllFishCaughtAnnouncementMessage()
+      : this.getFishDespawnAnnouncementMessage(guildFish);
+
+    this.deleteAnnouncementMessage(guildId);
 
     delete this.guildFishSpawn[guildId].fish;
+    delete this.remainingAttempts[guildId];
 
-    const announcement = await announcementChannel.send(announementMessage);
+    const despawnAnnouncement = await announcementChannel.send(
+      announementMessage
+    );
 
     setTimeout(() => {
-      announcement.delete();
+      if (despawnAnnouncement && despawnAnnouncement.deletable) {
+        despawnAnnouncement.delete().catch(() => null);
+      }
     }, NEXT_DESPAWN_IN_MILLISECONDS);
   }
 
   private getFishSpawnAnnouncementMessage(
     fish: Record<string, FishSpawnedResult>
   ): string {
-    return this.getAnnouncementMessage(
+    return this.getFishAnnouncementMessage(
       fish,
       FISH_SPAWNED_ANNOUNCEMENTS,
       SHARK_SPAWNED_ANNOUNCEMENTS,
@@ -157,7 +258,7 @@ export class FishManager {
   private getFishDespawnAnnouncementMessage(
     fish: Record<string, FishSpawnedResult>
   ): string {
-    return this.getAnnouncementMessage(
+    return this.getFishAnnouncementMessage(
       fish,
       FISH_DESPAWNED_ANNOUNCEMENTS,
       SHARK_DESPAWNED_ANNOUNCEMENTS,
@@ -165,7 +266,11 @@ export class FishManager {
     );
   }
 
-  private getAnnouncementMessage(
+  private getAllFishCaughtAnnouncementMessage(): string {
+    return this.getRandomAnnouncement(ALL_FISH_CAUGHT_ANNOUNCEMENTS);
+  }
+
+  private getFishAnnouncementMessage(
     fish: Record<string, FishSpawnedResult>,
     announcements: string[],
     sharkAnnouncements: string[],
@@ -189,30 +294,18 @@ export class FishManager {
     return this.getRandomAnnouncement(announcements);
   }
 
-  private getRandomAnnouncement(announcements: string[]): string {
-    return announcements[Math.floor(Math.random() * announcements.length)];
+  private deleteAnnouncementMessage(guildId: string): void {
+    const announcementMessage = this.getAnnouncementMessage(guildId);
+
+    if (announcementMessage) {
+      if (announcementMessage.deletable) {
+        announcementMessage.delete().catch(() => null);
+      }
+      delete this.guildFishSpawn[guildId].announcementMessage;
+    }
   }
 
-  private async getAnnouncementChannel(
-    message: Interaction | Message
-  ): Promise<TextBasedChannel> {
-    if (!this.bot.guildSettings.has(message.guildId)) {
-      return message.channel;
-    }
-
-    const settings = this.bot.guildSettings.get(message.guildId);
-    const channelId = await settings.get("levelChannel", message.channel.id);
-
-    try {
-      const channel = this.bot.client.channels.cache.has(channelId)
-        ? (this.bot.client.channels.cache.get(channelId) as TextBasedChannel)
-        : ((await this.bot.client.channels.fetch(
-            channelId
-          )) as TextBasedChannel);
-
-      return channel;
-    } catch {
-      return message.channel;
-    }
+  private getRandomAnnouncement(announcements: string[]): string {
+    return announcements[Math.floor(Math.random() * announcements.length)];
   }
 }

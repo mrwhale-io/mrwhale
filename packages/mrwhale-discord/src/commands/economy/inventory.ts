@@ -9,7 +9,7 @@ import { fishTypes } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
 import { getUserFish } from "../../util/fishing";
-import { UserFishInstance } from "src/database/models/user-fish";
+import { UserFishInstance } from "../../database/models/user-fish";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -44,7 +44,6 @@ export default class extends DiscordCommand {
 
       return interaction.reply({ embeds: [embed] });
     } catch (error) {
-      console.error(error);
       return interaction.reply("Could not fetch your inventory.");
     }
   }

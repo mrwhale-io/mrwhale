@@ -32,21 +32,36 @@ export async function getOceanEmbed(
   return embed;
 }
 
+/**
+ * Returns an embed containing all the fish caught by catch command.
+ */
 export async function getCaughtFishEmbed(
-  fishCaught: Fish
+  fishCaught: Fish,
+  interaction: Interaction | Message,
+  botClient: DiscordBotClient
 ): Promise<EmbedBuilder> {
   const embed = new EmbedBuilder().setColor(EMBED_COLOR);
+  const guildId = interaction.guildId;
+  const userId = interaction.member.user.id;
+  const remainingFishingAttempts = botClient.getRemainingFishingAttempts(
+    guildId,
+    userId
+  );
+  const attemptText = remainingFishingAttempts === 1 ? "attempt" : "attempts";
+  embed.setFooter({
+    text: `You have ${remainingFishingAttempts} ${attemptText} remaining.`,
+  });
 
   if (!fishCaught) {
     const noFishMessage =
       NO_FISH_MESSAGES[Math.floor(Math.random() * NO_FISH_MESSAGES.length)];
 
-    embed.setTitle("Tough Luck!").setDescription(noFishMessage);
+    embed.setTitle(`Tough Luck!`).setDescription(noFishMessage);
     return embed;
   }
 
   embed
-    .setTitle("Congratulations!")
+    .setTitle(`Congratulations!`)
     .setDescription(
       `You caught a ${fishCaught.icon} ${bold(fishCaught.name)}!`
     );

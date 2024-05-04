@@ -1,4 +1,4 @@
-export const FISH_SPAWNED_ANNOUNCEMENTS = [
+export const FISH_SPAWNED_ANNOUNCEMENTS: string[] = [
   "🦐 Time to catch some sea snacks.",
   "🐠 Fish are jumping for joy!",
   "🐡 Who ordered sushi? The fish are here!",
@@ -9,7 +9,7 @@ export const FISH_SPAWNED_ANNOUNCEMENTS = [
   "🐚 Mermaids are throwing a fishy fiesta!",
 ];
 
-export const SQUID_SPAWNED_ANNOUNCEMENTS = [
+export const SQUID_SPAWNED_ANNOUNCEMENTS: string[] = [
   "🦑 Hold onto your fishing rods, folks! The Kraken has awoken!",
   "🦑 Brace yourselves! It's a tentacled terror from the deep!",
   "🦑 Release the Kraken! It's time for a squiddy surprise!",
@@ -21,7 +21,7 @@ export const SQUID_SPAWNED_ANNOUNCEMENTS = [
   "🦑 Time to put those fishing skills to the test against a cephalopod challenge!",
 ];
 
-export const SHARK_SPAWNED_ANNOUNCEMENTS = [
+export const SHARK_SPAWNED_ANNOUNCEMENTS: string[] = [
   "🦈 Hold onto your hats, folks! Looks like Bruce the shark is making an appearance!",
   "🦈 Attention all swimmers: it's Shark Week in the fishing game!",
   "🦈 Sharks in the water! Time to channel your inner shark whisperer!",

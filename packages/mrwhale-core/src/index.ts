@@ -60,6 +60,16 @@ export {
   SHARK_DESPAWNED_ANNOUNCEMENTS,
   SQUID_DESPAWNED_ANNOUNCEMENTS,
 } from "./data/fish-despawn-announcements";
+export {
+  HUNGRY_ANNOUNCEMENTS,
+  VERY_HUNGRY_ANNOUNCEMENTS,
+  STARVING_ANNOUNCEMENTS,
+} from "./data/hungry-announcements";
+export {
+  FISH_CAUGHT_ANNOUNCEMENTS,
+  ALL_FISH_CAUGHT_ANNOUNCEMENTS,
+} from "./data/fish-caught-announements";
+export { FED_MESSAGES } from "./data/fed-messages";
 export { NO_FISH_MESSAGES } from "./data/no-fish-messages";
 export { Fish } from "./types/fish";
 export { FishTypeNames } from "./types/fish-type-names";

@@ -6,9 +6,15 @@ import {
   Message,
 } from "discord.js";
 
-import { FishTypeNames, fishTypes } from "@mrwhale-io/core";
+import {
+  FED_MESSAGES,
+  FishTypeNames,
+  fishTypes,
+  getFishByName,
+} from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
+import { drawHealthBar } from "../../util/draw-health-bar";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -17,7 +23,7 @@ export default class extends DiscordCommand {
       description: "Feed Mr. Whale fish.",
       type: "economy",
       usage: "<prefix>feed",
-      cooldown: 5000,
+      cooldown: 3000,
     });
     this.slashCommandData.addStringOption((option) =>
       option
@@ -45,12 +51,19 @@ export default class extends DiscordCommand {
 
     try {
       const result = await this.botClient.feed(interaction, fishType, quantity);
+      const fedMessage =
+        FED_MESSAGES[Math.floor(Math.random() * FED_MESSAGES.length)];
+      const fish = getFishByName(fishType);
+      const hungerLevel = this.botClient.getGuildHungerLevel(
+        interaction.guildId
+      );
+      const currentProgress = Math.floor((hungerLevel / 100) * 100);
       const embed = new EmbedBuilder()
         .setColor(EMBED_COLOR)
         .addFields([
           {
-            name: "Coins Rewarded",
-            value: `🪙 ${result.reward}`,
+            name: "Gems Rewarded",
+            value: `💎 +${result.reward}`,
           },
           {
             name: "Your Current Balance",
@@ -58,16 +71,16 @@ export default class extends DiscordCommand {
           },
           {
             name: "Exp Gained",
-            value: `💯 ${result.expGained}`,
+            value: `🆙 +${result.expGained}`,
           },
           {
             name: "Hunger Level",
-            value: `${+result.hungerLevel.toFixed(2)}/100`,
+            value: `${drawHealthBar(result.hungerLevel)} ${currentProgress}%`,
           },
         ])
+        .setTitle(`You just fed me ${quantity} ${fish.name} ${fish.icon} `)
         .setColor(EMBED_COLOR)
-        .setTitle("Thank you for feeding me, human.")
-        .setDescription("Here is your reward.");
+        .setDescription(`${fedMessage} \n\nHere is your reward:`);
 
       return interaction.reply({ embeds: [embed] });
     } catch (error) {

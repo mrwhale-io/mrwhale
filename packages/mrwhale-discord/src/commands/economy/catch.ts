@@ -2,6 +2,7 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ChatInputCommandInteraction,
+  EmbedBuilder,
   InteractionResponse,
   Message,
 } from "discord.js";
@@ -9,6 +10,7 @@ import {
 import { DiscordCommand } from "../../client/command/discord-command";
 import { Buttons } from "../../types/buttons";
 import { getCaughtFishEmbed } from "../../util/embed-helpers";
+import { EMBED_COLOR } from "../../constants";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -38,9 +40,26 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const guildId = interaction.guildId;
     const userId = interaction.member.user.id;
+    const embed = new EmbedBuilder().setColor(EMBED_COLOR);
+
+    const guildFish = this.botClient.getGuildFish(guildId);
+    if (!guildFish) {
+      embed.setDescription("There are no fish in the sea.");
+
+      return interaction.reply({ embeds: [embed] });
+    }
+
+    if (!this.botClient.hasRemainingFishingAttempts(guildId, userId)) {
+      embed.setDescription(
+        "You have no remaining fishing attempts. Try again later."
+      );
+
+      return interaction.reply({ embeds: [embed] });
+    }
 
     const fishCaught = await this.botClient.catchFish(guildId, userId);
     const oceanHandler = this.botClient.buttons.get(Buttons.Ocean);
+
     const oceanButton = oceanHandler.getButtonBuilder(
       interaction.member.user.id
     );
@@ -52,8 +71,12 @@ export default class extends DiscordCommand {
       catchButton,
       oceanButton
     );
-    const embed = await getCaughtFishEmbed(fishCaught);
+    const fishCaughtEmbed = await getCaughtFishEmbed(
+      fishCaught,
+      interaction,
+      this.botClient
+    );
 
-    return interaction.reply({ components: [row], embeds: [embed] });
+    return interaction.reply({ components: [row], embeds: [fishCaughtEmbed] });
   }
 }

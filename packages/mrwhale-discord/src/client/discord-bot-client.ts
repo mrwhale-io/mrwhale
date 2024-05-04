@@ -16,9 +16,11 @@ import {
   Guild,
   GuildBasedChannel,
   GuildMember,
+  GuildTextBasedChannel,
   Interaction,
   Message,
   NonThreadGuildBasedChannel,
+  PartialDMChannel,
   TextBasedChannel,
   User,
 } from "discord.js";
@@ -256,12 +258,34 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
+   * Gets the remaining fishing attempts allowed for the user.
+   */
+  getRemainingFishingAttempts(guildId: string, userId: string): number {
+    return this.fishManager.getRemainingAttempts(guildId, userId);
+  }
+
+  /**
+   * Get the timestamp of the last hunger announcement for the guild.
+   * @param guildId The guild to get the last announcement timestamp.
+   */
+  getLastHungerAnnouncementTimestamp(guildId: string): number {
+    return this.hungerManager.getLastHungerAnnouncementTimestamp(guildId);
+  }
+
+  /**
+   * Checks whether the user has remaining fishing attempts in the guild.
+   */
+  hasRemainingFishingAttempts(guildId: string, userId: string) {
+    return this.fishManager.hasRemainingAttempts(guildId, userId);
+  }
+
+  /**
    * Catch a fish from the given guild.
    * @param guildId The identifier of the guild.
    * @param userId The identifier of the user.
    */
   async catchFish(guildId: string, userId: string): Promise<Fish> {
-    const fishCaught = this.fishManager.catchFish(guildId);
+    const fishCaught = this.fishManager.catchFish(guildId, userId);
 
     if (fishCaught) {
       await updateOrCreateUserFish(userId, fishCaught.name);
@@ -312,6 +336,71 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     if (this.guildSettings.has(guildId)) {
       await this.guildStorageLoader.settingsProvider.remove(guildId);
       this.guildSettings.delete(guildId);
+    }
+  }
+
+  /**
+   * Get the channel used for sending bot announcements.
+   * @param guildId The identifier of the guild.
+   * @param defaultChannel The channel to send if the announcement channel hasn't been set.
+   */
+  async getAnnouncementChannel(
+    guildId: string,
+    defaultChannel: DMChannel | PartialDMChannel | GuildTextBasedChannel
+  ): Promise<TextBasedChannel> {
+    if (!this.guildSettings.has(guildId)) {
+      return defaultChannel;
+    }
+
+    const settings = this.guildSettings.get(guildId);
+    const channelId = await settings.get(
+      "announcementChannel",
+      defaultChannel.id
+    );
+
+    try {
+      const channel = this.client.channels.cache.has(channelId)
+        ? (this.client.channels.cache.get(channelId) as TextBasedChannel)
+        : ((await this.client.channels.fetch(channelId)) as TextBasedChannel);
+
+      return channel;
+    } catch {
+      return defaultChannel;
+    }
+  }
+
+  /**
+   * Gets announcements for the fishing game. If an announcement is not set it will fallback to the
+   * level channel and if a level channel has not been set it will fallback to the channel the message was sent in.
+   * @param message The message or interaction.
+   */
+  async getFishingAnnouncementChannel(
+    message: Interaction | Message
+  ): Promise<TextBasedChannel> {
+    const guildId = message.guildId;
+    if (!this.guildSettings.has(guildId)) {
+      return message.channel;
+    }
+
+    const settings = this.guildSettings.get(guildId);
+    const announcementChannelId = await settings.get("announcementChannel");
+
+    if (announcementChannelId) {
+      return await this.getAnnouncementChannel(guildId, message.channel);
+    }
+
+    const levelupChannelId = await settings.get("levelChannel", message.id);
+
+    try {
+      const channel = this.client.channels.cache.has(levelupChannelId)
+        ? (this.client.channels.cache.get(levelupChannelId) as TextBasedChannel)
+        : ((await this.client.channels.fetch(
+            levelupChannelId
+          )) as TextBasedChannel);
+
+      return channel;
+    } catch {
+      return message.channel;
     }
   }
 
@@ -439,7 +528,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
 
     const settings = this.guildSettings.get(guild.id);
-    const channelId = await settings.get("greetingChannel", firstChannel.id);
+    const channelId = await settings.get("greetingChannel");
+
+    if (!channelId) {
+      return await this.getAnnouncementChannel(guild.id, firstChannel);
+    }
 
     try {
       const channel = this.client.channels.cache.has(channelId)

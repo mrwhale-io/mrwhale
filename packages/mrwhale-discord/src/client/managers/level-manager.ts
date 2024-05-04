@@ -135,7 +135,7 @@ export class LevelManager {
     const newLevel = getLevelFromExp(score.exp);
 
     if (newLevel > level) {
-      const channel = await this.getAnnouncementChannel(interaction);
+      const channel = await this.getLevelUpAnnouncementChannel(interaction);
       channel.send({
         content: `<@${interaction.member.user.id}> just advanced to level ${newLevel}!`,
         allowedMentions: { users: [] },
@@ -154,15 +154,20 @@ export class LevelManager {
     return Date.now() - lastMessageTimestamp >= TIME_FOR_EXP;
   }
 
-  private async getAnnouncementChannel(
+  private async getLevelUpAnnouncementChannel(
     message: Interaction | Message
   ): Promise<TextBasedChannel> {
-    if (!this.bot.guildSettings.has(message.guildId)) {
+    const guildId = message.guildId;
+    if (!this.bot.guildSettings.has(guildId)) {
       return message.channel;
     }
 
-    const settings = this.bot.guildSettings.get(message.guildId);
-    const channelId = await settings.get("levelChannel", message.channel.id);
+    const settings = this.bot.guildSettings.get(guildId);
+    const channelId = await settings.get("levelChannel");
+
+    if (!channelId) {
+      return await this.bot.getAnnouncementChannel(guildId, message.channel);
+    }
 
     try {
       const channel = this.bot.client.channels.cache.has(channelId)

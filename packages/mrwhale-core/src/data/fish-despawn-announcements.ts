@@ -1,4 +1,4 @@
-export const FISH_DESPAWNED_ANNOUNCEMENTS = [
+export const FISH_DESPAWNED_ANNOUNCEMENTS: string[] = [
   "🎣 Well folks, looks like the fish have gone back to fish school.",
   "🐟 It's time to say goodbye to our aquatic friends.",
   "🦐 Gone fishin'! The fish have packed their bags and swam away.",
@@ -10,7 +10,7 @@ export const FISH_DESPAWNED_ANNOUNCEMENTS = [
   "🐬 Dive deep, fish friends! We'll catch you on the flip side.",
 ];
 
-export const SHARK_DESPAWNED_ANNOUNCEMENTS = [
+export const SHARK_DESPAWNED_ANNOUNCEMENTS: string[] = [
   "🦈 Phew! O__O Looks like the coast is clear. Sharknado warning canceled!",
   "🌊 Sharknado watch has ended! It's safe to dip your toes back in the water.",
   "🌊 Calling all beachgoers! The sharks have retired for their afternoon siesta.",
@@ -21,7 +21,7 @@ export const SHARK_DESPAWNED_ANNOUNCEMENTS = [
   "🌊 Attention ocean enthusiasts! The sharks have gone fishing... for compliments, that is.",
 ];
 
-export const SQUID_DESPAWNED_ANNOUNCEMENTS = [
+export const SQUID_DESPAWNED_ANNOUNCEMENTS: string[] = [
   "🦑 Looks like the Kraken has returned to its underwater lair!",
   "🌊 Squid squad disbands! The tentacled troublemakers have vanished into the deep blue.",
   "🦑 Tentacles, away! The Kraken bids adieu to its surface-dwelling admirers.",

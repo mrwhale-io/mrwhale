@@ -14,7 +14,7 @@ export default class extends DiscordCommand {
       description: "View the ocean to see what creatures are lurking.",
       type: "economy",
       usage: "<prefix>ocean",
-      cooldown: 5000,
+      cooldown: 3000,
     });
   }
 
@@ -31,6 +31,6 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const ocean = await getOceanEmbed(interaction, this.botClient);
 
-    return interaction.reply({ embeds: [ocean] });
+    return interaction.reply({ embeds: [ocean], ephemeral: true });
   }
 }

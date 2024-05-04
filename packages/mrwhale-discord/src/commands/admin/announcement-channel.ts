@@ -13,17 +13,17 @@ import { DiscordCommand } from "../../client/command/discord-command";
 export default class extends DiscordCommand {
   constructor() {
     super({
-      name: "levelchannel",
-      description: "Set a channel for level up messages.",
+      name: "announcementchannel",
+      description: "Set the announcement channel.",
       type: "admin",
-      usage: "<prefix>levelchannel <channel>",
+      usage: "<prefix>announcementchannel <channel>",
       guildOnly: true,
       callerPermissions: ["Administrator"],
     });
     this.slashCommandData.addChannelOption((option) =>
       option
         .setName("channel")
-        .setDescription("The channel to put level up messages in.")
+        .setDescription("The channel to put announcements in.")
         .setRequired(true)
     );
   }
@@ -58,9 +58,9 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const settings = this.botClient.guildSettings.get(interaction.guildId);
     if (settings) {
-      settings.set("levelChannel", channel.id);
+      settings.set("announcementChannel", channel.id);
       return interaction.reply(
-        `Successfully set level up channel to <#${channel.id}>`
+        `Successfully set announcement channel to <#${channel.id}>`
       );
     }
 
