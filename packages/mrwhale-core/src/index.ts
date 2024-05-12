@@ -50,6 +50,7 @@ export {
 export { InfoBuilder } from "./util/info-builder";
 export { applyText } from "./util/apply-text";
 export { fishTypes } from "./data/fish-types";
+export { GREETINGS } from "./data/greetings";
 export {
   FISH_SPAWNED_ANNOUNCEMENTS,
   SHARK_SPAWNED_ANNOUNCEMENTS,
@@ -60,15 +61,12 @@ export {
   SHARK_DESPAWNED_ANNOUNCEMENTS,
   SQUID_DESPAWNED_ANNOUNCEMENTS,
 } from "./data/fish-despawn-announcements";
-export {
-  HUNGRY_ANNOUNCEMENTS,
-  VERY_HUNGRY_ANNOUNCEMENTS,
-  STARVING_ANNOUNCEMENTS,
-} from "./data/hungry-announcements";
+export { HUNGRY_ANNOUNCEMENTS } from "./data/hungry-announcements";
 export {
   FISH_CAUGHT_ANNOUNCEMENTS,
   ALL_FISH_CAUGHT_ANNOUNCEMENTS,
 } from "./data/fish-caught-announements";
+export { LEVEL_UP_MESSAGES } from "./data/level-up-messages";
 export { FED_MESSAGES } from "./data/fed-messages";
 export { NO_FISH_MESSAGES } from "./data/no-fish-messages";
 export { Fish } from "./types/fish";
@@ -80,3 +78,5 @@ export {
   spawnFish,
   FishSpawnedResult,
 } from "./helpers/fishing";
+export { Mood } from "./types/mood";
+export { HungerLevel } from "./types/hunger-level";

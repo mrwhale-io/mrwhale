@@ -1,28 +1,26 @@
 import { Model, DataTypes } from "sequelize";
 
-import { FishTypeNames } from "@mrwhale-io/core";
 import { database } from "..";
 
-interface UserFishAttributes {
+interface FishFedAttributes {
   userId: string;
-  fishName: FishTypeNames;
+  guildId: string;
   quantity: number;
 }
 
-export interface UserFishInstance
-  extends Model<UserFishAttributes, UserFishAttributes>,
-    UserFishAttributes {}
+export interface FishFedInstance
+  extends Model<FishFedAttributes, FishFedAttributes>,
+    FishFedAttributes {}
 
-export const UserFish = database.connection.define<UserFishInstance>(
-  "UserFish",
+export const FishFed = database.connection.define<FishFedInstance>(
+  "FishFed",
   {
     userId: {
       allowNull: false,
-      autoIncrement: false,
       primaryKey: true,
       type: DataTypes.STRING,
     },
-    fishName: {
+    guildId: {
       allowNull: false,
       primaryKey: true,
       type: DataTypes.STRING,
@@ -33,5 +31,5 @@ export const UserFish = database.connection.define<UserFishInstance>(
       defaultValue: 0,
     },
   },
-  { tableName: "user_fish", timestamps: false }
+  { tableName: "fish_fed", timestamps: false }
 );

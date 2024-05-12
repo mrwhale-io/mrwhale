@@ -1,5 +1,19 @@
 import { ItemTypes } from "@mrwhale-io/core";
-import { Inventory, InventoryInstance } from "../database/models/inventory";
+import { Inventory, InventoryInstance } from "../models/inventory";
+
+/**
+ * Fetch all items of from the inventory for the given user.
+ * @param userId The id of the user the item belongs to.
+ */
+export async function getUserItemsFromInventory(
+  userId: string
+): Promise<InventoryInstance[]> {
+  return await Inventory.findAll({
+    where: {
+      userId,
+    },
+  });
+}
 
 /**
  * Fetch all items of a particular type for the given user.
@@ -8,7 +22,7 @@ import { Inventory, InventoryInstance } from "../database/models/inventory";
  */
 export async function getUserItemsByType(
   userId: string,
-  itemType: string
+  itemType: ItemTypes
 ): Promise<InventoryInstance[]> {
   return await Inventory.findAll({
     where: {

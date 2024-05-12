@@ -1,27 +1,29 @@
-import { Events, Interaction, Message, TextBasedChannel } from "discord.js";
+import { Events, Guild, Interaction, Message } from "discord.js";
 
 import {
   Fish,
   HUNGRY_ANNOUNCEMENTS,
-  STARVING_ANNOUNCEMENTS,
-  VERY_HUNGRY_ANNOUNCEMENTS,
+  HungerLevel,
+  Mood,
 } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
+import { delay } from "../../util/delay";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
 const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 1.8e6; // 30 minutes
 const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 1.2e6; // 20 minutes
-const ANNOUNCE_CHANCE_THRESHOLD = 0.3;
 
-interface HungerLevel {
+interface HungerState {
   level: number;
+  mood: Mood;
   lastUpdate?: number;
   lastHungerAnnouncement?: number;
+  lastFedTimestamp?: number;
 }
 
 interface HungerLevelMap {
-  [guildId: string]: HungerLevel;
+  [guildId: string]: HungerState;
 }
 
 /**
@@ -32,6 +34,9 @@ export class HungerManager {
 
   constructor(private bot: DiscordBotClient) {
     this.guildHungerLevels = {};
+    this.bot.client.on(Events.GuildAvailable, (guild: Guild) =>
+      this.updateHunger(guild.id)
+    );
     this.bot.client.on(Events.MessageCreate, (message: Message) => {
       this.updateHunger(message.guildId);
       this.sendHungryAnnouncement(message);
@@ -59,6 +64,22 @@ export class HungerManager {
   }
 
   /**
+   * Get Mr. Whale's current mood.
+   * @param guildId The identifier of the guild.
+   */
+  getCurrentMood(guildId: string): Mood {
+    return this.guildHungerLevels[guildId]?.mood || Mood.Happy;
+  }
+
+  /**
+   * Get the timestamp of the last time Mr. Whale was fed.
+   * @param guildId The guild to get the last fed timestamp.
+   */
+  lastFedTimestamp(guildId: string): number {
+    return this.guildHungerLevels[guildId]?.lastFedTimestamp;
+  }
+
+  /**
    * Increases the health level for the given guild.
    * This will increase depending on the expWorth of the given fish type.
    * @param guildId The guild to increase health for.
@@ -70,71 +91,92 @@ export class HungerManager {
       const newLevel =
         this.guildHungerLevels[guildId].level + fish.hpWorth * quantity; // Increase hunger level based on fish type
 
-      if (newLevel > FULL_HUNGER_LEVEL) {
+      if (newLevel > HungerLevel.Full) {
         throw new Error("I'm too full to eat this!");
       }
 
-      this.guildHungerLevels[guildId].level = newLevel;
+      const guildHungerLevel = this.guildHungerLevels[guildId];
+
+      guildHungerLevel.level = newLevel;
+      guildHungerLevel.lastFedTimestamp = Date.now();
 
       return newLevel;
     }
   }
 
   private async sendHungryAnnouncement(
-    interaction: Interaction | Message
+    interactionOrMessage: Interaction | Message
   ): Promise<void> {
     const currentTime = Date.now();
-    const { guildId } = interaction;
+    const { guildId } = interactionOrMessage;
     const lastSpawn = this.getLastHungerAnnouncementTimestamp(guildId);
     const elapsedTime = currentTime - lastSpawn;
-    const announceChance = Math.random();
 
-    if (
-      elapsedTime <= NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS ||
-      announceChance > ANNOUNCE_CHANCE_THRESHOLD
-    ) {
+    // Check if it's time to send a hungry announcement
+    if (elapsedTime <= NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS) {
       return;
     }
 
     const hungerLevel = this.getGuildHungerLevel(guildId);
 
-    if (hungerLevel <= 25) {
-      return this.sendRandomAnnouncement(interaction, STARVING_ANNOUNCEMENTS);
+    // Determine the appropriate announcements based on hunger level
+    let announcements: string[] | undefined;
+    if (hungerLevel <= HungerLevel.Starving) {
+      announcements = HUNGRY_ANNOUNCEMENTS[Mood.Grumpy];
+    } else if (hungerLevel <= HungerLevel.Hungry) {
+      announcements = HUNGRY_ANNOUNCEMENTS[Mood.Okay];
+    } else if (hungerLevel <= HungerLevel.Peckish) {
+      announcements = HUNGRY_ANNOUNCEMENTS[Mood.Happy];
     }
 
-    if (hungerLevel <= 50) {
-      return this.sendRandomAnnouncement(
-        interaction,
-        VERY_HUNGRY_ANNOUNCEMENTS
+    // Send the announcement if available
+    if (announcements) {
+      await this.sendRandomHungerAnnouncement(
+        interactionOrMessage,
+        announcements
       );
-    }
-
-    if (hungerLevel <= 75) {
-      return this.sendRandomAnnouncement(interaction, HUNGRY_ANNOUNCEMENTS);
     }
   }
 
-  private async sendRandomAnnouncement(
-    interaction: Interaction | Message,
+  private async sendRandomHungerAnnouncement(
+    interactionOrMessage: Interaction | Message,
     announcements: string[]
   ): Promise<void> {
-    const { guildId } = interaction;
-    const currentTime = Date.now();
+    const { guildId } = interactionOrMessage;
 
-    if (this.guildHungerLevels[guildId]) {
-      this.guildHungerLevels[guildId].lastHungerAnnouncement = currentTime;
+    if (!this.guildHungerLevels[guildId]) {
+      return;
     }
+    // Send the announcement message to the appropriate channel.
+    const currentTime = Date.now();
+    this.guildHungerLevels[guildId].lastHungerAnnouncement = currentTime;
+
+    // Generate random delay between 30 and 60 seconds (in milliseconds)
+    const delayInMilliseconds = Math.floor(Math.random() * 31 + 30) * 1000;
+    await delay(delayInMilliseconds);
 
     const announcement =
       announcements[Math.floor(Math.random() * announcements.length)];
     const announcementChannel = await this.bot.getFishingAnnouncementChannel(
-      interaction
+      interactionOrMessage
     );
     const message = await announcementChannel.send(announcement);
 
     setTimeout(() => {
-      message.delete();
+      if (message && message.deletable) {
+        message.delete().catch(() => null);
+      }
     }, DELETE_HUNGER_ANNOUNCEMENT_AFTER);
+  }
+
+  private setCurrentMood(guildId: string, hungerLevel: number) {
+    if (hungerLevel >= HungerLevel.Hungry) {
+      this.guildHungerLevels[guildId].mood = Mood.Happy;
+    } else if (hungerLevel >= HungerLevel.Starving) {
+      this.guildHungerLevels[guildId].mood = Mood.Okay;
+    } else {
+      this.guildHungerLevels[guildId].mood = Mood.Grumpy;
+    }
   }
 
   /**
@@ -151,11 +193,16 @@ export class HungerManager {
     if (this.guildHungerLevels[guildId]) {
       this.guildHungerLevels[guildId].level -= decreaseAmount;
 
+      this.setCurrentMood(guildId, this.guildHungerLevels[guildId].level);
+
       if (this.guildHungerLevels[guildId].level < 0) {
         this.guildHungerLevels[guildId].level = 0;
       }
     } else {
-      this.guildHungerLevels[guildId] = { level: FULL_HUNGER_LEVEL };
+      this.guildHungerLevels[guildId] = {
+        level: FULL_HUNGER_LEVEL,
+        mood: Mood.Happy,
+      };
     }
 
     this.guildHungerLevels[guildId].lastUpdate = currentTime;

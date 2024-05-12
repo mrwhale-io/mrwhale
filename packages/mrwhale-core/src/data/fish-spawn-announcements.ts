@@ -1,13 +1,34 @@
-export const FISH_SPAWNED_ANNOUNCEMENTS: string[] = [
-  "🦐 Time to catch some sea snacks.",
-  "🐠 Fish are jumping for joy!",
-  "🐡 Who ordered sushi? The fish are here!",
-  "🐋 Did someone say 'whale of a time'? Let's go fishing!",
-  "🐙 It's like a seafood buffet out here!",
-  "🦈 Don't worry, these fish won't bite... too hard.",
-  "🐬 Dive into the deep blue and reel in some fun!",
-  "🐚 Mermaids are throwing a fishy fiesta!",
-];
+import { Mood } from "../types/mood";
+
+export const FISH_SPAWNED_ANNOUNCEMENTS: Record<string, string[]> = {
+  [Mood.Happy]: [
+    "🦐 Time to catch some sea snacks.",
+    "🐠 Fish are jumping for joy!",
+    "🐡 Who ordered sushi? The fish are here!",
+    "🐋 Did someone say 'whale of a time'? Let's go fishing!",
+    "🐙 It's like a seafood buffet out here!",
+    "🦈 Don't worry, these fish won't bite... too hard.",
+    "🐬 Dive into the deep blue and reel in some fun!",
+    "🐚 Mermaids are throwing a fishy fiesta!",
+  ],
+  [Mood.Okay]: [
+    "🦐 Time to catch some sea snacks.",
+    "🐠 Fish are jumping for joy!",
+    "🐡 Who ordered sushi? The fish are here!",
+    "🐋 Did someone say 'whale of a time'? Let's go fishing!",
+    "🐙 It's like a seafood buffet out here!",
+    "🦈 Don't worry, these fish won't bite... too hard.",
+    "🐬 Dive into the deep blue and reel in some fun!",
+    "🐚 Mermaids are throwing a fishy fiesta!",
+  ],
+  [Mood.Grumpy]: [
+    "🐟 Oh, look. More fish. Just what the ocean needed.",
+    "🐠 Great, more fish. As if we didn't have enough already.",
+    "🐡 Oh joy, fish! Because we definitely needed more of those.",
+    "🐟 Fantastic news, more fish! I was just thinking we were running low.",
+    "🐠 Wow, more fish. What a surprise. Can you feel my enthusiasm?",
+  ],
+};
 
 export const SQUID_SPAWNED_ANNOUNCEMENTS: string[] = [
   "🦑 Hold onto your fishing rods, folks! The Kraken has awoken!",

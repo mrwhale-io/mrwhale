@@ -4,6 +4,7 @@ import {
   FishTypeNames,
   KeyedStorageProvider,
   ListenerDecorators,
+  Mood,
   getFishByName,
 } from "@mrwhale-io/core";
 import {
@@ -37,14 +38,19 @@ import { DiscordSelectMenu } from "./menu/discord-select-menu";
 import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
 import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
 import { HungerManager } from "./managers/hunger-manager";
-import { getOrCreatetUser } from "../util/user";
-import { getUserFishByType, updateOrCreateUserFish } from "../util/fishing";
-import { UserFish } from "../database/models/user-fish";
+import { getOrCreateUser } from "../database/services/user";
 import { FeedResult } from "../types/feed-result";
 import { FishManager } from "./managers/fish-manager";
 import { DiscordButton } from "./button/discord-button";
 import { DiscordButtonLoader } from "./button/discord-button-loader";
 import { DiscordButtonHandler } from "./button/discord-button-handler";
+import {
+  getUserItemByName,
+  updateOrCreateUserItem,
+} from "../database/services/inventory";
+import { Inventory } from "../database/models/inventory";
+import { logFishCaught } from "../database/services/fish-caught";
+import { logFishFed } from "../database/services/fish-fed";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -206,8 +212,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   ): Promise<FeedResult> {
     const userId = interaction.member.user.id;
     const guildId = interaction.guildId;
-    const user = await getOrCreatetUser(userId);
-    const usersFish = await getUserFishByType(userId, fishType);
+    const user = await getOrCreateUser(userId);
+    const usersFish = await getUserItemByName(userId, fishType);
 
     if (!usersFish || usersFish.quantity <= 0) {
       throw new Error(`You have no ${fishType} in your inventory.`);
@@ -219,7 +225,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       );
     }
 
-    const fish = getFishByName(usersFish.fishName);
+    const fishName = usersFish.itemName as FishTypeNames;
+    const fish = getFishByName(fishName);
     const hungerLevel = await this.hungerManager.feed(guildId, fish, quantity);
 
     const expIncrease = fish.expWorth * quantity;
@@ -231,15 +238,17 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     usersFish.quantity -= quantity;
     if (usersFish.quantity <= 0) {
-      UserFish.destroy({
+      Inventory.destroy({
         where: {
           userId,
-          fishName: usersFish.fishName,
+          itemName: usersFish.itemName,
         },
       });
     }
 
     usersFish.save();
+
+    await logFishFed(userId, guildId, quantity);
 
     return {
       expGained: expIncrease,
@@ -280,6 +289,22 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
+   * Get Mr. Whale's current mood.
+   * @param guildId The identifier of the guild.
+   */
+  getCurrentMood(guildId: string): Mood {
+    return this.hungerManager.getCurrentMood(guildId);
+  }
+
+  /**
+   * Get the timestamp of the last time Mr. Whale was fed.
+   * @param guildId The guild to get the last fed timestamp.
+   */
+  lastFedTimestamp(guildId: string): number {
+    return this.hungerManager.lastFedTimestamp(guildId);
+  }
+
+  /**
    * Catch a fish from the given guild.
    * @param guildId The identifier of the guild.
    * @param userId The identifier of the user.
@@ -288,7 +313,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     const fishCaught = this.fishManager.catchFish(guildId, userId);
 
     if (fishCaught) {
-      await updateOrCreateUserFish(userId, fishCaught.name);
+      await updateOrCreateUserItem(userId, fishCaught.name, "Fish");
+      await logFishCaught(userId, guildId);
     }
 
     return fishCaught;

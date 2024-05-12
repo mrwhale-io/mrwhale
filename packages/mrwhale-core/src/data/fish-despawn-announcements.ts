@@ -1,14 +1,32 @@
-export const FISH_DESPAWNED_ANNOUNCEMENTS: string[] = [
-  "🎣 Well folks, looks like the fish have gone back to fish school.",
-  "🐟 It's time to say goodbye to our aquatic friends.",
-  "🦐 Gone fishin'! The fish have packed their bags and swam away.",
-  "🐠 Adios, fish amigos! Until next time, keep swimming!",
-  "🐡 Fish are fickle creatures... and they've decided to swim off into the sunset.",
-  "🦑 Looks like the fish have left the building... or should we say, the ocean.",
-  "🐋 It's a fishy disappearing act! Time to bid adieu to our underwater pals.",
-  "🐙 So long, and thanks for all the fish! Until we meet again...",
-  "🐬 Dive deep, fish friends! We'll catch you on the flip side.",
-];
+import { Mood } from "../types/mood";
+
+export const FISH_DESPAWNED_ANNOUNCEMENTS: Record<string, string[]> = {
+  [Mood.Happy]: [
+    "🎣 Well folks, looks like the fish have gone back to fish school.",
+    "🐟 It's time to say goodbye to our aquatic friends.",
+    "🦐 Gone fishin'! The fish have packed their bags and swam away.",
+    "🐠 Adios, fish amigos! Until next time, keep swimming!",
+    "🐡 Fish are fickle creatures... and they've decided to swim off into the sunset.",
+    "🦑 Looks like the fish have left the building... or should we say, the ocean.",
+    "🐋 It's a fishy disappearing act! Time to bid adieu to our underwater pals.",
+    "🐙 So long, and thanks for all the fish! Until we meet again...",
+    "🐬 Dive deep, fish friends! We'll catch you on the flip side.",
+  ],
+  [Mood.Okay]: [
+    "🐟 Oh, how tragic. The fish decided to leave the party early.",
+    "🐠 Well, looks like the fish got bored and swam away. Can't blame them, really.",
+    "🎣 Ah, the fish have vanished. Guess they found better waters.",
+    "🐡 Poof! And just like that, the fish disappeared. Typical.",
+    "🐟 Goodbye, fish. Thanks for gracing us with your presence... for a little while.",
+  ],
+  [Mood.Grumpy]: [
+    "🐟 Great, the fish have disappeared. Just what I needed.",
+    "🐠 Typical. The fish vanish as soon as I get interested.",
+    "🐡 Well, that's just fantastic. The fish decided to bail on us.",
+    "🎣 Ugh, the fish are gone. Can't rely on anything these days.",
+    "🐟 Oh, wonderful. The fish have disappeared into the abyss.",
+  ],
+};
 
 export const SHARK_DESPAWNED_ANNOUNCEMENTS: string[] = [
   "🦈 Phew! O__O Looks like the coast is clear. Sharknado warning canceled!",

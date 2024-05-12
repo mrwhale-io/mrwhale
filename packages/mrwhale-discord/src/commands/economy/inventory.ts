@@ -5,11 +5,12 @@ import {
   Message,
 } from "discord.js";
 
-import { fishTypes } from "@mrwhale-io/core";
+import { code, fishTypes } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
-import { getUserFish } from "../../util/fishing";
-import { UserFishInstance } from "../../database/models/user-fish";
+import { getUserItemsFromInventory } from "../../database/services/inventory";
+import { InventoryInstance } from "../../database/models/inventory";
+import { getOrCreateUser } from "../../database/services/user";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -35,41 +36,49 @@ export default class extends DiscordCommand {
   }
 
   private async showInventory(
-    interaction: ChatInputCommandInteraction | Message
+    interactionOrMessage: ChatInputCommandInteraction | Message
   ) {
     try {
-      const userId = interaction.member.user.id;
-      const userFish = await getUserFish(userId);
-      const embed = this.buildFishEmbed(userFish);
+      const userId = interactionOrMessage.member.user.id;
+      const inventoryItems = await getUserItemsFromInventory(userId);
+      const user = await getOrCreateUser(userId);
+      const embed = new EmbedBuilder()
+        .setColor(EMBED_COLOR)
+        .setTitle("Your inventory");
 
-      return interaction.reply({ embeds: [embed] });
+      embed.addFields([
+        {
+          name: "Fish",
+          value: this.buildUserFishInventory(inventoryItems),
+        },
+        {
+          name: "Your Current Balance",
+          value: `💎 ${user.balance}`,
+        },
+      ]);
+
+      return interactionOrMessage.reply({ embeds: [embed] });
     } catch (error) {
-      return interaction.reply("Could not fetch your inventory.");
+      this.botClient.logger.error("Error fetching inventory:", error);
+      return interactionOrMessage.reply("Could not fetch your inventory.");
     }
   }
 
-  private buildFishEmbed(fishCaught: UserFishInstance[]): EmbedBuilder {
-    const embed = new EmbedBuilder()
-      .setColor(EMBED_COLOR)
-      .setTitle("Your inventory");
-    let fishCaughtDescription = "";
-    if (fishCaught.length === 0) {
-      fishCaughtDescription = "You have no fish in your inventory.";
-    } else {
-      for (const fish of fishCaught) {
-        const fishTypeInfo = fishTypes.find(
-          (fishType) => fishType.name === fish.fishName
-        );
-        fishCaughtDescription += `${fishTypeInfo.icon} ${fish.fishName}: ${fish.quantity}\n`;
-      }
+  private buildUserFishInventory(inventoryItems: InventoryInstance[]): string {
+    const userFish = inventoryItems.filter((item) => item.itemType === "Fish");
+    if (userFish.length === 0) {
+      return "You have no fish in your inventory.";
     }
-    embed.addFields([
-      {
-        name: "Fish",
-        value: fishCaughtDescription,
-      },
-    ]);
 
-    return embed;
+    return userFish
+      .map((fish) => {
+        const fishTypeInfo = fishTypes.find(
+          (fishType) => fishType.name === fish.itemName
+        );
+        return `${code(`${fish.quantity}x`)} ${fishTypeInfo.icon} ${
+          fish.itemName
+        }`;
+      })
+      .join("\n");
   }
 }

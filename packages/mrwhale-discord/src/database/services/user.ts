@@ -1,10 +1,10 @@
-import { User } from "../database/models/user";
+import { User } from "../models/user";
 
 /**
  * Gets an existing user or creates a user if one doesn't exist.
  * @param userId The discord identifier of the user.
  */
-export async function getOrCreatetUser(userId: string) {
+export async function getOrCreateUser(userId: string) {
   let user = await User.findOne({
     where: {
       id: userId,

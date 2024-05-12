@@ -48,11 +48,15 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const fishType = interaction.options.getString("fish") as FishTypeNames;
     const quantity = interaction.options.getInteger("quantity");
+    const guildId = interaction.guildId;
 
     try {
       const result = await this.botClient.feed(interaction, fishType, quantity);
+      const currentMood = this.botClient.getCurrentMood(guildId);
       const fedMessage =
-        FED_MESSAGES[Math.floor(Math.random() * FED_MESSAGES.length)];
+        FED_MESSAGES[currentMood][
+          Math.floor(Math.random() * FED_MESSAGES[currentMood].length)
+        ];
       const fish = getFishByName(fishType);
       const hungerLevel = this.botClient.getGuildHungerLevel(
         interaction.guildId
@@ -74,7 +78,7 @@ export default class extends DiscordCommand {
             value: `🆙 +${result.expGained}`,
           },
           {
-            name: "Hunger Level",
+            name: "Satiety Level",
             value: `${drawHealthBar(result.hungerLevel)} ${currentProgress}%`,
           },
         ])

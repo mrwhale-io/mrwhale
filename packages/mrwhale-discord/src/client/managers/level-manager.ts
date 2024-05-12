@@ -6,7 +6,11 @@ import {
   TextBasedChannel,
 } from "discord.js";
 
-import { getLevelFromExp, getRandomInt } from "@mrwhale-io/core";
+import {
+  LEVEL_UP_MESSAGES,
+  getLevelFromExp,
+  getRandomInt,
+} from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
 import { Score, ScoreInstance } from "../../database/models/score";
 
@@ -136,8 +140,12 @@ export class LevelManager {
 
     if (newLevel > level) {
       const channel = await this.getLevelUpAnnouncementChannel(interaction);
+      const announcementLevelUpMessage = this.getRandomLevelUpAnnouncement(
+        interaction,
+        level
+      );
       channel.send({
-        content: `<@${interaction.member.user.id}> just advanced to level ${newLevel}!`,
+        content: announcementLevelUpMessage,
         allowedMentions: { users: [] },
       });
     }
@@ -180,6 +188,19 @@ export class LevelManager {
     } catch {
       return message.channel;
     }
+  }
+
+  private getRandomLevelUpAnnouncement(
+    interaction: Interaction | Message,
+    level: number
+  ): string {
+    const mood = this.bot.getCurrentMood(interaction.guildId);
+    const announcements = LEVEL_UP_MESSAGES[mood];
+    const message = announcements[
+      Math.floor(Math.random() * announcements.length)
+    ].replace("<<LEVEL>>", level.toString());
+
+    return `<@${interaction.member.user.id}> ${message}`;
   }
 
   protected async onMessage(message: Message): Promise<void> {
