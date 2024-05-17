@@ -31,6 +31,6 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const ocean = await getOceanEmbed(interaction, this.botClient);
 
-    return interaction.reply({ embeds: [ocean], ephemeral: true });
+    return interaction.reply({ embeds: [ocean] });
   }
 }
