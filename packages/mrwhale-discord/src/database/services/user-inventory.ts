@@ -1,5 +1,5 @@
 import { ItemTypes } from "@mrwhale-io/core";
-import { Inventory, InventoryInstance } from "../models/inventory";
+import { UserInventory, UserInventoryInstance } from "../models/user-inventory";
 
 /**
  * Fetch all items of from the inventory for the given user.
@@ -7,8 +7,8 @@ import { Inventory, InventoryInstance } from "../models/inventory";
  */
 export async function getUserItemsFromInventory(
   userId: string
-): Promise<InventoryInstance[]> {
-  return await Inventory.findAll({
+): Promise<UserInventoryInstance[]> {
+  return UserInventory.findAll({
     where: {
       userId,
     },
@@ -18,13 +18,13 @@ export async function getUserItemsFromInventory(
 /**
  * Fetch all items of a particular type for the given user.
  * @param userId The id of the user the item belongs to.
- * @param itemType The type of inventory item.
+ * @param itemType The type of the inventory item.
  */
 export async function getUserItemsByType(
   userId: string,
   itemType: ItemTypes
-): Promise<InventoryInstance[]> {
-  return await Inventory.findAll({
+): Promise<UserInventoryInstance[]> {
+  return UserInventory.findAll({
     where: {
       userId,
       itemType,
@@ -35,38 +35,45 @@ export async function getUserItemsByType(
 /**
  * Fetch a specific item for the given user.
  * @param userId The id of the user the item belongs to.
- * @param itemName The type of inventory item.
+ * @param itemId The id of inventory item.
+ * @param itemType The type of the inventory item.
  */
-export async function getUserItemByName(
+export async function getUserItemById(
   userId: string,
-  itemName: string
-): Promise<InventoryInstance> {
-  return await Inventory.findOne({
+  itemId: number,
+  itemType: ItemTypes
+): Promise<UserInventoryInstance> {
+  return UserInventory.findOne({
     where: {
       userId,
-      itemName,
+      itemType,
+      itemId,
     },
   });
 }
 
 /**
  * Create or update a user inventory record.
- * @param userId The user to create or update inventory item for.
- * @param fishName The name of the item
+ * @param userId The owner of the item.
+ * @param itemId The id of the item to create.
+ * @param itemType The type of the inventory item to create.
+ * @param equipped Whether the user is equipped with this item.
  */
 export async function updateOrCreateUserItem(
   userId: string,
-  itemName: string,
-  itemType: ItemTypes
+  itemId: number,
+  itemType: ItemTypes,
+  equipped: boolean = false
 ): Promise<void> {
-  let userItems = await getUserItemByName(userId, itemName);
+  let userItems = await getUserItemById(userId, itemId, itemType);
 
   if (!userItems) {
-    userItems = Inventory.build({
+    userItems = UserInventory.build({
       userId,
-      itemName,
+      itemId,
       itemType,
       quantity: 0,
+      equipped,
     });
   }
 

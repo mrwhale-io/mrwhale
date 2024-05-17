@@ -38,19 +38,21 @@ import { DiscordSelectMenu } from "./menu/discord-select-menu";
 import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
 import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
 import { HungerManager } from "./managers/hunger-manager";
-import { getOrCreateUser } from "../database/services/user";
 import { FeedResult } from "../types/feed-result";
 import { FishManager } from "./managers/fish-manager";
 import { DiscordButton } from "./button/discord-button";
 import { DiscordButtonLoader } from "./button/discord-button-loader";
 import { DiscordButtonHandler } from "./button/discord-button-handler";
 import {
-  getUserItemByName,
+  getUserItemById,
   updateOrCreateUserItem,
-} from "../database/services/inventory";
-import { Inventory } from "../database/models/inventory";
+} from "../database/services/user-inventory";
+import { UserInventory } from "../database/models/user-inventory";
 import { logFishCaught } from "../database/services/fish-caught";
 import { logFishFed } from "../database/services/fish-fed";
+import { getEquippedFishingRod } from "../database/services/fishing-rods";
+import { getUserFishByName } from "../database/services/fish";
+import { UserManager } from "./managers/user-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -131,6 +133,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly buttons: Map<string, DiscordButton>;
 
   /**
+   * Contains a list of users for Mr. Whale.
+   */
+  readonly userManager: UserManager;
+
+  /**
    * Contains the hunger manager for Mr. Whale.
    */
   private readonly hungerManager: HungerManager;
@@ -172,6 +179,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.levelManager = new LevelManager(this);
     this.hungerManager = new HungerManager(this);
     this.fishManager = new FishManager(this);
+    this.userManager = new UserManager(this);
     this.commandDispatcher = new DiscordCommandDispatcher(this);
     this.discordSelectMenuHandler = new DiscordSelectMenuHandler(this);
     this.discordButtonHandler = new DiscordButtonHandler(this);
@@ -181,6 +189,13 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       this.discordBotList = botOptions.discordBotList;
     }
     registerListeners(this.client, this);
+  }
+
+  /**
+   * Contains the database user's for Mr. Whale.
+   */
+  get users() {
+    return this.userManager.users;
   }
 
   /**
@@ -202,46 +217,44 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * Increases the health level for the given guild.
    * This will increase depending on the expWorth of the given fish type.
    * @param interaction The interaction or message.
-   * @param fish The fish to feed Mr. Whale.
+   * @param fishName The fish to feed Mr. Whale.
    * @param quantity The number of given fish to feed Mr. Whale.
    */
   async feed(
     interaction: Interaction | Message,
-    fishType: FishTypeNames,
+    fishName: FishTypeNames,
     quantity: number
   ): Promise<FeedResult> {
     const userId = interaction.member.user.id;
     const guildId = interaction.guildId;
-    const user = await getOrCreateUser(userId);
-    const usersFish = await getUserItemByName(userId, fishType);
+    const fish = getFishByName(fishName);
+    const usersFish = await getUserItemById(userId, fish.id, "Fish");
 
     if (!usersFish || usersFish.quantity <= 0) {
-      throw new Error(`You have no ${fishType} in your inventory.`);
+      throw new Error(`You have no ${fishName} in your inventory.`);
     }
 
     if (quantity > usersFish.quantity) {
       throw new Error(
-        `You only have ${usersFish.quantity} ${fishType} in your inventory.`
+        `You only have ${usersFish.quantity} ${fishName} in your inventory.`
       );
     }
 
-    const fishName = usersFish.itemName as FishTypeNames;
-    const fish = getFishByName(fishName);
     const hungerLevel = await this.hungerManager.feed(guildId, fish, quantity);
 
     const expIncrease = fish.expWorth * quantity;
     this.levelManager.increaseExp(interaction, expIncrease);
 
     const reward = fish.worth * quantity;
-    user.balance += reward;
-    user.save();
+    const user = await this.userManager.addToUserBalance(userId, reward);
 
     usersFish.quantity -= quantity;
     if (usersFish.quantity <= 0) {
-      Inventory.destroy({
+      UserInventory.destroy({
         where: {
           userId,
-          itemName: usersFish.itemName,
+          itemType: "Fish",
+          itemId: fish.id,
         },
       });
     }
@@ -310,10 +323,15 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * @param userId The identifier of the user.
    */
   async catchFish(guildId: string, userId: string): Promise<Fish> {
-    const fishCaught = this.fishManager.catchFish(guildId, userId);
+    const fishingRodEquipped = await getEquippedFishingRod(userId);
+    const fishCaught = this.fishManager.catchFish(
+      guildId,
+      userId,
+      fishingRodEquipped
+    );
 
     if (fishCaught) {
-      await updateOrCreateUserItem(userId, fishCaught.name, "Fish");
+      await updateOrCreateUserItem(userId, fishCaught.id, "Fish");
       await logFishCaught(userId, guildId);
     }
 

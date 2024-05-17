@@ -7,6 +7,7 @@ import {
   Fish,
   FishSpawnedResult,
   FishTypeNames,
+  FishingRod,
   Mood,
   SHARK_DESPAWNED_ANNOUNCEMENTS,
   SHARK_SPAWNED_ANNOUNCEMENTS,
@@ -121,7 +122,7 @@ export class FishManager {
    * @param guildId The identifier of the guild.
    * @param userId The user that used the command.
    */
-  catchFish(guildId: string, userId: string): Fish {
+  catchFish(guildId: string, userId: string, fishingRod: FishingRod): Fish {
     const allGuildFish = this.getGuildFish(guildId);
 
     if (!allGuildFish || !this.hasRemainingAttempts) {
@@ -129,7 +130,7 @@ export class FishManager {
     }
 
     const catchableFish = this.getCatchableFish(allGuildFish);
-    const fishCaught = catchFish(catchableFish);
+    const fishCaught = catchFish(catchableFish, fishingRod);
 
     if (fishCaught) {
       const guildFish = allGuildFish[fishCaught.name];

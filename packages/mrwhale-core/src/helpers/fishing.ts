@@ -1,7 +1,10 @@
 import { Fish } from "../types/fish";
 import { fishTypes } from "../data/fish-types";
-import { weightedSample } from "../util/weighted-sample";
 import { FishTypeNames } from "../types/fish-type-names";
+import { FishingRod } from "../types/fishing-rod";
+import { weightedSample } from "../util/weighted-sample";
+import { fishingRods } from "../data/fishing-rods";
+import { FishingRodNames } from "../types/fishing-rod-names";
 
 export interface FishSpawnedResult {
   icon: string;
@@ -15,6 +18,30 @@ export interface FishSpawnedResult {
  */
 export function getFishByName(fishName: FishTypeNames) {
   return fishTypes.find((fishType) => fishType.name === fishName);
+}
+
+/**
+ * Get a fish type by name.
+ * @param fishId The id of the fish.
+ */
+export function getFishById(fishId: number) {
+  return fishTypes.find((fishType) => fishType.id === fishId);
+}
+
+/**
+ * Get a fishing rod by name.
+ * @param fishingRodName The name of the fishing rod.
+ */
+export function getFishingRodByName(fishingRodName: FishingRodNames) {
+  return fishingRods.find((fishingRod) => fishingRod.name === fishingRodName);
+}
+
+/**
+ * Get a fishing rod by id.
+ * @param fishingRodId The id of the fishing rod.
+ */
+export function getFishingRodById(fishingRodId: number) {
+  return fishingRods.find((fishingRod) => fishingRod.id === fishingRodId);
 }
 
 /**
@@ -34,11 +61,15 @@ export function spawnFish(
 }
 
 /**
- * Returns a random fish from a given collection of fish.
+ * Returns a random fish from a given collection of fish, taking into account the fishing rod's effect.
  * @param catchableFish An array of all the available fish to catch.
+ * @param fishingRod The fishing rod being used by the player.
  */
-export function catchFish(catchableFish: Fish[]): Fish {
-  let fishCaught = weightedSample(catchableFish);
+export function catchFish(catchableFish: Fish[], fishingRod: FishingRod): Fish {
+  let fishCaught = weightedSample(
+    catchableFish,
+    fishingRod.probabilityMultiplier
+  );
   const random = Math.random();
 
   if (random > 0.5) {

@@ -69,14 +69,20 @@ export {
 export { LEVEL_UP_MESSAGES } from "./data/level-up-messages";
 export { FED_MESSAGES } from "./data/fed-messages";
 export { NO_FISH_MESSAGES } from "./data/no-fish-messages";
+export { fishingRods } from "./data/fishing-rods";
 export { Fish } from "./types/fish";
 export { FishTypeNames } from "./types/fish-type-names";
 export { ItemTypes } from "./types/item-types";
 export {
   catchFish,
+  getFishById,
   getFishByName,
+  getFishingRodById,
+  getFishingRodByName,
   spawnFish,
   FishSpawnedResult,
 } from "./helpers/fishing";
 export { Mood } from "./types/mood";
+export { FishingRodNames } from "./types/fishing-rod-names";
 export { HungerLevel } from "./types/hunger-level";
+export { FishingRod } from "./types/fishing-rod";

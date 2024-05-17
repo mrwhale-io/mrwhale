@@ -3,14 +3,14 @@ import {
   EmbedBuilder,
   InteractionResponse,
   Message,
+  User,
 } from "discord.js";
 
-import { code, fishTypes } from "@mrwhale-io/core";
+import { code, getFishById, getFishingRodById } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
-import { getUserItemsFromInventory } from "../../database/services/inventory";
-import { InventoryInstance } from "../../database/models/inventory";
-import { getOrCreateUser } from "../../database/services/user";
+import { getUserItemsFromInventory } from "../../database/services/user-inventory";
+import { UserInventoryInstance } from "../../database/models/user-inventory";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -26,36 +26,43 @@ export default class extends DiscordCommand {
   async action(
     message: Message
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
-    return this.showInventory(message);
+    return this.showInventory(message.author, message);
   }
 
   async slashCommandAction(
     interaction: ChatInputCommandInteraction
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
-    return this.showInventory(interaction);
+    return this.showInventory(interaction.user, interaction);
   }
 
   private async showInventory(
+    discordUser: User,
     interactionOrMessage: ChatInputCommandInteraction | Message
   ) {
     try {
       const userId = interactionOrMessage.member.user.id;
+      const user = this.botClient.users.get(userId);
       const inventoryItems = await getUserItemsFromInventory(userId);
-      const user = await getOrCreateUser(userId);
       const embed = new EmbedBuilder()
         .setColor(EMBED_COLOR)
-        .setTitle("Your inventory");
+        .setAuthor({
+          name: "Your Inventory",
+          iconURL: discordUser.avatarURL(),
+        })
+        .setDescription("Here is a list of all the items you have collected.");
 
       embed.addFields([
         {
-          name: "Fish",
+          name: "🐟 Fish",
           value: this.buildUserFishInventory(inventoryItems),
         },
         {
-          name: "Your Current Balance",
-          value: `💎 ${user.balance}`,
+          name: "🎣 Fishing Rods",
+          value: this.buildUserFishingRodInventory(inventoryItems),
         },
       ]);
+
+      embed.setFooter({ text: `💎 Your Balance: ${user.balance}` });
 
       return interactionOrMessage.reply({ embeds: [embed] });
     } catch (error) {
@@ -64,19 +71,41 @@ export default class extends DiscordCommand {
     }
   }
 
-  private buildUserFishInventory(inventoryItems: InventoryInstance[]): string {
-    const userFish = inventoryItems.filter((item) => item.itemType === "Fish");
-    if (userFish.length === 0) {
+  private buildUserFishInventory(
+    inventoryItems: UserInventoryInstance[]
+  ): string {
+    const filteredFishItems = inventoryItems.filter(
+      (item) => item.itemType === "Fish"
+    );
+    if (filteredFishItems.length === 0) {
       return "You have no fish in your inventory.";
     }
 
-    return userFish
-      .map((fish) => {
-        const fishTypeInfo = fishTypes.find(
-          (fishType) => fishType.name === fish.itemName
-        );
-        return `${code(`${fish.quantity}x`)} ${fishTypeInfo.icon} ${
-          fish.itemName
+    return filteredFishItems
+      .map((item) => {
+        const fish = getFishById(item.itemId);
+        return `${code(`${item.quantity}x`)} ${fish.icon} ${fish.name}`;
+      })
+      .join("\n");
+  }
+
+  private buildUserFishingRodInventory(
+    inventoryItems: UserInventoryInstance[]
+  ): string {
+    const filteredFishItems = inventoryItems.filter(
+      (item) => item.itemType === "FishingRod"
+    );
+
+    if (filteredFishItems.length === 0) {
+      return "You have no fishing rods in your inventory.";
+    }
+
+    return filteredFishItems
+      .map((item) => {
+        const isEquipped = item.equipped;
+        const fishingRod = getFishingRodById(item.itemId);
+        return `${code(`${item.quantity}x`)} ${fishingRod.name} ${
+          isEquipped ? " " + code("[Equipped]") : ""
         }`;
       })
       .join("\n");

@@ -84,8 +84,9 @@ export class DiscordCommandDispatcher {
       return;
     }
 
-    const args = getCommandArgs(message.content, prefix, command.argSeparator);
+    await this.bot.userManager.storeUser(message.author.id);
 
+    const args = getCommandArgs(message.content, prefix, command.argSeparator);
     await dispatch(command, message, args).catch((e) =>
       this.bot.logger.error(e)
     );
@@ -122,6 +123,8 @@ export class DiscordCommandDispatcher {
     if (!hasPermission) {
       return;
     }
+
+    await this.bot.userManager.storeUser(interaction.user.id);
 
     await command
       .slashCommandAction(interaction)

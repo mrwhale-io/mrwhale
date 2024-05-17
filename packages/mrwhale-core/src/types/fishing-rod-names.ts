@@ -1,0 +1,7 @@
+export type FishingRodNames =
+  | "Basic Fishing Rod"
+  | "Bamboo Fishing Rod"
+  | "Fiberglass Fishing Rod"
+  | "Telescopic Fishing Rod"
+  | "Surf Fishing Rod"
+  | "Deep Sea Fishing Rod";
