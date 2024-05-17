@@ -1,4 +1,4 @@
-import { Events } from "discord.js";
+import { ActivityType, Events } from "discord.js";
 import * as path from "path";
 
 import { SqliteStorageProvider } from "@mrwhale-io/core";
@@ -8,7 +8,53 @@ import { DiscordBotClient } from "./src/client/discord-bot-client";
 import { INTENTS } from "./src/constants";
 import { startServer } from "./server";
 
-const SET_ACTIVITY_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const SET_ACTIVITY_INTERVAL = 60 * 1000; // 1 minute
+const ACTIVITIES = [
+  {
+    text: "🦈Swimming upside down and pretending to be a shark.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "🎤Singing whale songs to the moon.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "🫧Trying to catch seagulls with bubble rings.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "hide and seek with a giant squid.",
+    type: ActivityType.Playing,
+  },
+  {
+    text: "🍳Hosting a plankton cooking competition.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "🐳Attempting to dance the 'whale waltz' with passing ships.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "🐟Organizing a synchronized swimming performance for fish.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "🐬Practicing flips and somersaults in the ocean currents.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "🦐Holding a debate with other whales about the best type of krill.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "🎷Learning to play the saxophone underwater.",
+    type: ActivityType.Custom,
+  },
+  {
+    text: "in the underwater Olympics",
+    type: ActivityType.Competing,
+  },
+];
 
 const bot = new DiscordBotClient(
   {
@@ -46,7 +92,11 @@ process.on("unhandledRejection", (err) => {
 });
 
 function setActivity() {
-  bot.client.user.setActivity(`in ${bot.client.guilds.cache.size} servers`);
+  const { text, type } = ACTIVITIES[
+    Math.floor(Math.random() * ACTIVITIES.length)
+  ];
+
+  bot.client.user.setActivity(text, { type });
 }
 
 startServer(bot);
