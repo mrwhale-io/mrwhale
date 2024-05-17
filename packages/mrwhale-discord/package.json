@@ -20,7 +20,8 @@
   "scripts": {
     "dev": "ts-node --transpile-only index.ts",
     "start": "rm -rf ./lib && tsc && copyfiles ./images/*.png ./lib && node ./lib/index.js",
-    "deploy-commands": "ts-node --transpile-only scripts/deploy-commands.ts"
+    "deploy-commands": "ts-node --transpile-only scripts/deploy-commands.ts",
+    "seed": "ts-node --transpile-only scripts/seed-items.ts"
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
@@ -33,6 +34,7 @@
     "canvas": "^2.11.2",
     "connect-session-sequelize": "^7.1.7",
     "copyfiles": "^2.4.1",
+    "date-fns": "^3.6.0",
     "discord-api-types": "^0.37.55",
     "discord.js": "^14.13.0",
     "discordbotlist": "^1.1.1",
