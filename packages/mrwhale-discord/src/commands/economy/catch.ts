@@ -44,14 +44,14 @@ export default class extends DiscordCommand {
 
     const guildFish = this.botClient.getGuildFish(guildId);
     if (!guildFish) {
-      embed.setDescription("There are no fish in the sea.");
+      embed.setDescription("🎣 There are no fish in the sea.");
 
       return interaction.reply({ embeds: [embed] });
     }
 
     if (!this.botClient.hasRemainingFishingAttempts(guildId, userId)) {
       embed.setDescription(
-        "You have no remaining fishing attempts. Try again later."
+        "🎣 You have no remaining fishing attempts. Try again later."
       );
 
       return interaction.reply({ embeds: [embed] });

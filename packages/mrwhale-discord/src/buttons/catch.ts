@@ -29,7 +29,7 @@ export default class extends DiscordButton {
     if (!guildFish) {
       const embed = new EmbedBuilder()
         .setColor(EMBED_COLOR)
-        .setDescription("There are no fish in the sea.");
+        .setDescription("🎣 There are no fish in the sea.");
 
       return interaction.reply({ embeds: [embed] });
     }
@@ -38,7 +38,7 @@ export default class extends DiscordButton {
       const embed = new EmbedBuilder()
         .setColor(EMBED_COLOR)
         .setDescription(
-          "You have no remaining fishing attempts. Try again later."
+          "🎣 You have no remaining fishing attempts. Try again later."
         );
 
       return interaction.reply({ embeds: [embed] });
