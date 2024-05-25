@@ -1,4 +1,3 @@
-import { FishTypeNames } from "@mrwhale-io/core";
 import { FishCaught, FishCaughtInstance } from "../models/fish-caught";
 import { HIGHSCORE_PAGE_LIMIT } from "../../constants";
 

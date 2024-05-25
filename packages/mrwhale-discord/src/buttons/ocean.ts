@@ -6,8 +6,8 @@ import {
 } from "discord.js";
 
 import { DiscordButton } from "../client/button/discord-button";
-import { Buttons } from "../types/buttons";
-import { getOceanEmbed } from "../util/embed-helpers";
+import { Buttons } from "../types/button/buttons";
+import { getOceanEmbed } from "../util/embed/ocean-embed-helpers";
 
 export default class extends DiscordButton {
   constructor() {

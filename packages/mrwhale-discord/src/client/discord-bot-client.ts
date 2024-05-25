@@ -1,13 +1,15 @@
 import {
   BotClient,
-  Fish,
   FishTypeNames,
+  FishingRod,
   KeyedStorageProvider,
   ListenerDecorators,
   Mood,
   getFishByName,
 } from "@mrwhale-io/core";
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
   ChannelType,
   Client,
   ClientOptions,
@@ -33,26 +35,27 @@ import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
 import { AVATAR_OPTIONS, EMBED_COLOR, THEME } from "../constants";
 import { DiscordBotOptions } from "../types/discord-bot-options";
-import { Greeting } from "../image/greeting";
+import { Greeting } from "../types/image/greeting";
 import { DiscordSelectMenu } from "./menu/discord-select-menu";
 import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
 import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
 import { HungerManager } from "./managers/hunger-manager";
-import { FeedResult } from "../types/feed-result";
+import { FeedResult } from "../types/fishing/feed-result";
 import { FishManager } from "./managers/fish-manager";
 import { DiscordButton } from "./button/discord-button";
 import { DiscordButtonLoader } from "./button/discord-button-loader";
 import { DiscordButtonHandler } from "./button/discord-button-handler";
-import {
-  getUserItemById,
-  updateOrCreateUserItem,
-} from "../database/services/user-inventory";
+import { getUserItemById } from "../database/services/user-inventory";
 import { UserInventory } from "../database/models/user-inventory";
-import { logFishCaught } from "../database/services/fish-caught";
 import { logFishFed } from "../database/services/fish-fed";
 import { getEquippedFishingRod } from "../database/services/fishing-rods";
-import { getUserFishByName } from "../database/services/fish";
 import { UserManager } from "./managers/user-manager";
+import { createCatchButtons } from "../util/button/catch-buttons-helpers";
+import { getEquippedBait } from "../database/services/bait";
+import { NoFishError } from "../types/errors/no-fish-error";
+import { NoAttemptsLeftError } from "../types/errors/no-attempts-left-error";
+import { RemainingAttempts } from "../types/fishing/remaining-attempts";
+import { getCaughtFishEmbed } from "../util/embed/fish-caught-embed-helpers";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -282,8 +285,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   /**
    * Gets the remaining fishing attempts allowed for the user.
    */
-  getRemainingFishingAttempts(guildId: string, userId: string): number {
-    return this.fishManager.getRemainingAttempts(guildId, userId);
+  getRemainingFishingAttempts(
+    userId: string,
+    fishingRod: FishingRod
+  ): RemainingAttempts {
+    return this.fishManager.getRemainingAttempts(userId, fishingRod);
   }
 
   /**
@@ -295,10 +301,20 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Checks whether the user has remaining fishing attempts in the guild.
+   * Checks whether the user has remaining fishing attempts.
    */
-  hasRemainingFishingAttempts(guildId: string, userId: string) {
-    return this.fishManager.hasRemainingAttempts(guildId, userId);
+  hasRemainingFishingAttempts(userId: string, fishingRod: FishingRod): boolean {
+    return this.fishManager.hasRemainingAttempts(userId, fishingRod);
+  }
+
+  /**
+   * Returns whether the guild has any fish.
+   * @param guildId The identifier of the guild.
+   */
+  hasGuildFish(guildId: string): boolean {
+    const guildFish = this.getGuildFish(guildId);
+
+    return guildFish && Object.keys(guildFish).length > 0;
   }
 
   /**
@@ -318,27 +334,62 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Catch a fish from the given guild.
-   * @param guildId The identifier of the guild.
-   * @param userId The identifier of the user.
+   * Attempts to catch a fish for the user in the specified guild, taking into account their equipped fishing rod and bait.
+   * If successful, returns an embed with the details of the caught fish and any additional action buttons.
+   * If unsuccessful due to specific known errors (e.g., no fish available, no remaining attempts), returns an embed with an appropriate error message.
+   *
+   * @param interactionOrMessage - The interaction or message object from the Discord API, containing details of the user and guild.
+   * @returns A promise that resolves to an object containing the embed with the details of the caught fish or an error message, and optionally any action buttons.
+   * @throws Will throw an error if an unexpected error occurs during the process.
    */
-  async catchFish(guildId: string, userId: string): Promise<Fish> {
-    const fishingRodEquipped = await getEquippedFishingRod(userId);
-    const fishCaught = this.fishManager.catchFish(
-      guildId,
-      userId,
-      fishingRodEquipped
-    );
+  async catchFish(
+    interactionOrMessage: Interaction | Message
+  ): Promise<{
+    fishCaughtEmbed: EmbedBuilder;
+    catchButtons?: ActionRowBuilder<ButtonBuilder>;
+  }> {
+    const {
+      user: { id: userId },
+    } = interactionOrMessage.member;
+    const { guildId } = interactionOrMessage;
 
-    if (fishCaught) {
-      await updateOrCreateUserItem(userId, fishCaught.id, "Fish");
-      await logFishCaught(userId, guildId);
+    try {
+      const fishingRodEquipped = await getEquippedFishingRod(userId);
+      const baitEquipped = await getEquippedBait(userId);
+      const fishCaught = await this.fishManager.catchFish(
+        guildId,
+        userId,
+        fishingRodEquipped,
+        baitEquipped
+      );
+      const fishCaughtEmbed = await getCaughtFishEmbed({
+        fishCaught,
+        interaction: interactionOrMessage,
+        fishingRodUsed: fishingRodEquipped,
+        baitUsed: baitEquipped,
+        botClient: this,
+      });
+      const catchButtons = createCatchButtons(interactionOrMessage, this);
+
+      return { fishCaughtEmbed: fishCaughtEmbed, catchButtons: catchButtons };
+    } catch (error) {
+      const nothingCaughtEmbed = new EmbedBuilder().setColor(EMBED_COLOR);
+      if (
+        error instanceof NoFishError ||
+        error instanceof NoAttemptsLeftError
+      ) {
+        nothingCaughtEmbed.setDescription(`🎣 ${error.message}`);
+        return {
+          fishCaughtEmbed: nothingCaughtEmbed,
+        };
+      } else {
+        this.logger.error("Error catching fish:", error);
+        throw error;
+      }
     }
-
-    return fishCaught;
   }
 
-  /**
+  /**F
    * Get the hunger level for the given guild.
    * @param guildId The guild to get the hunger level for.
    */

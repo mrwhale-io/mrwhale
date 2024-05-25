@@ -27,7 +27,14 @@ interface HungerLevelMap {
 }
 
 /**
- * Responsible for managing Mr. Whale's hunger levels for each guild.
+ * This handles the management of Mr. Whale's hunger levels in each guild.
+ *
+ * Responsibilities:
+ * - Maintaining the hunger levels of Mr. Whale for each guild.
+ * - Tracking and updating timestamps for the last hunger announcement and the last feeding time for each guild.
+ * - Providing a method to feed Mr. Whale, which increases his hunger level for the specific guild.
+ * - Sending hunger announcements when Mr. Whale is hungry, based on predefined conditions.
+ * - Setting Mr. Whale's current mood based on his hunger level, influencing his interactions and announcements.
  */
 export class HungerManager {
   private guildHungerLevels: HungerLevelMap;
@@ -37,14 +44,12 @@ export class HungerManager {
     this.bot.client.on(Events.GuildAvailable, (guild: Guild) =>
       this.updateHunger(guild.id)
     );
-    this.bot.client.on(Events.MessageCreate, (message: Message) => {
-      this.updateHunger(message.guildId);
-      this.sendHungryAnnouncement(message);
-    });
-    this.bot.client.on(Events.InteractionCreate, (interaction: Interaction) => {
-      this.updateHunger(interaction.guildId);
-      this.sendHungryAnnouncement(interaction);
-    });
+    this.bot.client.on(Events.MessageCreate, (message: Message) =>
+      this.updateHungerAndSendAnnouncement(message)
+    );
+    this.bot.client.on(Events.InteractionCreate, (interaction: Interaction) =>
+      this.updateHungerAndSendAnnouncement(interaction)
+    );
   }
 
   /**
@@ -80,28 +85,32 @@ export class HungerManager {
   }
 
   /**
-   * Increases the health level for the given guild.
-   * This will increase depending on the expWorth of the given fish type.
-   * @param guildId The guild to increase health for.
-   * @param fish The fish to feed Mr. Whale.
-   * @param quantity The number of given fish to feed Mr. Whale.
+   * Feeds the guild's Mr. Whale with the specified quantity of fish, updating the hunger level.
+   * @param guildId The ID of the guild.
+   * @param fish The fish being fed to Mr. Whale.
+   * @param quantity The quantity of fish being fed.
+   * @returns The new hunger level after feeding.
    */
   async feed(guildId: string, fish: Fish, quantity: number): Promise<number> {
-    if (this.guildHungerLevels[guildId]) {
-      const newLevel =
-        this.guildHungerLevels[guildId].level + fish.hpWorth * quantity; // Increase hunger level based on fish type
-
-      if (newLevel > HungerLevel.Full) {
-        throw new Error("I'm too full to eat this!");
-      }
-
-      const guildHungerLevel = this.guildHungerLevels[guildId];
-
-      guildHungerLevel.level = newLevel;
-      guildHungerLevel.lastFedTimestamp = Date.now();
-
-      return newLevel;
+    // Check if the guild exists in the hunger levels map
+    if (!this.guildHungerLevels[guildId]) {
+      throw new Error("Guild not found.");
     }
+
+    // Calculate the new hunger level
+    const currentHungerLevel = this.guildHungerLevels[guildId].level;
+    const increaseAmount = fish.hpWorth * quantity;
+    const newHungerLevel = currentHungerLevel + increaseAmount; // Increase hunger level based on fish type
+
+    if (newHungerLevel > HungerLevel.Full) {
+      throw new Error("I'm too full to eat this!");
+    }
+
+    // Update the guild's hunger level and last fed timestamp
+    this.guildHungerLevels[guildId].level = newHungerLevel;
+    this.guildHungerLevels[guildId].lastFedTimestamp = Date.now();
+
+    return newHungerLevel;
   }
 
   private async sendHungryAnnouncement(
@@ -179,8 +188,18 @@ export class HungerManager {
     }
   }
 
+  private updateHungerAndSendAnnouncement(
+    interactionOrMessage: Interaction | Message
+  ) {
+    const { guildId } = interactionOrMessage;
+    if (guildId) {
+      this.updateHunger(guildId);
+      this.sendHungryAnnouncement(interactionOrMessage);
+    }
+  }
+
   /**
-   * Adjusts the guilds hunger level based on the time elapsed.
+   * Adjusts the guilds hunger level based on the time elapsed since the last update.
    * @param guildId The guild to update the hunger level for.
    */
   private updateHunger(guildId: string): void {

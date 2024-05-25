@@ -26,6 +26,24 @@ export async function getEquippedFishingRod(
 }
 
 /**
+ * Gets the fishing rods being used by the players.
+ */
+export async function getplayerFishingRods(
+  userIds: string[]
+): Promise<number[]> {
+  const fishingRods = await UserInventory.findAll({
+    attributes: ["itemId"],
+    where: {
+      itemType: "FishingRod",
+      userId: userIds,
+    },
+    group: ["itemId"],
+  });
+
+  return fishingRods.map((fishingRod) => fishingRod.itemId);
+}
+
+/**
  * Adds the fishing rod to the user inventory items.
  * @param userId The id of the user.
  * @param fishingRodName The name of the fishing rod to add.

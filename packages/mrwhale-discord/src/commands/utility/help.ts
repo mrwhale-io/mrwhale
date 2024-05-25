@@ -13,8 +13,8 @@ import {
 import { TimeUtilities, capitalise } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
-import { SelectMenus } from "../../types/select-menus";
-import { getCommandsByTypeEmbed } from "../../util/help";
+import { SelectMenus } from "../../types/menu/select-menus";
+import { getCommandsByTypeEmbed } from "../../util/embed/help-embed-helpers";
 
 export default class extends DiscordCommand {
   constructor() {

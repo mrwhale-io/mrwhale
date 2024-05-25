@@ -1,16 +1,12 @@
 import {
-  ActionRowBuilder,
   ButtonBuilder,
   ButtonInteraction,
   ButtonStyle,
-  EmbedBuilder,
   InteractionResponse,
 } from "discord.js";
 
 import { DiscordButton } from "../client/button/discord-button";
-import { Buttons } from "../types/buttons";
-import { getCaughtFishEmbed } from "../util/embed-helpers";
-import { EMBED_COLOR } from "../constants";
+import { Buttons } from "../types/button/buttons";
 
 export default class extends DiscordButton {
   constructor() {
@@ -22,51 +18,27 @@ export default class extends DiscordButton {
   async action(
     interaction: ButtonInteraction
   ): Promise<InteractionResponse<boolean>> {
-    const guildId = interaction.guildId;
-    const userId = interaction.member.user.id;
+    try {
+      const { fishCaughtEmbed, catchButtons } = await this.botClient.catchFish(
+        interaction
+      );
+      const replyOptions = { embeds: [fishCaughtEmbed] };
 
-    const guildFish = this.botClient.getGuildFish(guildId);
-    if (!guildFish) {
-      const embed = new EmbedBuilder()
-        .setColor(EMBED_COLOR)
-        .setDescription("🎣 There are no fish in the sea.");
+      if (catchButtons) {
+        replyOptions["components"] = [catchButtons];
+      }
 
-      return interaction.reply({ embeds: [embed] });
+      return interaction.reply(replyOptions);
+    } catch (error) {
+      this.botClient.logger.error("Error catching fish:", error);
+      return interaction.reply("An error occured while catching fish.");
     }
-
-    if (!this.botClient.hasRemainingFishingAttempts(guildId, userId)) {
-      const embed = new EmbedBuilder()
-        .setColor(EMBED_COLOR)
-        .setDescription(
-          "🎣 You have no remaining fishing attempts. Try again later."
-        );
-
-      return interaction.reply({ embeds: [embed] });
-    }
-
-    const fishCaught = await this.botClient.catchFish(guildId, userId);
-    const oceanHandler = this.botClient.buttons.get(Buttons.Ocean);
-    const oceanButton = oceanHandler.getButtonBuilder(
-      interaction.member.user.id
-    );
-    const catchButton = this.getButtonBuilder(interaction.member.user.id);
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      catchButton,
-      oceanButton
-    );
-    const fishCaughtEmbed = await getCaughtFishEmbed(
-      fishCaught,
-      interaction,
-      this.botClient
-    );
-
-    return interaction.reply({ components: [row], embeds: [fishCaughtEmbed] });
   }
 
   getButtonBuilder(id: string): ButtonBuilder {
     const catchButton = new ButtonBuilder()
       .setCustomId(`${this.name}${id}`)
-      .setLabel("Fish Again")
+      .setLabel("Cast Again")
       .setEmoji("🎣")
       .setStyle(ButtonStyle.Primary);
 

@@ -1,4 +1,4 @@
-import { DiscordSelectMenu } from "../client/menu/discord-select-menu";
+import { DiscordSelectMenu } from "../../client/menu/discord-select-menu";
 
 /**
  * Loads a discord select menu from a given file path.

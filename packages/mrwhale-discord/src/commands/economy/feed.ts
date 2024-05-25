@@ -11,10 +11,12 @@ import {
   FishTypeNames,
   fishTypes,
   getFishByName,
+  getRemainingExp,
 } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
 import { drawHealthBar } from "../../util/draw-health-bar";
+import { LevelManager } from "../../client/managers/level-manager";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -52,6 +54,10 @@ export default class extends DiscordCommand {
 
     try {
       const result = await this.botClient.feed(interaction, fishType, quantity);
+      const userScore = await LevelManager.getUserScore(
+        guildId,
+        interaction.user.id
+      );
       const currentMood = this.botClient.getCurrentMood(guildId);
       const fedMessage =
         FED_MESSAGES[currentMood][
@@ -62,29 +68,45 @@ export default class extends DiscordCommand {
         interaction.guildId
       );
       const currentProgress = Math.floor((hungerLevel / 100) * 100);
+      const whaleAvatar = this.botClient.client.user.displayAvatarURL();
       const embed = new EmbedBuilder()
         .setColor(EMBED_COLOR)
+        .setThumbnail(whaleAvatar)
         .addFields([
           {
             name: "Gems Rewarded",
             value: `💎 +${result.reward}`,
+            inline: true,
           },
           {
             name: "Your Current Balance",
             value: `💰 ${result.newBalance}`,
+            inline: true,
           },
           {
             name: "Exp Gained",
             value: `🆙 +${result.expGained}`,
+            inline: true,
+          },
+          {
+            name: "Next Level",
+            value: `⬆️ ${getRemainingExp(userScore.exp)} EXP to level up`,
+            inline: true,
           },
           {
             name: "Satiety Level",
             value: `${drawHealthBar(result.hungerLevel)} ${currentProgress}%`,
+            inline: false,
           },
         ])
         .setTitle(`You just fed me ${quantity} ${fish.name} ${fish.icon} `)
         .setColor(EMBED_COLOR)
-        .setDescription(`${fedMessage} \n\nHere is your reward:`);
+        .setDescription(`${fedMessage} \n\nHere is your reward:`)
+        .setFooter({
+          text: "Keep feeding Mr. Whale to get more rewards!",
+          iconURL: whaleAvatar,
+        })
+        .setTimestamp();
 
       return interaction.reply({ embeds: [embed] });
     } catch (error) {

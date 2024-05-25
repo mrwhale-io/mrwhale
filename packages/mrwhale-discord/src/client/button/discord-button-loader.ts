@@ -2,7 +2,7 @@ import * as glob from "glob";
 
 import { DiscordBotClient } from "../discord-bot-client";
 import { DiscordButton } from "./discord-button";
-import { loadButton } from "../../util/load-button";
+import { loadButton } from "../../util/button/load-button";
 
 /**
  * Responsible for loading discord buttons.

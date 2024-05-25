@@ -203,7 +203,7 @@ export class LevelManager {
     return `<@${interaction.member.user.id}> ${message}`;
   }
 
-  protected async onMessage(message: Message): Promise<void> {
+  private async onMessage(message: Message): Promise<void> {
     const isEnabled = await this.isLevelsEnabled(message.guildId);
     const dm = message.channel.type === ChannelType.DM;
 
@@ -221,5 +221,7 @@ export class LevelManager {
 
     const expGained = getRandomInt(MIN_EXP_EARNED, MAX_EXP_EARNED);
     this.increaseExp(message, expGained);
+
+    await this.bot.userManager.addToUserBalance(message.author.id, 1);
   }
 }

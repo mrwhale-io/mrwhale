@@ -6,7 +6,7 @@ import {
   SelectMenuType,
 } from "discord.js";
 
-import { DiscordSelectMenuOptions } from "../../types/discord-select-menu-options";
+import { DiscordSelectMenuOptions } from "../../types/menu/discord-select-menu-options";
 import { DiscordBotClient } from "../discord-bot-client";
 
 export abstract class DiscordSelectMenu {

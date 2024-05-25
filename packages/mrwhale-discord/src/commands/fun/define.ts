@@ -17,7 +17,7 @@ import {
 import {
   PageResult,
   getEmbedWithPaginatorButtons,
-} from "../../util/paginator-buttons";
+} from "../../util/button/paginator-buttons";
 
 export default class extends DiscordCommand {
   constructor() {

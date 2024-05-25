@@ -2,7 +2,7 @@ import { ButtonBuilder, ButtonInteraction } from "discord.js";
 
 import { DEFAULT_COMMAND_RATE_LIMIT } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
-import { DiscordButtonOptions } from "../../types/discord-button-options";
+import { DiscordButtonOptions } from "../../types/button/discord-button-options";
 import { DiscordButtonRateLimiter } from "./discord-button-rate-limiter";
 
 export abstract class DiscordButton {

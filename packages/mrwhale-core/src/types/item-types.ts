@@ -1,1 +1,1 @@
-export type ItemTypes = "Fish" | "FishingRod";
+export type ItemTypes = "Fish" | "FishingRod" | "Bait";

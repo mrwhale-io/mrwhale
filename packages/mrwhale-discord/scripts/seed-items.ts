@@ -1,6 +1,7 @@
-import { fishTypes, fishingRods } from "@mrwhale-io/core";
+import { baits, fishTypes, fishingRods } from "@mrwhale-io/core";
 import { Fish } from "../src/database/models/fish";
 import { FishingRod } from "../src/database/models/fishing-rod";
+import { Bait } from "../src/database/models/bait";
 
 async function seedItems() {
   try {
@@ -17,6 +18,14 @@ async function seedItems() {
 
     // Seed fishing rods
     FishingRod.bulkCreate(fishingRods, {
+      updateOnDuplicate: ["name"],
+    });
+
+    // Sync bait model
+    await Bait.sync({ force: true });
+
+    // Seed baits
+    Bait.bulkCreate(baits, {
       updateOnDuplicate: ["name"],
     });
 

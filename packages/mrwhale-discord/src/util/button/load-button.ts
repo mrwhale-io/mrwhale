@@ -1,4 +1,4 @@
-import { DiscordButton } from "../client/button/discord-button";
+import { DiscordButton } from "../../client/button/discord-button";
 
 /**
  * Loads a discord button from a given file path.

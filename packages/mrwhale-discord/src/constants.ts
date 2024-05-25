@@ -20,3 +20,5 @@ export const HEX_COLOUR_REGEX = /^#[0-9A-F]{6}$/i;
 export const MAX_EMBED_DESCRIPTION_LENGTH = 4096;
 export const MAX_EMBED_FIELD_VALUE_LENGTH = 1024;
 export const AVATAR_OPTIONS: ImageURLOptions = { extension: "png", size: 512 };
+export const HIGHSCORE_PAGE_LIMIT = 10;
+export const HIGHSCORE_MAX_LIMIT = 100;

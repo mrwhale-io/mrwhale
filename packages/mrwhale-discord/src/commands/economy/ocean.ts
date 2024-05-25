@@ -5,7 +5,7 @@ import {
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
-import { getOceanEmbed } from "../../util/embed-helpers";
+import { getOceanEmbed } from "../../util/embed/ocean-embed-helpers";
 
 export default class extends DiscordCommand {
   constructor() {
