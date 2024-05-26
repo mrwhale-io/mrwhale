@@ -4,10 +4,14 @@ import { UserInventory } from "../models/user-inventory";
 /**
  * Get the bait the user is currently equipped with.
  * @param userId The id of the user.
+ * @param guildId The id of the guild.
  */
-export async function getEquippedBait(userId: string): Promise<Bait> {
+export async function getEquippedBait(
+  userId: string,
+  guildId: string
+): Promise<Bait> {
   const userInventory = await UserInventory.findOne({
-    where: { userId: userId, itemType: "Bait", equipped: true },
+    where: { userId, guildId, itemType: "Bait", equipped: true },
   });
 
   if (!userInventory) {

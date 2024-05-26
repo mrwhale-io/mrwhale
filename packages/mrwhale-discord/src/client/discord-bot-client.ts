@@ -1,5 +1,6 @@
 import {
   BotClient,
+  FishSpawnedResult,
   FishTypeNames,
   FishingRod,
   KeyedStorageProvider,
@@ -49,7 +50,7 @@ import { getUserItemById } from "../database/services/user-inventory";
 import { UserInventory } from "../database/models/user-inventory";
 import { logFishFed } from "../database/services/fish-fed";
 import { getEquippedFishingRod } from "../database/services/fishing-rods";
-import { UserManager } from "./managers/user-manager";
+import { UserBalanceManager } from "./managers/user-balance-manager";
 import { createCatchButtons } from "../util/button/catch-buttons-helpers";
 import { getEquippedBait } from "../database/services/bait";
 import { NoFishError } from "../types/errors/no-fish-error";
@@ -136,9 +137,9 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly buttons: Map<string, DiscordButton>;
 
   /**
-   * Contains a list of users for Mr. Whale.
+   * Contains an instance of the user balance manager.
    */
-  readonly userManager: UserManager;
+  readonly userBalanceManager: UserBalanceManager;
 
   /**
    * Contains the hunger manager for Mr. Whale.
@@ -182,7 +183,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.levelManager = new LevelManager(this);
     this.hungerManager = new HungerManager(this);
     this.fishManager = new FishManager(this);
-    this.userManager = new UserManager(this);
+    this.userBalanceManager = new UserBalanceManager();
     this.commandDispatcher = new DiscordCommandDispatcher(this);
     this.discordSelectMenuHandler = new DiscordSelectMenuHandler(this);
     this.discordButtonHandler = new DiscordButtonHandler(this);
@@ -192,13 +193,6 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       this.discordBotList = botOptions.discordBotList;
     }
     registerListeners(this.client, this);
-  }
-
-  /**
-   * Contains the database user's for Mr. Whale.
-   */
-  get users() {
-    return this.userManager.users;
   }
 
   /**
@@ -231,7 +225,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     const userId = interaction.member.user.id;
     const guildId = interaction.guildId;
     const fish = getFishByName(fishName);
-    const usersFish = await getUserItemById(userId, fish.id, "Fish");
+    const usersFish = await getUserItemById(userId, guildId, fish.id, "Fish");
 
     if (!usersFish || usersFish.quantity <= 0) {
       throw new Error(`You have no ${fishName} in your inventory.`);
@@ -246,10 +240,14 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     const hungerLevel = await this.hungerManager.feed(guildId, fish, quantity);
 
     const expIncrease = fish.expWorth * quantity;
-    this.levelManager.increaseExp(interaction, expIncrease);
+    this.levelManager.increaseExp(interaction, userId, guildId, expIncrease);
 
     const reward = fish.worth * quantity;
-    const user = await this.userManager.addToUserBalance(userId, reward);
+    const user = await this.userBalanceManager.addToUserBalance(
+      userId,
+      guildId,
+      reward
+    );
 
     usersFish.quantity -= quantity;
     if (usersFish.quantity <= 0) {
@@ -278,7 +276,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * Returns all the fish for the given guild.
    * @param guildId The identifier of the guild.
    */
-  getGuildFish(guildId: string) {
+  getGuildFish(guildId: string): Record<string, FishSpawnedResult> {
     return this.fishManager.getGuildFish(guildId);
   }
 
@@ -334,6 +332,16 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
+   * Retrieves the user's balance for a specific guild.
+   *
+   * @param userId The Id of the user whose balance is being retrieved.
+   * @param guildId The Id of the guild where the balance is being checked.
+   */
+  async getUserBalance(userId: string, guildId: string): Promise<number> {
+    return this.userBalanceManager.getUserBalance(userId, guildId);
+  }
+
+  /**
    * Attempts to catch a fish for the user in the specified guild, taking into account their equipped fishing rod and bait.
    * If successful, returns an embed with the details of the caught fish and any additional action buttons.
    * If unsuccessful due to specific known errors (e.g., no fish available, no remaining attempts), returns an embed with an appropriate error message.
@@ -355,7 +363,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     try {
       const fishingRodEquipped = await getEquippedFishingRod(userId);
-      const baitEquipped = await getEquippedBait(userId);
+      const baitEquipped = await getEquippedBait(userId, guildId);
       const fishCaught = await this.fishManager.catchFish(
         guildId,
         userId,
@@ -389,7 +397,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
   }
 
-  /**F
+  /**
    * Get the hunger level for the given guild.
    * @param guildId The guild to get the hunger level for.
    */

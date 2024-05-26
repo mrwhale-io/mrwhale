@@ -4,9 +4,7 @@ import {
   ItemTypes,
   baits,
   fishingRods,
-  getLevelFromExp,
 } from "@mrwhale-io/core";
-import { LevelManager } from "src/client/managers/level-manager";
 
 /**
  * Gets shop items by type.
@@ -46,4 +44,23 @@ export async function getFishingRodsAvailable(userLevel: number) {
   );
 
   return { availableFishingRods, nextUnlockableFishingRod };
+}
+
+/**
+ * Gets the available bait based on the user's level and the next unlockable bait.
+ * @param userLevel The user's current level.
+ */
+export async function getBaitsAvailable(userLevel: number) {
+  const allBaitsAvailable = getShopItemsByType("Bait");
+
+  // Filter available baits based on user's level
+  const availableBaits = allBaitsAvailable.filter(
+    (bait) => bait.minLevel <= userLevel
+  );
+  // Find the next unlockable bait
+  const nextUnlockableBait = allBaitsAvailable.find(
+    (bait) => bait.minLevel > userLevel
+  );
+
+  return { availableBaits, nextUnlockableBait };
 }

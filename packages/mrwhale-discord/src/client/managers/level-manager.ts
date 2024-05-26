@@ -15,8 +15,8 @@ import { DiscordBotClient } from "../discord-bot-client";
 import { Score, ScoreInstance } from "../../database/models/score";
 
 const TIME_FOR_EXP = 6e4;
-const MIN_EXP_EARNED = 15;
-const MAX_EXP_EARNED = 25;
+const MIN_EXP_EARNED = 5;
+const MAX_EXP_EARNED = 15;
 
 interface MessageMap {
   [guildId: number]: { [user: number]: number };
@@ -119,18 +119,23 @@ export class LevelManager {
   }
 
   /**
-   * Increase the EXP for the user by the given amount.
-   * @param interaction The interaction or message.
-   * @param expGained The amount of exp to give.
+   * Increases the experience points (EXP) for the user by the given amount and handles level-up announcements.
+   *
+   * This method retrieves or creates the user's score record for the specified guild, updates the user's EXP,
+   * and checks if the user has leveled up. If the user levels up, it sends a level-up announcement in the appropriate channel.
+   *
+   * @param interactionOrMessage The interaction or message that triggered the EXP increase.
+   * @param userId The Id of the user whose EXP is being increased.
+   * @param guildId The Id of the guild where the EXP increase is taking place.
+   * @param expGained The amount of EXP to give to the user
    */
   async increaseExp(
-    interaction: Interaction | Message,
+    interactionOrMessage: Interaction | Message,
+    userId: string,
+    guildId: string,
     expGained: number
   ): Promise<void> {
-    const score = await LevelManager.getorCreateScore(
-      interaction.member.user.id,
-      interaction.guildId
-    );
+    const score = await LevelManager.getorCreateScore(userId, guildId);
     const level = getLevelFromExp(score.exp);
 
     score.exp += expGained;
@@ -139,10 +144,12 @@ export class LevelManager {
     const newLevel = getLevelFromExp(score.exp);
 
     if (newLevel > level) {
-      const channel = await this.getLevelUpAnnouncementChannel(interaction);
+      const channel = await this.getLevelUpAnnouncementChannel(
+        interactionOrMessage
+      );
       const announcementLevelUpMessage = this.getRandomLevelUpAnnouncement(
-        interaction,
-        level
+        interactionOrMessage,
+        newLevel
       );
       channel.send({
         content: announcementLevelUpMessage,
@@ -211,17 +218,20 @@ export class LevelManager {
       return;
     }
 
-    const timeForExp = this.isTimeForExp(message.guildId, message.author.id);
+    const userId = message.author.id;
+    const guildId = message.guildId;
+    const timeForExp = this.isTimeForExp(guildId, userId);
 
     if (!timeForExp) {
       return;
     }
 
-    this.lastMessages[message.guildId][message.author.id] = Date.now();
+    this.lastMessages[guildId][userId] = Date.now();
 
     const expGained = getRandomInt(MIN_EXP_EARNED, MAX_EXP_EARNED);
-    this.increaseExp(message, expGained);
 
-    await this.bot.userManager.addToUserBalance(message.author.id, 1);
+    this.increaseExp(message, userId, guildId, expGained);
+
+    await this.bot.userBalanceManager.addToUserBalance(userId, guildId, 1);
   }
 }

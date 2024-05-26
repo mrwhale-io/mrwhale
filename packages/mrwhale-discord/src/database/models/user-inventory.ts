@@ -7,6 +7,7 @@ import { FishingRod, FishingRodInstance } from "./fishing-rod";
 
 interface UserInventoryAttributes {
   userId: string;
+  guildId: string;
   itemId: number;
   itemType: ItemTypes;
   quantity: number;
@@ -24,6 +25,10 @@ export const UserInventory = database.connection.define<UserInventoryInstance>(
   "UserInventory",
   {
     userId: {
+      allowNull: false,
+      type: DataTypes.STRING,
+    },
+    guildId: {
       allowNull: false,
       type: DataTypes.STRING,
     },

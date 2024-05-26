@@ -37,7 +37,12 @@ export default class extends DiscordCommand {
     [transferAmount]: [number]
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const user = message.mentions.users.first();
-    const embed = await this.bestow(message.author, user, transferAmount);
+    const embed = await this.bestow(
+      message.author,
+      user,
+      message.guildId,
+      transferAmount
+    );
 
     return message.reply({ embeds: [embed] });
   }
@@ -47,7 +52,12 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const user = interaction.options.getUser("user");
     const transferAmount = interaction.options.getInteger("amount");
-    const embed = await this.bestow(interaction.user, user, transferAmount);
+    const embed = await this.bestow(
+      interaction.user,
+      user,
+      interaction.guildId,
+      transferAmount
+    );
 
     return interaction.reply({ embeds: [embed] });
   }
@@ -55,10 +65,14 @@ export default class extends DiscordCommand {
   private async bestow(
     transferFromUser: User,
     transferToUser: User,
+    guildId: string,
     transferAmount: number
   ): Promise<EmbedBuilder> {
-    const user = this.botClient.users.get(transferFromUser.id);
-    const userBalance = user.balance;
+    const { userBalanceManager } = this.botClient;
+    const userBalance = await userBalanceManager.getUserBalance(
+      transferFromUser.id,
+      guildId
+    );
     const embed = new EmbedBuilder().setColor(EMBED_COLOR);
 
     if (transferToUser.id === this.botClient.client.user.id) {
@@ -81,12 +95,16 @@ export default class extends DiscordCommand {
       return embed.setDescription(`Please enter an amount greater than zero.`);
     }
 
-    const userManager = this.botClient.userManager;
-    const { balance: newBalance } = await userManager.addToUserBalance(
+    const { balance: newBalance } = await userBalanceManager.addToUserBalance(
       transferFromUser.id,
+      guildId,
       -transferAmount
     );
-    await userManager.addToUserBalance(transferToUser.id, transferAmount);
+    await userBalanceManager.addToUserBalance(
+      transferToUser.id,
+      guildId,
+      transferAmount
+    );
 
     return embed.setDescription(
       `You have bestowed upon <@${transferToUser.id}> ${transferAmount} gems. Your balance is now ${newBalance}.`

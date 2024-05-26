@@ -180,6 +180,8 @@ export class FishManager {
     fishCaught: Fish,
     allGuildFish: Record<string, any>
   ): Promise<void> {
+    // Find the type of fish caught in the guild and decrement it's quantity.
+    // When the quantity is zero we delete the fish from the guild.
     const guildFish = allGuildFish[fishCaught.name];
     if (guildFish) {
       guildFish.quantity--;
@@ -188,10 +190,19 @@ export class FishManager {
       }
     }
 
-    await updateOrCreateUserItem(userId, fishCaught.id, "Fish");
+    // Add this fish to the user's inventory.
+    await updateOrCreateUserItem({
+      userId,
+      guildId,
+      itemId: fishCaught.id,
+      itemType: "Fish",
+    });
     await logFishCaught(userId, guildId);
+
+    // Decrement the number of attempts the user has left.
     this.updateAttempts(userId);
 
+    // If we have caught all the fish in the guild we send an announcement
     if (!this.hasGuildFish(guildId)) {
       const announcementMessage = this.getAnnouncementMessage(guildId);
       if (announcementMessage) {
@@ -246,7 +257,7 @@ export class FishManager {
       if (!message.guild || message.author.bot) {
         return;
       }
-  
+
       const { guildId } = message;
       const canSpawnFish = this.canSpawnFish(guildId);
       if (!canSpawnFish) {
@@ -314,7 +325,8 @@ export class FishManager {
       const playerFishingRodIds = await getplayerFishingRods(activeUsersIds);
 
       // Get the best fishing rod being used.
-      const bestFishingRodId = Math.max(...playerFishingRodIds) || 1;
+      const bestFishingRodId =
+        playerFishingRodIds.length > 0 ? Math.max(...playerFishingRodIds) : 1;
       const bestFishingRod = getFishingRodById(bestFishingRodId);
 
       // Calculate the number of fish to spawn based on active users

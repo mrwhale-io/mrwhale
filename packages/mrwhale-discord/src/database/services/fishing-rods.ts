@@ -4,12 +4,17 @@ import {
   getFishingRodById,
   getFishingRodByName,
 } from "@mrwhale-io/core";
-import { UserInventory } from "../models/user-inventory";
+import { UserInventory, UserInventoryInstance } from "../models/user-inventory";
 import { updateOrCreateUserItem } from "./user-inventory";
 
 /**
- * Get the fishing rod the user is currently equipped with.
- * @param userId The id of the user to get fishing rod for.
+ * Retrieves the fishing rod that the user is currently equipped with.
+ *
+ * This function queries the UserInventory table to find the fishing rod that is currently equipped by
+ * the specified user. If the user does not have any fishing rod equipped, the function returns the
+ * basic fishing rod.
+ *
+ * @param userId The Id of the user to get the equipped fishing rod for.
  */
 export async function getEquippedFishingRod(
   userId: string
@@ -26,7 +31,12 @@ export async function getEquippedFishingRod(
 }
 
 /**
- * Gets the fishing rods being used by the players.
+ * Retrieves the unique Ids of all fishing rods owned by a group of players.
+ *
+ * This function queries the UserInventory table to find all unique fishing rod IDs that are owned by
+ * the specified user IDs. The result is a list of fishing rod item IDs without duplicates.
+ *
+ * @param userIds An array of user Ids for which the fishing rod Ids are to be retrieved.
  */
 export async function getplayerFishingRods(
   userIds: string[]
@@ -44,20 +54,28 @@ export async function getplayerFishingRods(
 }
 
 /**
- * Adds the fishing rod to the user inventory items.
- * @param userId The id of the user.
- * @param fishingRodName The name of the fishing rod to add.
+ * Adds a specified fishing rod to a user's inventory, optionally equipping it.
+ *
+ * This function retrieves the fishing rod by its name and updates or creates an entry
+ * in the user's inventory for the specified guild. By default, the fishing rod is equipped.
+ *
+ * @param userId The Id of the user to whom the fishing rod will be added.
+ * @param guildId The Id of the guild in which the user's inventory will be updated.
+ * @param fishingRodName The name of the fishing rod to be added.
+ * @param [equipped=true] Whether the fishing rod should be equipped by default.
  */
-export async function addFishingRodToUserItems(
+export async function addFishingRodToUserInventory(
   userId: string,
+  guildId: string,
   fishingRodName: FishingRodNames,
   equipped: boolean = true
-): Promise<void> {
-  const basicFishingRod = getFishingRodByName(fishingRodName);
-  await updateOrCreateUserItem(
+): Promise<UserInventoryInstance> {
+  const fishingRod = getFishingRodByName(fishingRodName);
+  return await updateOrCreateUserItem({
     userId,
-    basicFishingRod.id,
-    "FishingRod",
-    equipped
-  );
+    guildId,
+    itemId: fishingRod.id,
+    itemType: "FishingRod",
+    equipped,
+  });
 }
