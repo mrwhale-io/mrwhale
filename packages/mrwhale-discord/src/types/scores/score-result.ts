@@ -1,4 +1,4 @@
-import { MappedScores } from "./scores/mapped-scores";
+import { MappedScores } from "../scores/mapped-scores";
 
 export interface ScoreResult {
   scores: MappedScores[];

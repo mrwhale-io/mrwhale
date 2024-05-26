@@ -2,7 +2,7 @@ import * as glob from "glob";
 import * as path from "path";
 
 import { COMMAND_TYPE_NAMES, loadCommand } from "@mrwhale-io/core";
-import { DiscordCommand } from "../client/command/discord-command";
+import { DiscordCommand } from "../../client/command/discord-command";
 
 export function loadCommands(): DiscordCommand[] {
   const commands: DiscordCommand[] = [];
