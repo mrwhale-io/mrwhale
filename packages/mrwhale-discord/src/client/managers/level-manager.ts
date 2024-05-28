@@ -22,6 +22,21 @@ interface MessageMap {
   [guildId: number]: { [user: number]: number };
 }
 
+/**
+ * The LevelManager class is responsible for managing and awarding experience points (EXP) to users within the Discord bot.
+ * It handles the following functionalities:
+ *
+ * - Awarding EXP: Increase the EXP for users based on various actions and achievements within the bot.
+ * - Level Calculation: Determine the user's level based on their accumulated EXP.
+ * - Announcements: Sends a level-up announcement in the specified channel when a user levels up.
+ *
+ * The class interacts with the database to persist user scores and ensure that level progression is tracked accurately.
+ * It also includes methods for fetching and updating user scores, calculating levels, and generating level-up messages.
+ *
+ * Usage:
+ * - `increaseExp(interaction, userId, guildId, expGained)`: Increase the user's EXP by a specified amount.
+ * - Automatically sends a level-up announcement if the user reaches a new level.
+ */
 export class LevelManager {
   private lastMessages: MessageMap;
 
@@ -33,8 +48,11 @@ export class LevelManager {
   }
 
   /**
-   * Checks whether levels are enabled in the guild.
-   * @param guildId The identifier of the guild.
+   * Checks if the leveling system is enabled for a specific guild.
+   * If no settings are found for the guild, it defaults to true.
+   *
+   * @param guildId The Id of the guild to check the leveling system status.
+   * @returns A promise that resolves to a boolean indicating whether the leveling system is enabled.
    */
   async isLevelsEnabled(guildId: string): Promise<boolean> {
     if (!this.bot.guildSettings.has(guildId)) {
@@ -47,8 +65,9 @@ export class LevelManager {
   }
 
   /**
-   * Get guild scores.
-   * @param guildId The guild id to get scores for.
+   * Retrieves all the scores for the given guild.
+   * 
+   * @param guildId The Id of the guild to retrieve the scores.
    */
   static async getScores(guildId: string): Promise<ScoreInstance[]> {
     return await Score.findAll<ScoreInstance>({
@@ -59,9 +78,11 @@ export class LevelManager {
   }
 
   /**
-   * Get user score in a guild.
-   * @param guildId The guild id to get scores for.
-   * @param userId The user id to get scores for.
+   * Retrieves the score for a specific user in a given guild.
+   *
+   * @param guildId The Id of the guild from which to retrieve the user's score.
+   * @param userId The Id of the user whose score is to be retrieved.
+   * @returns A promise that resolves to the user's score instance, or null if no score is found.
    */
   static async getUserScore(
     guildId: string,
@@ -76,9 +97,12 @@ export class LevelManager {
   }
 
   /**
-   * Get an existing user score record or create if one doesn't exist.
-   * @param userId The identifier of the user.
-   * @param guildId The identifier of the guild.
+   * Retrieves the user's score for the specified guild. If the user does not have an existing score,
+   * a new score record is created with an initial EXP of 0.
+   *
+   * @param userId The Id of the user whose score is to be retrieved or created.
+   * @param guildId The Id of the guild for which the user's score is to be retrieved or created.
+   * @returns The user's score instance for the specified guild.
    */
   static async getorCreateScore(userId: string, guildId: string) {
     let score = await LevelManager.getUserScore(guildId, userId);
@@ -95,8 +119,9 @@ export class LevelManager {
   }
 
   /**
-   * Removes all the leaderboard scores for a given guild id.
-   * @param guildId The guild id to remove scores for.
+   * Removes all the leaderboard scores for the specified guild.
+
+   * @param guildId The Id of the guild to remove the scores for.
    */
   static async removeAllScoresForGuild(guildId: string): Promise<number> {
     return await Score.destroy({
@@ -169,19 +194,28 @@ export class LevelManager {
     return Date.now() - lastMessageTimestamp >= TIME_FOR_EXP;
   }
 
+  /**
+   * Fetches the channel where level-up announcements should be sent.
+   *
+   * @param interactionOrMessage The interaction or message that triggered the level-up announcement.
+   * @returns The text channel where level-up announcements should be sent.
+   */
   private async getLevelUpAnnouncementChannel(
-    message: Interaction | Message
+    interactionOrMessage: Interaction | Message
   ): Promise<TextBasedChannel> {
-    const guildId = message.guildId;
+    const guildId = interactionOrMessage.guildId;
     if (!this.bot.guildSettings.has(guildId)) {
-      return message.channel;
+      return interactionOrMessage.channel;
     }
 
     const settings = this.bot.guildSettings.get(guildId);
     const channelId = await settings.get("levelChannel");
 
     if (!channelId) {
-      return await this.bot.getAnnouncementChannel(guildId, message.channel);
+      return await this.bot.getAnnouncementChannel(
+        guildId,
+        interactionOrMessage.channel
+      );
     }
 
     try {
@@ -193,28 +227,35 @@ export class LevelManager {
 
       return channel;
     } catch {
-      return message.channel;
+      return interactionOrMessage.channel;
     }
   }
 
+  /**
+   * Generates a random level-up announcement message.
+   *
+   * @param interaction The interaction or message that triggered the level-up announcement.
+   * @param newLevel The new level that the user has reached.
+   * @returns A random level-up announcement message.
+   */
   private getRandomLevelUpAnnouncement(
     interaction: Interaction | Message,
-    level: number
+    newLevel: number
   ): string {
     const mood = this.bot.getCurrentMood(interaction.guildId);
     const announcements = LEVEL_UP_MESSAGES[mood];
     const message = announcements[
       Math.floor(Math.random() * announcements.length)
-    ].replace("<<LEVEL>>", level.toString());
+    ].replace("<<LEVEL>>", newLevel.toString());
 
     return `<@${interaction.member.user.id}> ${message}`;
   }
 
   private async onMessage(message: Message): Promise<void> {
     const isEnabled = await this.isLevelsEnabled(message.guildId);
-    const dm = message.channel.type === ChannelType.DM;
+    const isDmChannel = message.channel.type === ChannelType.DM;
 
-    if (message.author.bot || dm || !isEnabled) {
+    if (message.author.bot || isDmChannel || !isEnabled) {
       return;
     }
 
