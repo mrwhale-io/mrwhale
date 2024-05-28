@@ -11,8 +11,9 @@ import { delay } from "../../util/delay";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
-const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 1.8e6; // 30 minutes
-const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 1.2e6; // 20 minutes
+const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 30 * 60 * 1000; // 30 minutes
+const DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT = 5 * 60 * 1000;
+const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 5 * 60 * 1000; // 5 minutes
 
 interface HungerState {
   level: number;
@@ -118,11 +119,24 @@ export class HungerManager {
   ): Promise<void> {
     const currentTime = Date.now();
     const { guildId } = interactionOrMessage;
-    const lastSpawn = this.getLastHungerAnnouncementTimestamp(guildId);
-    const elapsedTime = currentTime - lastSpawn;
+    const lastHungerMessage = this.getLastHungerAnnouncementTimestamp(guildId);
+    const elapsedTimeSinceHungerMessage = currentTime - lastHungerMessage;
+
+    const fishSpawnMessage = this.bot.getAnnouncementMessage(guildId);
+    const fishSpawnMessageTimestamp = fishSpawnMessage
+      ? fishSpawnMessage.createdTimestamp
+      : -Infinity;
+    const elapsedTimeSinceSpawnMessage =
+      currentTime - fishSpawnMessageTimestamp;
+
+    if (elapsedTimeSinceSpawnMessage <= DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT) {
+      return;
+    }
 
     // Check if it's time to send a hungry announcement
-    if (elapsedTime <= NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS) {
+    if (
+      elapsedTimeSinceHungerMessage <= NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS
+    ) {
       return;
     }
 

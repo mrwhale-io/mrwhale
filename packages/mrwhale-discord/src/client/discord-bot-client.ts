@@ -299,6 +299,14 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
+   * Get the spawn announcement message from the specified guild.
+   * @param guildId The Id of the guild to get the announcement message from.
+   */
+  getAnnouncementMessage(guildId: string): Message<boolean> {
+    return this.fishManager.getAnnouncementMessage(guildId);
+  }
+
+  /**
    * Checks whether the user has remaining fishing attempts.
    */
   hasRemainingFishingAttempts(userId: string, fishingRod: FishingRod): boolean {

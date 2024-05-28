@@ -22,16 +22,18 @@ import {
 import { DiscordBotClient } from "../discord-bot-client";
 import { delay } from "../../util/delay";
 import { getActiveUsers } from "../../util/get-active-users";
-import { getplayerFishingRods } from "../../database/services/fishing-rods";
+import { getUniqueFishingRodIds } from "../../database/services/fishing-rods";
 import { updateOrCreateUserItem } from "../../database/services/user-inventory";
 import { logFishCaught } from "../../database/services/fish-caught";
 import { NoFishError } from "../../types/errors/no-fish-error";
 import { NoAttemptsLeftError } from "../../types/errors/no-attempts-left-error";
 import { RemainingAttempts } from "../../types/fishing/remaining-attempts";
 
-const ATTEMPT_REGEN_INTERVAL = 60 * 60 * 1000; // 1 hour
-const NEXT_SPAWN_IN_MILLISECONDS = 2.7e6; // 45 minutes
-const NEXT_DESPAWN_IN_MILLISECONDS = 1.2e6; // 20 minutes
+const ATTEMPT_REGEN_INTERVAL = 15 * 60 * 1000; // 15 minutes
+const NEXT_SPAWN_IN_MILLISECONDS = 60 * 60 * 1000; // 1 hour
+const NEXT_DESPAWN_IN_MILLISECONDS = 30 * 60 * 1000; // 30 minutes
+const DELETE_ANNOUNCEMENT_AFTER = 5 * 60 * 1000; // 5 minutes
+const DELAY_BETWEEN_HUNGER_ANNOUNCEMENT = 5 * 60 * 1000; // 5 minutes
 const BASE_NO_CATCH_PROBABILITY = 200;
 const FISH_PER_ACTIVE_USER = 5;
 
@@ -67,6 +69,9 @@ export class FishManager {
     this.remainingAttempts = {};
     this.bot.client.on(Events.MessageCreate, (message: Message) =>
       this.spawnFish(message)
+    );
+    this.bot.client.on(Events.InteractionCreate, (interaction: Interaction) =>
+      this.spawnFish(interaction)
     );
   }
 
@@ -252,13 +257,16 @@ export class FishManager {
     return catchableFish;
   }
 
-  private async spawnFish(message: Message): Promise<void> {
+  private async spawnFish(
+    messageOrInteraction: Message | Interaction
+  ): Promise<void> {
     try {
-      if (!message.guild || message.author.bot) {
+      // Only spawn fish in guilds and only count non bot users as guild activity
+      if (!messageOrInteraction.guild || messageOrInteraction.member.user.bot) {
         return;
       }
 
-      const { guildId } = message;
+      const { guildId } = messageOrInteraction;
       const canSpawnFish = this.canSpawnFish(guildId);
       if (!canSpawnFish) {
         return;
@@ -267,15 +275,16 @@ export class FishManager {
       const currentTime = Date.now();
       this.guildFishSpawn[guildId] = { lastSpawn: currentTime, fish: {} };
 
+      // Generate random delay between 30 and 60 seconds (in milliseconds)
       const delayInMilliseconds = Math.floor(Math.random() * 31 + 30) * 1000;
       await delay(delayInMilliseconds);
 
-      const fish = await this.generateFish(message);
-      await this.generateFishSpawnNotification(message, fish);
+      const fish = await this.generateFish(messageOrInteraction);
+      await this.generateFishSpawnNotification(messageOrInteraction, fish);
 
       setTimeout(() => {
         const guildFish = this.getGuildFish(guildId);
-        this.despawnFish(message, guildFish);
+        this.despawnFish(messageOrInteraction, guildFish);
       }, NEXT_DESPAWN_IN_MILLISECONDS);
     } catch (error) {
       this.bot.logger.error("Error while spawning fish:", error);
@@ -308,21 +317,21 @@ export class FishManager {
   }
 
   private async generateFish(
-    message: Message
+    messageOrInteraction: Message | Interaction
   ): Promise<Record<string, FishSpawnedResult>> {
     let generatedFish: Record<string, FishSpawnedResult> = {};
     try {
-      const { guild } = message;
-      const activeUsers = await getActiveUsers(message.guild);
+      const { guild } = messageOrInteraction;
+      const activeUsers = await getActiveUsers(messageOrInteraction.guild);
       const activeUsersIds = activeUsers
         ? Array.from(activeUsers)
-        : [message.author.id];
+        : [messageOrInteraction.member.user.id];
       // Ensure there's at least one active user to calculate fish count
       const activeUserCount =
         activeUsersIds.length > 0 ? activeUsersIds.length : 1;
 
       // Get the fishing rods being used among active users.
-      const playerFishingRodIds = await getplayerFishingRods(activeUsersIds);
+      const playerFishingRodIds = await getUniqueFishingRodIds(activeUsersIds);
 
       // Get the best fishing rod being used.
       const bestFishingRodId =
@@ -356,18 +365,18 @@ export class FishManager {
 
     return (
       elapsedTimeSinceLastSpawn >= NEXT_SPAWN_IN_MILLISECONDS &&
-      elapsedTimeSinceLastHungerMessage >= 6e4
+      elapsedTimeSinceLastHungerMessage >= DELAY_BETWEEN_HUNGER_ANNOUNCEMENT
     );
   }
 
   private async despawnFish(
-    message: Message,
+    messageOrInteraction: Message | Interaction,
     guildFish: Record<string, FishSpawnedResult>
   ): Promise<void> {
     const announcementChannel = await this.bot.getFishingAnnouncementChannel(
-      message
+      messageOrInteraction
     );
-    const guildId = message.guildId;
+    const { guildId } = messageOrInteraction;
     const currentMood = this.bot.getCurrentMood(guildId);
     const announementMessage = !guildFish
       ? this.getAllFishCaughtAnnouncementMessage()
@@ -385,7 +394,7 @@ export class FishManager {
       if (despawnAnnouncement && despawnAnnouncement.deletable) {
         despawnAnnouncement.delete().catch(() => null);
       }
-    }, NEXT_DESPAWN_IN_MILLISECONDS);
+    }, DELETE_ANNOUNCEMENT_AFTER);
   }
 
   private getFishSpawnAnnouncementMessage(
