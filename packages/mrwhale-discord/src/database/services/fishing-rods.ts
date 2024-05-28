@@ -5,7 +5,7 @@ import {
   getFishingRodByName,
 } from "@mrwhale-io/core";
 import { UserInventory, UserInventoryInstance } from "../models/user-inventory";
-import { updateOrCreateUserItem } from "./user-inventory";
+import { getUserItemsByType, updateOrCreateUserItem } from "./user-inventory";
 
 /**
  * Retrieves the fishing rod that the user is currently equipped with.
@@ -38,7 +38,7 @@ export async function getEquippedFishingRod(
  *
  * @param userIds An array of user Ids for which the fishing rod Ids are to be retrieved.
  */
-export async function getplayerFishingRods(
+export async function getUniqueFishingRodIds(
   userIds: string[]
 ): Promise<number[]> {
   const fishingRods = await UserInventory.findAll({
@@ -51,6 +51,27 @@ export async function getplayerFishingRods(
   });
 
   return fishingRods.map((fishingRod) => fishingRod.itemId);
+}
+
+/**
+ * Retrieves all fishing rods owned by a specific player in a specific guild.
+ *
+ * This function queries the UserInventory table to find all fishing rod items that are owned by
+ * the specified user Id within the specified guild. It then maps these inventory entries to
+ * their corresponding fishing rod details by fetching the fishing rod information using the
+ * item IDs.
+ *
+ * @param userId The Id of the user for whom the fishing rods are to be retrieved.
+ * @param guildId The Id of the guild in which the user's inventory is being queried.
+ * @returns A promise that resolves to an array of FishingRod objects owned by the user in the specified guild.
+ */
+export async function getFishingRodsOwnedByPlayer(
+  userId: string,
+  guildId: string
+): Promise<FishingRod[]> {
+  const fishingRods = await getUserItemsByType(userId, guildId, "FishingRod");
+
+  return fishingRods.map((fishingRod) => getFishingRodById(fishingRod.itemId));
 }
 
 /**
