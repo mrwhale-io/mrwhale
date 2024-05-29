@@ -20,7 +20,7 @@ import {
   spawnFish,
 } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
-import { delay } from "../../util/delay";
+import { delay, getRandomDelayInMilliseconds } from "../../util/delay-helpers";
 import { getActiveUsers } from "../../util/get-active-users";
 import { getUniqueFishingRodIds } from "../../database/services/fishing-rods";
 import { updateOrCreateUserItem } from "../../database/services/user-inventory";
@@ -28,6 +28,7 @@ import { logFishCaught } from "../../database/services/fish-caught";
 import { NoFishError } from "../../types/errors/no-fish-error";
 import { NoAttemptsLeftError } from "../../types/errors/no-attempts-left-error";
 import { RemainingAttempts } from "../../types/fishing/remaining-attempts";
+import { consumeBait } from "../../database/services/bait";
 
 const ATTEMPT_REGEN_INTERVAL = 15 * 60 * 1000; // 15 minutes
 const NEXT_SPAWN_IN_MILLISECONDS = 60 * 60 * 1000; // 1 hour
@@ -43,6 +44,10 @@ interface FishSpawnMap {
     announcementMessage?: Message;
     fish: Record<string, FishSpawnedResult>;
   };
+}
+
+interface RemainingAttemptsMap {
+  [guildId: number]: { [user: number]: RemainingAttempts };
 }
 
 interface AnnouncementOptions {
@@ -62,7 +67,7 @@ interface AnnouncementOptions {
  */
 export class FishManager {
   private guildFishSpawn: FishSpawnMap;
-  private remainingAttempts: Record<string, RemainingAttempts>;
+  private remainingAttempts: RemainingAttemptsMap;
 
   constructor(private bot: DiscordBotClient) {
     this.guildFishSpawn = {};
@@ -106,24 +111,34 @@ export class FishManager {
    */
   getRemainingAttempts(
     userId: string,
+    guildId: string,
     fishingRod: FishingRod
   ): RemainingAttempts {
-    if (!this.remainingAttempts[userId]) {
-      this.remainingAttempts[userId] = {
+    if (!this.remainingAttempts[guildId]) {
+      this.remainingAttempts[guildId] = {};
+    }
+
+    if (!this.remainingAttempts[guildId][userId]) {
+      this.remainingAttempts[guildId][userId] = {
         lastAttemptTimestamp: Date.now(),
         attempts: fishingRod.casts,
       };
     }
 
-    return this.remainingAttempts[userId];
+    return this.remainingAttempts[guildId][userId];
   }
 
   /**
    * Checks whether the user has remaining fishing attempts in the guild.
    */
-  hasRemainingAttempts(userId: string, fishingRod: FishingRod): boolean {
+  hasRemainingAttempts(
+    userId: string,
+    guildId: string,
+    fishingRod: FishingRod
+  ): boolean {
     const remainingAttempts = this.regenerateFishingAttempts(
       userId,
+      guildId,
       fishingRod
     );
 
@@ -155,7 +170,7 @@ export class FishManager {
     }
 
     // Check if the user has any remaining attempts to catch fish
-    if (!this.hasRemainingAttempts(userId, fishingRod)) {
+    if (!this.hasRemainingAttempts(userId, guildId, fishingRod)) {
       throw new NoAttemptsLeftError();
     }
 
@@ -168,8 +183,11 @@ export class FishManager {
       BASE_NO_CATCH_PROBABILITY
     );
 
+    // Use bait equipped from the user's inventory.
+    await consumeBait(userId, guildId, bait.id);
+
     if (!fishCaught) {
-      this.updateAttempts(userId);
+      this.updateAttempts(userId, guildId);
       return null;
     }
 
@@ -205,7 +223,7 @@ export class FishManager {
     await logFishCaught(userId, guildId);
 
     // Decrement the number of attempts the user has left.
-    this.updateAttempts(userId);
+    this.updateAttempts(userId, guildId);
 
     // If we have caught all the fish in the guild we send an announcement
     if (!this.hasGuildFish(guildId)) {
@@ -216,18 +234,23 @@ export class FishManager {
     }
   }
 
-  private updateAttempts(userId: string): void {
-    if (this.remainingAttempts[userId]) {
-      this.remainingAttempts[userId].attempts--;
-      this.remainingAttempts[userId].lastAttemptTimestamp = Date.now();
+  private updateAttempts(userId: string, guildId: string): void {
+    if (this.remainingAttempts[guildId][userId]) {
+      this.remainingAttempts[guildId][userId].attempts--;
+      this.remainingAttempts[guildId][userId].lastAttemptTimestamp = Date.now();
     }
   }
 
   private regenerateFishingAttempts(
     userId: string,
+    guildId: string,
     fishingRod: FishingRod
   ): RemainingAttempts {
-    const remainingAttempts = this.getRemainingAttempts(userId, fishingRod);
+    const remainingAttempts = this.getRemainingAttempts(
+      userId,
+      guildId,
+      fishingRod
+    );
     const now = Date.now();
     const timeSinceLastAttempt = now - remainingAttempts.lastAttemptTimestamp;
     const attemptsToRegen = Math.floor(
@@ -257,16 +280,25 @@ export class FishManager {
     return catchableFish;
   }
 
+  /**
+   * Spawns fish in a guild if certain conditions are met.
+   * This method ensures that fish are only spawned in active guilds and non-bot users.
+   * It also handles fish spawn notification and scheduling fish despawn.
+   *
+   * @param messageOrInteraction The message or interaction that triggered the fish spawn.
+   */
   private async spawnFish(
     messageOrInteraction: Message | Interaction
   ): Promise<void> {
     try {
-      // Only spawn fish in guilds and only count non bot users as guild activity
-      if (!messageOrInteraction.guild || messageOrInteraction.member.user.bot) {
+      // Check if the interaction is invalid (not from a guild, from a bot user, etc.)
+      if (this.isInvalidInteraction(messageOrInteraction)) {
         return;
       }
 
       const { guildId } = messageOrInteraction;
+
+      // Check if fish can spawn in the guild
       const canSpawnFish = this.canSpawnFish(guildId);
       if (!canSpawnFish) {
         return;
@@ -276,35 +308,72 @@ export class FishManager {
       this.guildFishSpawn[guildId] = { lastSpawn: currentTime, fish: {} };
 
       // Generate random delay between 30 and 60 seconds (in milliseconds)
-      const delayInMilliseconds = Math.floor(Math.random() * 31 + 30) * 1000;
+      const delayInMilliseconds = getRandomDelayInMilliseconds(30, 60);
       await delay(delayInMilliseconds);
 
       const fish = await this.generateFish(messageOrInteraction);
+
+      // Send a notification about the fish spawn
       await this.generateFishSpawnNotification(messageOrInteraction, fish);
 
-      setTimeout(() => {
-        const guildFish = this.getGuildFish(guildId);
-        this.despawnFish(messageOrInteraction, guildFish);
-      }, NEXT_DESPAWN_IN_MILLISECONDS);
+      // Schedule the fish to despawn after a specified time
+      this.scheduleFishDespawn(messageOrInteraction, guildId);
     } catch (error) {
       this.bot.logger.error("Error while spawning fish:", error);
     }
   }
 
+  private isInvalidInteraction(
+    messageOrInteraction: Message | Interaction
+  ): boolean {
+    return (
+      !messageOrInteraction.guild ||
+      !messageOrInteraction.member ||
+      !messageOrInteraction.member.user ||
+      messageOrInteraction.member.user.bot
+    );
+  }
+
+  /**
+   * Schedules the fish to despawn after a specified time.
+   *
+   * @param messageOrInteraction The message or interaction that triggered the fish spawn.
+   * @param guildId The Id of the guild where the fish will despawn.
+   */
+  private scheduleFishDespawn(
+    messageOrInteraction: Message | Interaction,
+    guildId: string
+  ): void {
+    setTimeout(() => {
+      const guildFish = this.getGuildFish(guildId);
+      this.despawnFish(messageOrInteraction, guildFish);
+    }, NEXT_DESPAWN_IN_MILLISECONDS);
+  }
+
+  /**
+   * Generates and sends a fish spawn notification in a guild.
+   *
+   * @param messageOrInteraction The message or interaction that triggered the fish spawn.
+   * @param fish The spawned fish details.
+   */
   private async generateFishSpawnNotification(
     messageOrInteraction: Message | Interaction,
     fish: Record<string, FishSpawnedResult>
   ): Promise<void> {
     const { guildId } = messageOrInteraction;
 
+    // Check if any fish have spawned in the guild before sending an announcement
     if (!this.hasGuildFish(guildId)) {
       return;
     }
 
+    // Get the configured guild channel for fish spawn announcements
     const announcementChannel = await this.bot.getFishingAnnouncementChannel(
       messageOrInteraction
     );
     const currentMood = this.bot.getCurrentMood(guildId);
+
+    // Generate the announcement message text based on the current mood and spawned fish
     const announementMessageText = this.getFishSpawnAnnouncementMessage(
       currentMood,
       fish

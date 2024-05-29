@@ -28,8 +28,10 @@ export async function getCaughtFishEmbed(
     fishCaught,
   } = fishCaughtOptions;
   const userId = interaction.member.user.id;
+  const guildId = interaction.guildId;
   const remainingFishingAttempts = botClient.getRemainingFishingAttempts(
     userId,
+    guildId,
     fishingRodUsed
   );
   const attemptText =
