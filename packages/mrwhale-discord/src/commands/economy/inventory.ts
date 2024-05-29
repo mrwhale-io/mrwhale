@@ -25,6 +25,7 @@ export default class InventoryCommand extends DiscordCommand {
       description: "Shows your inventory.",
       type: "economy",
       usage: "<prefix>inventory",
+      guildOnly: true,
       cooldown: 3000,
     });
   }
@@ -151,8 +152,11 @@ export default class InventoryCommand extends DiscordCommand {
 
     return filteredBaitItems
       .map((item) => {
+        const isEquipped = item.equipped;
         const bait = getBaitById(item.itemId);
-        return `${code(`${item.quantity}x`)} ${bait.icon} ${bait.name}`;
+        return `${code(`${item.quantity}x`)} ${bait.icon} ${bait.name} ${
+          isEquipped ? " " + code("[Equipped]") : ""
+        }`;
       })
       .join("\n");
   }

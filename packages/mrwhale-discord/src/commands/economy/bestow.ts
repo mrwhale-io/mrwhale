@@ -16,6 +16,7 @@ export default class extends DiscordCommand {
       description: "Transfer your gems to another user.",
       type: "economy",
       usage: "<prefix>bestow",
+      guildOnly: true,
       cooldown: 3000,
     });
     this.slashCommandData.addUserOption((option) =>

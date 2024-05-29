@@ -15,6 +15,7 @@ export default class extends DiscordCommand {
       description: "Shop around for items.",
       type: "economy",
       usage: "<prefix>shop",
+      guildOnly: true,
       cooldown: 3000,
     });
     this.slashCommandData.addStringOption((option) =>

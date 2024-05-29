@@ -13,6 +13,7 @@ export default class extends DiscordCommand {
       description: "Catch some fish.",
       type: "economy",
       usage: "<prefix>catch",
+      guildOnly: true,
       cooldown: 3000,
     });
   }

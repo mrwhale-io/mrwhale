@@ -33,6 +33,7 @@ export default class extends DiscordCommand {
       description: "Buy an item from the shop.",
       type: "economy",
       usage: "<prefix>buy",
+      guildOnly: true,
       cooldown: 3000,
     });
     this.slashCommandData

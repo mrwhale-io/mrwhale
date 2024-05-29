@@ -14,6 +14,7 @@ export default class extends DiscordCommand {
       description: "View the ocean to see what creatures are lurking.",
       type: "economy",
       usage: "<prefix>ocean",
+      guildOnly: true,
       cooldown: 3000,
     });
   }

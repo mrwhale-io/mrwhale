@@ -18,6 +18,7 @@ export default class extends DiscordCommand {
       description: "Get Mr. Whale's current mood.",
       type: "economy",
       usage: "<prefix>whalemood",
+      guildOnly: true,
       cooldown: 3000,
     });
   }
