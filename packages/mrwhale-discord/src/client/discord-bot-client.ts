@@ -41,14 +41,10 @@ import { DiscordSelectMenu } from "./menu/discord-select-menu";
 import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
 import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
 import { HungerManager } from "./managers/hunger-manager";
-import { FeedResult } from "../types/fishing/feed-result";
 import { FishManager } from "./managers/fish-manager";
 import { DiscordButton } from "./button/discord-button";
 import { DiscordButtonLoader } from "./button/discord-button-loader";
 import { DiscordButtonHandler } from "./button/discord-button-handler";
-import { getUserItemById } from "../database/services/user-inventory";
-import { UserInventory } from "../database/models/user-inventory";
-import { logFishFed } from "../database/services/fish-fed";
 import { getEquippedFishingRod } from "../database/services/fishing-rods";
 import { UserBalanceManager } from "./managers/user-balance-manager";
 import { createCatchButtons } from "../util/button/catch-buttons-helpers";
@@ -57,6 +53,10 @@ import { NoFishError } from "../types/errors/no-fish-error";
 import { NoAttemptsLeftError } from "../types/errors/no-attempts-left-error";
 import { RemainingAttempts } from "../types/fishing/remaining-attempts";
 import { getCaughtFishEmbed } from "../util/embed/fish-caught-embed-helpers";
+import { InventoryError } from "../types/errors/inventory-error";
+import { InsufficientItemsError } from "../types/errors/Insufficient-items-error";
+import { HungerLevelFullError } from "../types/errors/hunger-level-full-error";
+import { getFedRewardsEmbed } from "../util/embed/hunger-embed-helpers";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -196,9 +196,9 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Gets the room prefix.
+   * Gets the unique bot prefix of the specified guild.
    *
-   * @param guildId The guild prefix.
+   * @param guildId The id of the guild to get the prefix for.
    */
   async getPrefix(guildId: string): Promise<string> {
     if (!this.guildSettings.has(guildId)) {
@@ -211,65 +211,77 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Increases the health level for the given guild.
-   * This will increase depending on the expWorth of the given fish type.
-   * @param interaction The interaction or message.
-   * @param fishName The fish to feed Mr. Whale.
-   * @param quantity The number of given fish to feed Mr. Whale.
+   * Feeds Mr. Whale with the specified fish and quantity, rewards the user with EXP and gems,
+   * and returns an embed with the rewards details.
+   *
+   * @param interactionOrMessage The interaction or message triggering the feed action.
+   * @param fishName The name of the fish to feed Mr. Whale.
+   * @param quantity The quantity of the fish to feed.
+   * @returns A promise that resolves to an EmbedBuilder containing the rewards details.
    */
   async feed(
-    interaction: Interaction | Message,
+    interactionOrMessage: Interaction | Message,
     fishName: FishTypeNames,
     quantity: number
-  ): Promise<FeedResult> {
-    const userId = interaction.member.user.id;
-    const guildId = interaction.guildId;
-    const fish = getFishByName(fishName);
-    const usersFish = await getUserItemById(userId, guildId, fish.id, "Fish");
+  ): Promise<EmbedBuilder> {
+    const {
+      user: { id: userId },
+    } = interactionOrMessage.member;
+    const { guildId } = interactionOrMessage;
 
-    if (!usersFish || usersFish.quantity <= 0) {
-      throw new Error(`You have no ${fishName} in your inventory.`);
-    }
+    try {
+      const fish = getFishByName(fishName);
 
-    if (quantity > usersFish.quantity) {
-      throw new Error(
-        `You only have ${usersFish.quantity} ${fishName} in your inventory.`
+      // Attempt to feed Mr. Whale with the specified fish and quantity
+      const result = await this.hungerManager.feed(
+        guildId,
+        userId,
+        fish,
+        quantity
       );
-    }
 
-    const hungerLevel = await this.hungerManager.feed(guildId, fish, quantity);
+      // Award EXP to the user
+      this.levelManager.increaseExp(
+        interactionOrMessage,
+        userId,
+        guildId,
+        result.expGained
+      );
 
-    const expIncrease = fish.expWorth * quantity;
-    this.levelManager.increaseExp(interaction, userId, guildId, expIncrease);
+      // Update the user's balance and get the new balance
+      const { balance } = await this.userBalanceManager.addToUserBalance(
+        userId,
+        guildId,
+        result.reward
+      );
 
-    const reward = fish.worth * quantity;
-    const user = await this.userBalanceManager.addToUserBalance(
-      userId,
-      guildId,
-      reward
-    );
-
-    usersFish.quantity -= quantity;
-    if (usersFish.quantity <= 0) {
-      UserInventory.destroy({
-        where: {
-          userId,
-          itemType: "Fish",
-          itemId: fish.id,
-        },
+      // Create an embed with the rewards details
+      const rewardsEmbed = await getFedRewardsEmbed({
+        fish,
+        guildId,
+        userId,
+        quantity,
+        balance,
+        result,
+        botClient: this,
       });
+
+      return rewardsEmbed;
+    } catch (error) {
+      if (
+        error instanceof InventoryError ||
+        error instanceof InsufficientItemsError ||
+        error instanceof HungerLevelFullError
+      ) {
+        const errorEmbed = new EmbedBuilder()
+          .setColor(EMBED_COLOR)
+          .setDescription(error.message);
+        return errorEmbed;
+      } else {
+        this.logger.error("Error feeding fish:", error);
+        throw error;
+      }
     }
-
-    usersFish.save();
-
-    await logFishFed(userId, guildId, quantity);
-
-    return {
-      expGained: expIncrease,
-      reward,
-      newBalance: user.balance,
-      hungerLevel,
-    };
   }
 
   /**
@@ -285,9 +297,10 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   getRemainingFishingAttempts(
     userId: string,
+    guildId: string,
     fishingRod: FishingRod
   ): RemainingAttempts {
-    return this.fishManager.getRemainingAttempts(userId, fishingRod);
+    return this.fishManager.getRemainingAttempts(userId, guildId, fishingRod);
   }
 
   /**
@@ -304,13 +317,6 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   getAnnouncementMessage(guildId: string): Message<boolean> {
     return this.fishManager.getAnnouncementMessage(guildId);
-  }
-
-  /**
-   * Checks whether the user has remaining fishing attempts.
-   */
-  hasRemainingFishingAttempts(userId: string, fishingRod: FishingRod): boolean {
-    return this.fishManager.hasRemainingAttempts(userId, fishingRod);
   }
 
   /**
@@ -595,6 +601,12 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       const levelChannelId = await settings.get("levelChannel");
       if (levelChannelId === channel.id) {
         settings.remove("levelChannel");
+      }
+
+      const announcementChannelId = await settings.get("announcementChannel");
+
+      if (announcementChannelId === channel.id) {
+        settings.remove("announcementChannel");
       }
     }
   }

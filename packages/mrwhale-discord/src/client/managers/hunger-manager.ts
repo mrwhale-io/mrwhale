@@ -7,7 +7,16 @@ import {
   Mood,
 } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
-import { delay } from "../../util/delay";
+import { delay, getRandomDelayInMilliseconds } from "../../util/delay-helpers";
+import { HungerLevelFullError } from "../../types/errors/hunger-level-full-error";
+import {
+  getUserItemById,
+  useUserItem,
+} from "../../database/services/user-inventory";
+import { InventoryError } from "../../types/errors/inventory-error";
+import { InsufficientItemsError } from "../../types/errors/Insufficient-items-error";
+import { FeedResult } from "../../types/fishing/feed-result";
+import { logFishFed } from "../../database/services/fish-fed";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
@@ -86,13 +95,33 @@ export class HungerManager {
   }
 
   /**
-   * Feeds the guild's Mr. Whale with the specified quantity of fish, updating the hunger level.
-   * @param guildId The ID of the guild.
+   * Feeds Mr. Whale with the specified quantity of a given fish, updating the user's inventory,
+   * Mr. Whale's hunger level, and awarding the user with experience points and rewards.
+   *
+   * @param guildId The Id of the guild where the feeding action is taking place.
+   * @param userId The Id of the user performing the feeding action.
    * @param fish The fish being fed to Mr. Whale.
-   * @param quantity The quantity of fish being fed.
-   * @returns The new hunger level after feeding.
+   * @param quantity The quantity of the fish being fed.
+   * @returns A Promise that resolves to a FeedResult containing the amount of exp gained, the reward given, and the new hunger level.
    */
-  async feed(guildId: string, fish: Fish, quantity: number): Promise<number> {
+  async feed(
+    guildId: string,
+    userId: string,
+    fish: Fish,
+    quantity: number
+  ): Promise<FeedResult> {
+    // Retrieve the user's fish item from their inventory
+    const usersFish = await getUserItemById(userId, guildId, fish.id, "Fish");
+
+    // Check if the user has the fish in their inventory and if they have enough quantity
+    if (!usersFish || usersFish.quantity <= 0) {
+      throw new InventoryError(fish.name);
+    }
+
+    if (quantity > usersFish.quantity) {
+      throw new InsufficientItemsError(fish.name, usersFish.quantity);
+    }
+
     // Check if the guild exists in the hunger levels map
     if (!this.guildHungerLevels[guildId]) {
       throw new Error("Guild not found.");
@@ -100,18 +129,28 @@ export class HungerManager {
 
     // Calculate the new hunger level
     const currentHungerLevel = this.guildHungerLevels[guildId].level;
-    const increaseAmount = fish.hpWorth * quantity;
-    const newHungerLevel = currentHungerLevel + increaseAmount; // Increase hunger level based on fish type
+    const reward = fish.worth * quantity;
+    const hpIncreaseAmount = fish.hpWorth * quantity;
+    const expIncreaseAmount = fish.expWorth * quantity;
+    const newHungerLevel = currentHungerLevel + hpIncreaseAmount; // Increase hunger level based on fish type
 
     if (newHungerLevel > HungerLevel.Full) {
-      throw new Error("I'm too full to eat this!");
+      throw new HungerLevelFullError();
     }
 
     // Update the guild's hunger level and last fed timestamp
     this.guildHungerLevels[guildId].level = newHungerLevel;
     this.guildHungerLevels[guildId].lastFedTimestamp = Date.now();
 
-    return newHungerLevel;
+    // Log the feeding action and update the user's inventory
+    await logFishFed(userId, guildId, quantity);
+    await useUserItem(userId, guildId, usersFish, quantity);
+
+    return {
+      expGained: expIncreaseAmount,
+      reward,
+      hungerLevel: newHungerLevel,
+    };
   }
 
   private async sendHungryAnnouncement(
@@ -129,13 +168,11 @@ export class HungerManager {
     const elapsedTimeSinceSpawnMessage =
       currentTime - fishSpawnMessageTimestamp;
 
-    if (elapsedTimeSinceSpawnMessage <= DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT) {
-      return;
-    }
-
-    // Check if it's time to send a hungry announcement
+    // Check if it's time to send a hunger announcement
     if (
-      elapsedTimeSinceHungerMessage <= NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS
+      elapsedTimeSinceHungerMessage <=
+        NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS ||
+      elapsedTimeSinceSpawnMessage <= DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT
     ) {
       return;
     }
@@ -175,7 +212,7 @@ export class HungerManager {
     this.guildHungerLevels[guildId].lastHungerAnnouncement = currentTime;
 
     // Generate random delay between 30 and 60 seconds (in milliseconds)
-    const delayInMilliseconds = Math.floor(Math.random() * 31 + 30) * 1000;
+    const delayInMilliseconds = getRandomDelayInMilliseconds(30, 60);
     await delay(delayInMilliseconds);
 
     const announcement =
