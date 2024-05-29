@@ -4,6 +4,7 @@ import { ItemTypes } from "@mrwhale-io/core";
 import { database } from "..";
 import { Fish, FishInstance } from "./fish";
 import { FishingRod, FishingRodInstance } from "./fishing-rod";
+import { Bait, BaitInstance } from "./bait";
 
 interface UserInventoryAttributes {
   userId: string;
@@ -17,8 +18,9 @@ interface UserInventoryAttributes {
 export interface UserInventoryInstance
   extends Model<UserInventoryAttributes, UserInventoryAttributes>,
     UserInventoryAttributes {
-  fish: FishInstance;
-  fishingRod: FishingRodInstance;
+  fish?: FishInstance;
+  fishingRod?: FishingRodInstance;
+  bait?: BaitInstance;
 }
 
 export const UserInventory = database.connection.define<UserInventoryInstance>(
@@ -58,12 +60,16 @@ UserInventory.belongsTo(Fish, {
   as: "fish",
   foreignKey: "itemId",
   constraints: false,
-  scope: { itemType: "Fish" },
 });
 
 UserInventory.belongsTo(FishingRod, {
   as: "fishingRod",
   foreignKey: "itemId",
   constraints: false,
-  scope: { itemType: "FishingRod" },
+});
+
+UserInventory.belongsTo(Bait, {
+  as: "bait",
+  foreignKey: "itemId",
+  constraints: false,
 });

@@ -1,5 +1,9 @@
+import { Op } from "sequelize";
+
 import { ItemTypes } from "@mrwhale-io/core";
 import { UserInventory, UserInventoryInstance } from "../models/user-inventory";
+import { FishingRod } from "../models/fishing-rod";
+import { Bait } from "../models/bait";
 
 interface UserItemCreateOptions {
   userId: string;
@@ -112,4 +116,129 @@ export async function updateOrCreateUserItem({
   userItem.save();
 
   return userItem;
+}
+
+/**
+ * Equips a specified item for the user in the given guild.
+ * This function ensures that any previously equipped item of the same type is unequipped
+ * before equipping the new item.
+ *
+ * @param userId The Id of the user equipping the item.
+ * @param guildId The Id of the guild where the item is being equipped.
+ * @param inventoryItem The inventory item instance to be equipped.
+ * @returns A promise that resolves when the item has been equipped.
+ */
+export async function equipUserItem(
+  userId: string,
+  guildId: string,
+  inventoryItem: UserInventoryInstance
+): Promise<void> {
+  // Unequip any currently equipped items of the same type
+  await UserInventory.update(
+    { equipped: false },
+    {
+      where: {
+        userId,
+        guildId,
+        itemType: inventoryItem.itemType,
+        equipped: true,
+      },
+    }
+  );
+
+  // Equip the new item
+  inventoryItem.equipped = true;
+  await inventoryItem.save();
+}
+
+/**
+ * Uses the specified item for the user in the given guild.
+ *
+ * Decreases the quantity of the item by the quantity passed in and removes the inventory item if
+ * there are no more in their inventory.
+ *
+ * @param userId The Id of the user using the item.
+ * @param guildId The Id of the guild where the item is being used.
+ * @param inventoryItem The inventory item instance to be used.
+ * @param quantity The number of items to use.
+ */
+export async function useUserItem(
+  userId: string,
+  guildId: string,
+  inventoryItem: UserInventoryInstance,
+  quantity: number
+): Promise<void> {
+  inventoryItem.quantity -= quantity;
+  await inventoryItem.save();
+
+  if (inventoryItem.quantity <= 0) {
+    UserInventory.destroy({
+      where: {
+        userId,
+        guildId,
+        itemType: inventoryItem.itemType,
+        itemId: inventoryItem.itemId,
+      },
+    });
+  }
+}
+
+/**
+ * Retrieves a specific item from the user's inventory based on the name of the item.
+ *
+ * This function queries the user's inventory within a specific guild to find an item matching
+ * the specified item name. If the item is found, it returns the corresponding
+ * UserInventoryInstance. This can be used to check if a user possesses a particular item
+ * within a specific guild and to retrieve details about that item.
+ *
+ * @param userId The Id of the user whose inventory is being queried.
+ * @param guildId The Id of the guild where the inventory is being checked.
+ * @param itemName The name of the item being queried.
+ */
+export async function getUserItemByName(
+  userId: string,
+  guildId: string,
+  itemName: string
+): Promise<UserInventoryInstance | null> {
+  const inventoryItems = await UserInventory.findAll({
+    where: {
+      userId,
+      guildId,
+    },
+    include: [
+      {
+        model: FishingRod,
+        as: "fishingRod",
+        where: { name: { [Op.like]: itemName } },
+        required: false,
+      },
+      {
+        model: Bait,
+        as: "bait",
+        where: { name: { [Op.like]: itemName } },
+        required: false,
+      },
+    ],
+  });
+
+  // Filter the inventory items to find the one that matches the item name
+  return (
+    inventoryItems.find((item) => {
+      if (
+        item.itemType === "FishingRod" &&
+        item.fishingRod &&
+        item.fishingRod.name === itemName
+      ) {
+        return true;
+      }
+      if (
+        item.itemType === "Bait" &&
+        item.bait &&
+        item.bait.name === itemName
+      ) {
+        return true;
+      }
+      return false;
+    }) || null
+  );
 }
