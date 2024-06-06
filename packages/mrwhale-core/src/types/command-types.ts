@@ -4,6 +4,7 @@
 export type CommandTypes =
   | "admin"
   | "economy"
+  | "fishing"
   | "useful"
   | "fun"
   | "utility"

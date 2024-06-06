@@ -12,7 +12,7 @@ export default class extends DiscordCommand {
     super({
       name: "ocean",
       description: "View the ocean to see what creatures are lurking.",
-      type: "economy",
+      type: "fishing",
       usage: "<prefix>ocean",
       guildOnly: true,
       cooldown: 3000,

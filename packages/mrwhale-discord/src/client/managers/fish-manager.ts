@@ -29,6 +29,8 @@ import { NoFishError } from "../../types/errors/no-fish-error";
 import { NoAttemptsLeftError } from "../../types/errors/no-attempts-left-error";
 import { RemainingAttempts } from "../../types/fishing/remaining-attempts";
 import { consumeBait } from "../../database/services/bait";
+import { checkAndAwardAchievements } from "../../database/services/achievements";
+import { CatchResult } from "../../types/fishing/catch-result";
 
 const ATTEMPT_REGEN_INTERVAL = 15 * 60 * 1000; // 15 minutes
 const NEXT_SPAWN_IN_MILLISECONDS = 60 * 60 * 1000; // 1 hour
@@ -148,7 +150,7 @@ export class FishManager {
   /**
    * Attempts to catch a fish for the specified user in the given guild using the provided fishing rod and bait.
    * Throws specific errors if no fish are available to catch or if the user has no remaining attempts.
-   * If successful, returns the caught fish. If no fish is caught, decrements the user's remaining attempts.
+   * If successful, returns the caught and achievements. If no fish is caught, decrements the user's remaining attempts.
    *
    * @param guildId The identifier of the guild where the fishing attempt is taking place.
    * @param userId The identifier of the user attempting to catch a fish.
@@ -163,7 +165,7 @@ export class FishManager {
     userId: string,
     fishingRod: FishingRod,
     bait: Bait
-  ): Promise<Fish> {
+  ): Promise<CatchResult> {
     // Check if there are any fish available to catch in the guild
     if (!this.hasGuildFish(guildId)) {
       throw new NoFishError();
@@ -188,13 +190,20 @@ export class FishManager {
 
     if (!fishCaught) {
       this.updateAttempts(userId, guildId);
-      return null;
+      return { fishCaught: null, achievements: [] };
     }
 
     // Handle the caught fish (e.g., add to inventory, update guild state)
     await this.handleFishCaught(guildId, userId, fishCaught, allGuildFish);
 
-    return fishCaught;
+    // Check whether the user has earned any achievements
+    const achievements = await checkAndAwardAchievements(
+      userId,
+      guildId,
+      fishCaught
+    );
+
+    return { fishCaught, achievements };
   }
 
   private async handleFishCaught(
@@ -220,7 +229,8 @@ export class FishManager {
       itemId: fishCaught.id,
       itemType: "Fish",
     });
-    await logFishCaught(userId, guildId);
+
+    await logFishCaught(userId, guildId, fishCaught.id, fishCaught.rarity);
 
     // Decrement the number of attempts the user has left.
     this.updateAttempts(userId, guildId);

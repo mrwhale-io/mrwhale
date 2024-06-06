@@ -26,6 +26,7 @@ export {
   DEFAULT_COMMAND_RATE_LIMIT,
   DEFAULT_COMMAND_COOLDOWN_DURATION,
   DEFAULT_RANK_THEME,
+  FISH_RARITY_ICONS,
 } from "./constants";
 export { BotClient } from "./client/bot-client";
 export { Command } from "./client/command/command";
@@ -70,7 +71,12 @@ export { LEVEL_UP_MESSAGES } from "./data/level-up-messages";
 export { FED_MESSAGES } from "./data/fed-messages";
 export { NO_FISH_MESSAGES } from "./data/no-fish-messages";
 export { fishingRods } from "./data/fishing-rods";
+export { achievements } from "./data/achievements";
 export { baits } from "./data/baits";
+export {
+  getAchievementByName,
+  getAchievementById,
+} from "./helpers/achievements";
 export { Fish } from "./types/fish";
 export { Bait } from "./types/bait";
 export { FishTypeNames } from "./types/fish-type-names";
@@ -88,7 +94,11 @@ export {
   countFishSpawned,
 } from "./helpers/fishing";
 export { Mood } from "./types/mood";
+export { Achievement } from "./types/achievement";
 export { FishingRodNames } from "./types/fishing-rod-names";
 export { HungerLevel } from "./types/hunger-level";
 export { FishingRod } from "./types/fishing-rod";
 export { BaseItem } from "./types/base-item";
+export { AchievementNames } from "./types/achievement-names";
+export { AchievementCriteria } from "./types/achievement-criteria";
+export { FishRarity } from "./types/fish-rarity";

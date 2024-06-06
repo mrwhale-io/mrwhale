@@ -1,14 +1,22 @@
 import { EmbedBuilder, Interaction, Message } from "discord.js";
 
-import { Bait, Fish, FishingRod, NO_FISH_MESSAGES } from "@mrwhale-io/core";
+import {
+  Achievement,
+  Bait,
+  Fish,
+  FishingRod,
+  NO_FISH_MESSAGES,
+} from "@mrwhale-io/core";
 import { DiscordBotClient } from "../../client/discord-bot-client";
 import { EMBED_COLOR } from "../../constants";
 import { getTwemojiUrl } from "../get-twemoji-url";
+import { formatAchievements } from "../format-achievements";
 
 interface FishCaughtEmbedOptions {
   fishCaught: Fish;
   fishingRodUsed: FishingRod;
   baitUsed: Bait;
+  achievements: Achievement[];
   interaction: Interaction | Message;
   botClient: DiscordBotClient;
 }
@@ -21,6 +29,7 @@ export async function getCaughtFishEmbed(
 ): Promise<EmbedBuilder> {
   const embed = new EmbedBuilder().setColor(EMBED_COLOR);
   const {
+    achievements,
     interaction,
     botClient,
     baitUsed,
@@ -73,7 +82,12 @@ export async function getCaughtFishEmbed(
         value: `${baitUsed.icon} ${baitUsed.name}`,
         inline: true,
       },
-      { name: "Rarity", value: `🌟 ${fishCaught.rarity}`, inline: true }
+      { name: "Rarity", value: `🌟 ${fishCaught.rarity}`, inline: true },
+      {
+        name: "Achievements Unlocked",
+        value: formatAchievements(achievements),
+        inline: true,
+      }
     );
 
   return embed;

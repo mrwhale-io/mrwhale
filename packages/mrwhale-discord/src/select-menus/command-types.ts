@@ -51,10 +51,11 @@ export default class extends DiscordSelectMenu {
 
   private getEmoji(commandType: CommandTypes): string {
     const emojis: Record<CommandTypes, string> = {
-      ["fun"]: "😀",
-      ["economy"]: "💵",
-      ["utility"]: "🔧",
       ["admin"]: "🛡️",
+      ["economy"]: "💵",
+      ["fishing"]: "🎣",
+      ["fun"]: "😀",
+      ["utility"]: "🔧",
       ["useful"]: "🖨️",
       ["game"]: "🎲",
       ["image"]: "🖼️",

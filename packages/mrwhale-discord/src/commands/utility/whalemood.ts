@@ -16,7 +16,7 @@ export default class extends DiscordCommand {
     super({
       name: "whalemood",
       description: "Get Mr. Whale's current mood.",
-      type: "economy",
+      type: "utility",
       usage: "<prefix>whalemood",
       guildOnly: true,
       cooldown: 3000,

@@ -8,6 +8,7 @@ import {
 
 import {
   code,
+  getAchievementById,
   getBaitById,
   getFishById,
   getFishingRodById,
@@ -17,8 +18,10 @@ import { EMBED_COLOR } from "../../constants";
 import { getUserItemsFromInventory } from "../../database/services/user-inventory";
 import { UserInventoryInstance } from "../../database/models/user-inventory";
 import { addFishingRodToUserInventory } from "../../database/services/fishing-rods";
+import { getUserAchievements } from "../../database/services/achievements";
+import { formatAchievements } from "../../util/format-achievements";
 
-export default class InventoryCommand extends DiscordCommand {
+export default class extends DiscordCommand {
   constructor() {
     super({
       name: "inventory",
@@ -66,13 +69,16 @@ export default class InventoryCommand extends DiscordCommand {
         guildId
       );
       const baitItems = this.buildUserBaitInventory(inventoryItems);
+      const achievements = await this.buildUserAchievements(userId, guildId);
 
       embed.addFields([
         { name: "🐟 Fish", value: fishItems },
         { name: "🎣 Fishing Rods", value: fishingRodItems },
         { name: "🪱 Bait", value: baitItems },
-        { name: "🎯 Achievements", value: this.buildUserAchievements(userId) },
-        { name: "📊 Statistics", value: this.buildUserStatistics(userId) },
+        {
+          name: "🎯 Achievements",
+          value: achievements,
+        },
       ]);
 
       embed.setFooter({ text: `💎 Your Balance: ${userBalance}` });
@@ -161,15 +167,15 @@ export default class InventoryCommand extends DiscordCommand {
       .join("\n");
   }
 
-  private buildUserAchievements(userId: string): string {
-    // Placeholder for achievements
-    // You would replace this with actual logic to fetch and display user achievements
-    return "No achievements yet.";
-  }
+  private async buildUserAchievements(
+    userId: string,
+    guildId: string
+  ): Promise<string> {
+    const userAchievements = await getUserAchievements(userId, guildId);
+    const achievements = userAchievements.map((ua) =>
+      getAchievementById(ua.achievementId)
+    );
 
-  private buildUserStatistics(userId: string): string {
-    // Placeholder for statistics
-    // You would replace this with actual logic to fetch and display user statistics
-    return "Total Fish Caught: 0\nRare Fish Caught: 0";
+    return formatAchievements(achievements);
   }
 }

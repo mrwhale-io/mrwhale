@@ -378,7 +378,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     try {
       const fishingRodEquipped = await getEquippedFishingRod(userId);
       const baitEquipped = await getEquippedBait(userId, guildId);
-      const fishCaught = await this.fishManager.catchFish(
+      const { fishCaught, achievements } = await this.fishManager.catchFish(
         guildId,
         userId,
         fishingRodEquipped,
@@ -389,6 +389,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
         interaction: interactionOrMessage,
         fishingRodUsed: fishingRodEquipped,
         baitUsed: baitEquipped,
+        achievements,
         botClient: this,
       });
       const catchButtons = createCatchButtons(interactionOrMessage, this);

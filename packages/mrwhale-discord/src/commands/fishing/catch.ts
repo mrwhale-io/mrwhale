@@ -11,7 +11,7 @@ export default class extends DiscordCommand {
     super({
       name: "catch",
       description: "Catch some fish.",
-      type: "economy",
+      type: "fishing",
       usage: "<prefix>catch",
       guildOnly: true,
       cooldown: 3000,

@@ -13,7 +13,7 @@ export default class extends DiscordCommand {
     super({
       name: "feed",
       description: "Feed Mr. Whale fish.",
-      type: "economy",
+      type: "fishing",
       usage: "<prefix>feed",
       guildOnly: true,
       cooldown: 3000,
