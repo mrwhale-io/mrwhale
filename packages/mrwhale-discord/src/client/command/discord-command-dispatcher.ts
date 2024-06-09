@@ -50,8 +50,9 @@ export class DiscordCommandDispatcher {
       return;
     }
 
+    const guildId = message.guildId;
     const dm = message.channel.type === ChannelType.DM;
-    const prefix = await this.bot.getPrefix(message.guildId);
+    const prefix = await this.bot.getPrefix(guildId);
 
     if (!message.content.trim().startsWith(prefix)) {
       return;
@@ -82,6 +83,11 @@ export class DiscordCommandDispatcher {
 
     if (!hasPermission) {
       return;
+    }
+
+    // Check if the settings for the guild are loaded
+    if (guildId && !this.bot.guildSettings.has(guildId)) {
+      await this.bot.loadGuildSettings(guildId);
     }
 
     const args = getCommandArgs(message.content, prefix, command.argSeparator);
@@ -122,6 +128,13 @@ export class DiscordCommandDispatcher {
       return;
     }
 
+    const guildId = interaction.guildId;
+
+    // Check if the settings for the guild are loaded
+    if (guildId && !this.bot.guildSettings.has(guildId)) {
+      await this.bot.loadGuildSettings(guildId);
+    }
+
     await command
       .slashCommandAction(interaction)
       .catch((e) => this.bot.logger.error(e));
@@ -137,6 +150,13 @@ export class DiscordCommandDispatcher {
     }
     const commandName = interaction.commandName.toLowerCase();
     const command = this.bot.commands.findByNameOrAlias(commandName);
+
+    const guildId = interaction.guildId;
+
+    // Check if the settings for the guild are loaded
+    if (guildId && !this.bot.guildSettings.has(guildId)) {
+      await this.bot.loadGuildSettings(guildId);
+    }
 
     await command
       .autocomplete(interaction)
@@ -189,7 +209,7 @@ export class DiscordCommandDispatcher {
     user: User,
     dm: boolean
   ): boolean {
-    if (command.admin && !this.bot.isOwner(user)) {
+    if (command.admin && !this.bot.isOwner(user.id)) {
       return false;
     }
 

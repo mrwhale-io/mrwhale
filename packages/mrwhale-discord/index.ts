@@ -80,9 +80,6 @@ const bot = new DiscordBotClient(
 bot.client.login(config.token);
 
 bot.client.once(Events.ClientReady, () => {
-  bot.commandDispatcher.ready = true;
-  bot.discordSelectMenuHandler.ready = true;
-  bot.discordButtonHandler.ready = true;
   setActivity();
   setInterval(setActivity, SET_ACTIVITY_INTERVAL);
 });

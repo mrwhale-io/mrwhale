@@ -1,4 +1,4 @@
-import { Events, Guild, Interaction, Message } from "discord.js";
+import { Events, Interaction, Message } from "discord.js";
 
 import {
   Fish,
@@ -17,6 +17,7 @@ import { InventoryError } from "../../types/errors/inventory-error";
 import { InsufficientItemsError } from "../../types/errors/Insufficient-items-error";
 import { FeedResult } from "../../types/fishing/feed-result";
 import { logFishFed } from "../../database/services/fish-fed";
+import { Settings } from "../../types/settings";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
@@ -27,7 +28,7 @@ const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 5 * 60 * 1000; // 5 minutes
 interface HungerState {
   level: number;
   mood: Mood;
-  lastUpdate?: number;
+  lastUpdate: number;
   lastHungerAnnouncement?: number;
   lastFedTimestamp?: number;
 }
@@ -51,47 +52,72 @@ export class HungerManager {
 
   constructor(private bot: DiscordBotClient) {
     this.guildHungerLevels = {};
-    this.bot.client.on(Events.GuildAvailable, (guild: Guild) =>
-      this.updateHunger(guild.id)
+    this.bot.client.on(
+      Events.MessageCreate,
+      async (message: Message) =>
+        await this.updateHungerAndSendAnnouncement(message)
     );
-    this.bot.client.on(Events.MessageCreate, (message: Message) =>
-      this.updateHungerAndSendAnnouncement(message)
-    );
-    this.bot.client.on(Events.InteractionCreate, (interaction: Interaction) =>
-      this.updateHungerAndSendAnnouncement(interaction)
+    this.bot.client.on(
+      Events.InteractionCreate,
+      async (interaction: Interaction) =>
+        await this.updateHungerAndSendAnnouncement(interaction)
     );
   }
 
   /**
-   * Get the hunger level for the given guild.
-   * @param guildId The guild to get the hunger level for.
-   */
-  getGuildHungerLevel(guildId: string): number {
-    return this.guildHungerLevels[guildId].level;
-  }
-
-  /**
-   * Get the timestamp of the last hunger announcement for the guild.
-   * @param guildId The guild to get the last announcement timestamp.
-   */
-  getLastHungerAnnouncementTimestamp(guildId: string): number {
-    return this.guildHungerLevels[guildId]?.lastHungerAnnouncement || -Infinity;
-  }
-
-  /**
-   * Get Mr. Whale's current mood.
+   * Retrieves the current hunger level for the specified guild.
    * @param guildId The identifier of the guild.
+   * @returns The current hunger level of the guild.
+   * @throws An error if the hunger state for the guild cannot be retrieved.
    */
-  getCurrentMood(guildId: string): Mood {
-    return this.guildHungerLevels[guildId]?.mood || Mood.Happy;
+  async getGuildHungerLevel(guildId: string): Promise<number> {
+    return this.getHungerStateProperty(guildId, "level");
   }
 
   /**
-   * Get the timestamp of the last time Mr. Whale was fed.
-   * @param guildId The guild to get the last fed timestamp.
+   * Retrieves the timestamp of the last hunger announcement for the specified guild.
+   * @param guildId The identifier of the guild.
+   * @returns The timestamp of the last hunger announcement, or -Infinity if not available.
    */
-  lastFedTimestamp(guildId: string): number {
-    return this.guildHungerLevels[guildId]?.lastFedTimestamp;
+  async getLastHungerAnnouncementTimestamp(guildId: string): Promise<number> {
+    return this.getHungerStateProperty(
+      guildId,
+      "lastHungerAnnouncement",
+      -Infinity
+    );
+  }
+
+  /**
+   * Retrieves Mr. Whale's current mood for the specified guild.
+   * @param guildId The identifier of the guild.
+   * @returns Mr. Whale's current mood, or Mood.Happy if not available.
+   */
+  async getCurrentMood(guildId: string): Promise<Mood> {
+    return this.getHungerStateProperty(guildId, "mood", Mood.Happy);
+  }
+
+  /**
+   * Retrieves the timestamp of the last time Mr. Whale was fed for the specified guild.
+   * @param guildId The identifier of the guild.
+   * @returns The timestamp of the last time Mr. Whale was fed.
+   */
+  async lastFedTimestamp(guildId: string): Promise<number> {
+    return this.getHungerStateProperty(guildId, "lastFedTimestamp");
+  }
+
+  /**
+   * Initialises the hunger state for a specific guild if it does not already exist.
+   * This method ensures that each guild has an initial hunger state setup.
+   *
+   * @param guildId The identifier of the guild for which to initialize the hunger state.
+   * @returns A promise that resolves when the hunger state is initialized.
+   */
+  async initialiseGuildHungerState(guildId: string): Promise<void> {
+    if (!this.guildHungerLevels[guildId]) {
+      this.guildHungerLevels[guildId] = await this.getInitialHungerState(
+        guildId
+      );
+    }
   }
 
   /**
@@ -153,12 +179,32 @@ export class HungerManager {
     };
   }
 
+  private async getHungerStateProperty<T>(
+    guildId: string,
+    property: keyof HungerState,
+    defaultValue?: T
+  ): Promise<T> {
+    try {
+      await this.initialiseGuildHungerState(guildId);
+
+      return (this.guildHungerLevels[guildId][property] as T) ?? defaultValue;
+    } catch (error) {
+      this.bot.logger.error(
+        `Failed to get ${property} for guild ${guildId}:`,
+        error
+      );
+      throw new Error(`Could not retrieve ${property} for guild ${guildId}.`);
+    }
+  }
+
   private async sendHungryAnnouncement(
     interactionOrMessage: Interaction | Message
   ): Promise<void> {
     const currentTime = Date.now();
     const { guildId } = interactionOrMessage;
-    const lastHungerMessage = this.getLastHungerAnnouncementTimestamp(guildId);
+    const lastHungerMessage = await this.getLastHungerAnnouncementTimestamp(
+      guildId
+    );
     const elapsedTimeSinceHungerMessage = currentTime - lastHungerMessage;
 
     const fishSpawnMessage = this.bot.getAnnouncementMessage(guildId);
@@ -177,7 +223,7 @@ export class HungerManager {
       return;
     }
 
-    const hungerLevel = this.getGuildHungerLevel(guildId);
+    const hungerLevel = await this.getGuildHungerLevel(guildId);
 
     // Determine the appropriate announcements based on hunger level
     let announcements: string[] | undefined;
@@ -239,42 +285,94 @@ export class HungerManager {
     }
   }
 
-  private updateHungerAndSendAnnouncement(
+  private async updateHungerAndSendAnnouncement(
     interactionOrMessage: Interaction | Message
-  ) {
+  ): Promise<void> {
     const { guildId } = interactionOrMessage;
     if (guildId) {
-      this.updateHunger(guildId);
-      this.sendHungryAnnouncement(interactionOrMessage);
+      await this.calculateAndUpdateHunger(guildId);
+      await this.sendHungryAnnouncement(interactionOrMessage);
     }
   }
 
   /**
-   * Adjusts the guilds hunger level based on the time elapsed since the last update.
-   * @param guildId The guild to update the hunger level for.
+   * Persists the current hunger state for a given guild.
+   *
+   * This method updates the hunger state for a specified guild by saving it to the guild's settings.
+   * It ensures that the hunger state is kept up-to-date and can be retrieved later when needed.
+   *
+   * @param guildId The Id of the guild whose hunger state needs to be updated.
+   * @param hungerState The current hunger state to be saved for the guild.
    */
-  private updateHunger(guildId: string): void {
-    const currentTime = Date.now();
-    const lastUpdateTime =
-      this.guildHungerLevels[guildId]?.lastUpdate || currentTime;
-    const elapsedTime = currentTime - lastUpdateTime;
-    const decreaseAmount = (elapsedTime / (1000 * 60)) * HUNGER_DECREASE_RATE;
-
-    if (this.guildHungerLevels[guildId]) {
-      this.guildHungerLevels[guildId].level -= decreaseAmount;
-
-      this.setCurrentMood(guildId, this.guildHungerLevels[guildId].level);
-
-      if (this.guildHungerLevels[guildId].level < 0) {
-        this.guildHungerLevels[guildId].level = 0;
-      }
+  private persistHungerState(guildId: string, hungerState: HungerState): void {
+    const guildSettings = this.bot.guildSettings.get(guildId);
+    if (guildSettings) {
+      guildSettings.set(Settings.HungerState, hungerState);
     } else {
-      this.guildHungerLevels[guildId] = {
-        level: FULL_HUNGER_LEVEL,
-        mood: Mood.Happy,
-      };
+      this.bot.logger.warn(`Guild settings not found for guildId: ${guildId}`);
     }
+  }
+
+  /**
+   * Calculates the hunger decrease amount based on elapsed time.
+   * @param elapsedTime The elapsed time in milliseconds.
+   * @returns The calculated hunger decrease amount.
+   */
+  private calculateHungerDecrease(elapsedTime: number): number {
+    return (elapsedTime / (1000 * 60)) * HUNGER_DECREASE_RATE;
+  }
+
+  /**
+   * Adjusts the guild's hunger level based on the time elapsed since the last update.
+   * This method ensures that the hunger level decreases over time and updates the mood accordingly.
+   * If the guild does not have a hunger state, it initializes it to a default value.
+   * The method also updates the last update timestamp to the current time.
+   *
+   * @param guildId The Id of the guild to update the hunger level for.
+   * @returns A promise that resolves when the hunger level has been calculated and updated.
+   */
+  private async calculateAndUpdateHunger(guildId: string): Promise<void> {
+    // Initialise hunger state if it doesn't exist
+    await this.initialiseGuildHungerState(guildId);
+
+    const currentTime = Date.now();
+    const { lastUpdate = currentTime, level } = this.guildHungerLevels[guildId];
+    const elapsedTime = currentTime - lastUpdate;
+
+    // Calculate the decrease in hunger level
+    const decreaseAmount = this.calculateHungerDecrease(elapsedTime);
+
+    // Update the hunger level and ensure it doesn't go below 0
+    this.guildHungerLevels[guildId].level = Math.max(level - decreaseAmount, 0);
+
+    // Update the guild's mood based on the new hunger level
+    this.setCurrentMood(guildId, this.guildHungerLevels[guildId].level);
 
     this.guildHungerLevels[guildId].lastUpdate = currentTime;
+
+    this.persistHungerState(guildId, this.guildHungerLevels[guildId]);
+  }
+
+  /**
+   * Retrieves the initial hunger state for a guild, either from settings or default.
+   * @param guildId The guild Id.
+   * @returns The initial hunger state.
+   */
+  private async getInitialHungerState(guildId: string): Promise<HungerState> {
+    const defaultHungerState: HungerState = {
+      level: FULL_HUNGER_LEVEL,
+      mood: Mood.Happy,
+      lastUpdate: Date.now(),
+    };
+
+    await this.bot.loadGuildSettings(guildId);
+
+    const guildSettings = this.bot.guildSettings.get(guildId);
+    const storedHungerState = await guildSettings.get(
+      Settings.HungerState,
+      defaultHungerState
+    );
+
+    return storedHungerState || defaultHungerState;
   }
 }

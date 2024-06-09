@@ -5,6 +5,7 @@ import {
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
+import { Settings } from "../../types/settings";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -39,7 +40,7 @@ export default class extends DiscordCommand {
     const settings = this.botClient.guildSettings.get(interaction.guildId);
 
     if (settings) {
-      settings.set("levels", enabled);
+      settings.set(Settings.Levels, enabled);
     }
 
     return enabled
@@ -54,6 +55,6 @@ export default class extends DiscordCommand {
 
     const settings = this.botClient.guildSettings.get(guildId);
 
-    return await settings.get("levels", true);
+    return await settings.get(Settings.Levels, true);
   }
 }

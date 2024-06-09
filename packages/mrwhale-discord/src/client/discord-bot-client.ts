@@ -19,14 +19,12 @@ import {
   Events,
   Guild,
   GuildBasedChannel,
-  GuildMember,
   GuildTextBasedChannel,
   Interaction,
   Message,
   NonThreadGuildBasedChannel,
   PartialDMChannel,
   TextBasedChannel,
-  User,
 } from "discord.js";
 import { createDjsClient } from "discordbotlist";
 
@@ -34,9 +32,8 @@ import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
 import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
-import { AVATAR_OPTIONS, EMBED_COLOR, THEME } from "../constants";
+import { EMBED_COLOR } from "../constants";
 import { DiscordBotOptions } from "../types/discord-bot-options";
-import { Greeting } from "../types/image/greeting";
 import { DiscordSelectMenu } from "./menu/discord-select-menu";
 import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
 import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
@@ -57,6 +54,8 @@ import { InventoryError } from "../types/errors/inventory-error";
 import { InsufficientItemsError } from "../types/errors/Insufficient-items-error";
 import { HungerLevelFullError } from "../types/errors/hunger-level-full-error";
 import { getFedRewardsEmbed } from "../util/embed/hunger-embed-helpers";
+import { Settings } from "../types/settings";
+import { GreetingsManager } from "./managers/greetings-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -67,27 +66,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly client: Client;
 
   /**
-   * An instance of the bot command dispatcher.
-   */
-  readonly commandDispatcher: DiscordCommandDispatcher;
-
-  /**
-   * An instance of the discord select menu handler.
-   */
-  readonly discordSelectMenuHandler: DiscordSelectMenuHandler;
-
-  /**
-   * An instance of the discord button handler.
-   */
-  readonly discordButtonHandler: DiscordButtonHandler;
-
-  /**
-   * The guild settings.
-   */
-  readonly guildSettings: Map<string, KeyedStorageProvider>;
-
-  /**
-   * The support server for the discord bot.
+   * Contains an invite link to the discord support server for the discord bot.
    */
   readonly discordServer: string;
 
@@ -137,28 +116,35 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly buttons: Map<string, DiscordButton>;
 
   /**
-   * Contains an instance of the user balance manager.
+   * Retrieves the storage settings for each guild.
+   *
+   * This property accesses the `guildSettings` managed by the `GuildStorageLoader`.
+   * Each guild has its own unique storage settings, which are used to store and retrieve
+   * configuration and state specific to that guild. This is particularly useful for
+   * commands and features that require guild-specific data.
    */
-  readonly userBalanceManager: UserBalanceManager;
-
-  /**
-   * Contains the hunger manager for Mr. Whale.
-   */
-  private readonly hungerManager: HungerManager;
-
-  /**
-   * Contains the fish spawning manager for Mr. Whale.
-   */
-  private readonly fishManager: FishManager;
+  get guildSettings(): Map<string, KeyedStorageProvider> {
+    return this.guildStorageLoader.guildSettings;
+  }
 
   /**
    * The discord bot list API key.
    */
-  private readonly discordBotList?: string;
-  private readonly levelManager: LevelManager;
-  private readonly guildStorageLoader: GuildStorageLoader;
-  private readonly discordSelectMenuLoader: DiscordSelectMenuLoader;
-  private readonly discordButtonsLoader: DiscordButtonLoader;
+  private discordBotList?: string;
+
+  private commandDispatcher: DiscordCommandDispatcher;
+  private discordSelectMenuHandler: DiscordSelectMenuHandler;
+  private discordButtonHandler: DiscordButtonHandler;
+
+  private greetingsManager: GreetingsManager;
+  private fishManager: FishManager;
+  private hungerManager: HungerManager;
+  private levelManager: LevelManager;
+  private userBalanceManager: UserBalanceManager;
+
+  private discordSelectMenuLoader: DiscordSelectMenuLoader;
+  private guildStorageLoader: GuildStorageLoader;
+  private discordButtonsLoader: DiscordButtonLoader;
 
   constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
@@ -173,20 +159,12 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.buttonDir = botOptions.buttonsDir;
     this.menus = new Map<string, DiscordSelectMenu>();
     this.buttons = new Map<string, DiscordButton>();
-    this.guildSettings = new Map<string, KeyedStorageProvider>();
     this.commandLoader.commandType = DiscordCommand.name;
     this.commandLoader.loadCommands();
     this.discordSelectMenuLoader = new DiscordSelectMenuLoader(this);
     this.discordSelectMenuLoader.loadMenus();
     this.discordButtonsLoader = new DiscordButtonLoader(this);
     this.discordButtonsLoader.loadButtons();
-    this.levelManager = new LevelManager(this);
-    this.hungerManager = new HungerManager(this);
-    this.fishManager = new FishManager(this);
-    this.userBalanceManager = new UserBalanceManager();
-    this.commandDispatcher = new DiscordCommandDispatcher(this);
-    this.discordSelectMenuHandler = new DiscordSelectMenuHandler(this);
-    this.discordButtonHandler = new DiscordButtonHandler(this);
     this.guildStorageLoader = new GuildStorageLoader(this);
     this.guildStorageLoader.init();
     if (botOptions.discordBotList) {
@@ -198,7 +176,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   /**
    * Gets the unique bot prefix of the specified guild.
    *
-   * @param guildId The id of the guild to get the prefix for.
+   * @param guildId The ID of the guild to get unique prefix for.
    */
   async getPrefix(guildId: string): Promise<string> {
     if (!this.guildSettings.has(guildId)) {
@@ -207,7 +185,36 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     const settings = this.guildSettings.get(guildId);
 
-    return await settings.get("prefix", this.defaultPrefix);
+    return await settings.get(Settings.Prefix, this.defaultPrefix);
+  }
+
+  /**
+   * Loads the settings for the specified guild.
+   *
+   * This method delegates the loading of guild settings to the GuildStorageLoader.
+   * It ensures that the settings for the specified guild are loaded and initialized
+   * into memory, making them readily accessible for the bot's operations.
+   *
+   * @param guildId The ID of the guild to load settings for.
+   * @returns A promise that resolves once the guild settings have been loaded.
+   */
+  async loadGuildSettings(guildId: string): Promise<void> {
+    await this.guildStorageLoader.loadGuildSettings(guildId);
+  }
+
+  /**
+   * Deletes storage settings for the given guild.
+   *
+   * This method delegates the deletion of guild settings to the GuildStorageLoader.
+   * It ensures that the settings for the specified guild are removed from both
+   * the database and the in-memory storage, effectively clearing any stored data
+   * related to that guild.
+   *
+   * @param guildId The ID of the guild to delete settings for.
+   * @returns A promise that resolves once the guild settings have been deleted.
+   */
+  async deleteGuildSettings(guildId: string): Promise<void> {
+    await this.guildStorageLoader.deleteGuildSettings(guildId);
   }
 
   /**
@@ -307,7 +314,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * Get the timestamp of the last hunger announcement for the guild.
    * @param guildId The guild to get the last announcement timestamp.
    */
-  getLastHungerAnnouncementTimestamp(guildId: string): number {
+  async getLastHungerAnnouncementTimestamp(guildId: string): Promise<number> {
     return this.hungerManager.getLastHungerAnnouncementTimestamp(guildId);
   }
 
@@ -333,7 +340,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * Get Mr. Whale's current mood.
    * @param guildId The identifier of the guild.
    */
-  getCurrentMood(guildId: string): Mood {
+  async getCurrentMood(guildId: string): Promise<Mood> {
     return this.hungerManager.getCurrentMood(guildId);
   }
 
@@ -341,7 +348,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * Get the timestamp of the last time Mr. Whale was fed.
    * @param guildId The guild to get the last fed timestamp.
    */
-  lastFedTimestamp(guildId: string): number {
+  async lastFedTimestamp(guildId: string): Promise<number> {
     return this.hungerManager.lastFedTimestamp(guildId);
   }
 
@@ -353,6 +360,31 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   async getUserBalance(userId: string, guildId: string): Promise<number> {
     return this.userBalanceManager.getUserBalance(userId, guildId);
+  }
+
+  /**
+   * Add a specified amount to the user's balance in a given guild.
+   *
+   * This method delegates the balance update to the user balance manager,
+   * ensuring that the user's balance is correctly adjusted by the specified amount.
+   *
+   * @param userId - The ID of the user whose balance is to be updated.
+   * @param guildId - The ID of the guild in which the user's balance is to be updated.
+   * @param amount - The amount to add to the user's balance. This can be positive or negative.
+   * @returns A promise that resolves to the updated balance of the user.
+   */
+  async addToUserBalance(
+    userId: string,
+    guildId: string,
+    amount: number
+  ): Promise<number> {
+    const { balance } = await this.userBalanceManager.addToUserBalance(
+      userId,
+      guildId,
+      amount
+    );
+
+    return balance;
   }
 
   /**
@@ -416,45 +448,25 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * Get the hunger level for the given guild.
    * @param guildId The guild to get the hunger level for.
    */
-  getGuildHungerLevel(guildId: string): number {
+  async getGuildHungerLevel(guildId: string): Promise<number> {
     return this.hungerManager.getGuildHungerLevel(guildId);
   }
 
   /**
-   * Checks whether the given user is the bot owner.
-   *
-   * @param user The user to check.
+   * Checks whether the given user is owner of this bot.
+   * @param userId The identifier of the user to check.
    */
-  isOwner(user: User): boolean {
-    return user.id === this.ownerId;
+  isOwner(userId: string): boolean {
+    return userId === this.ownerId;
   }
 
-  /**
-   * Creates storage settings for the given guild.
-   * @param guildId The guild to create settings for.
-   */
-  async createGuildSettings(guildId: string): Promise<void> {
-    if (!this.guildSettings.has(guildId)) {
-      const storage = new KeyedStorageProvider(
-        this.guildStorageLoader.settingsProvider,
-        guildId
-      );
-
-      await storage.init();
-
-      this.guildSettings.set(guildId, storage);
-    }
-  }
-
-  /**
-   * Deletes storage settings for the given guild.
-   * @param guildId The guild to delete settings for.
-   */
-  async deleteGuildSettings(guildId: string): Promise<void> {
-    if (this.guildSettings.has(guildId)) {
-      await this.guildStorageLoader.settingsProvider.remove(guildId);
-      this.guildSettings.delete(guildId);
-    }
+  getFirstTextChannel(guild: Guild): GuildBasedChannel {
+    const channels = guild.channels.cache;
+    return channels.find(
+      (c) =>
+        c.type === ChannelType.GuildText &&
+        c.permissionsFor(guild.members.me).has(["SendMessages", "AttachFiles"])
+    );
   }
 
   /**
@@ -472,7 +484,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     const settings = this.guildSettings.get(guildId);
     const channelId = await settings.get(
-      "announcementChannel",
+      Settings.AnnouncementChannel,
       defaultChannel.id
     );
 
@@ -501,13 +513,18 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
 
     const settings = this.guildSettings.get(guildId);
-    const announcementChannelId = await settings.get("announcementChannel");
+    const announcementChannelId = await settings.get(
+      Settings.AnnouncementChannel
+    );
 
     if (announcementChannelId) {
       return await this.getAnnouncementChannel(guildId, message.channel);
     }
 
-    const levelupChannelId = await settings.get("levelChannel", message.id);
+    const levelupChannelId = await settings.get(
+      Settings.LevelChannel,
+      message.id
+    );
 
     try {
       const channel = this.client.channels.cache.has(levelupChannelId)
@@ -524,7 +541,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   @once(Events.ClientReady)
   private async onClientReady(): Promise<void> {
-    this.guildStorageLoader.loadStorages();
+    await this.guildStorageLoader.loadAllGuildSettings();
     if (this.discordBotList) {
       const discordBotList = createDjsClient(this.discordBotList, this.client);
       discordBotList.startPosting();
@@ -533,11 +550,13 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       );
       discordBotList.startPolling();
     }
+    this.initialiseHandlers();
+    this.initialiseManagers();
   }
 
   @on(Events.GuildCreate)
   private async onGuildCreate(guild: Guild): Promise<void> {
-    await this.createGuildSettings(guild.id);
+    await this.guildStorageLoader.loadGuildSettings(guild.id);
 
     const channel = this.getFirstTextChannel(guild);
     const avatar = this.client.user.displayAvatarURL();
@@ -580,7 +599,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   @on(Events.GuildDelete)
   private async onGuildDelete(guild: Guild): Promise<void> {
     const guildId = guild.id;
-    await this.deleteGuildSettings(guildId);
+    await this.guildStorageLoader.deleteGuildSettings(guildId);
     await LevelManager.removeAllScoresForGuild(guildId);
   }
 
@@ -594,97 +613,41 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     const settings = this.guildSettings.get(channel.guildId);
     if (settings) {
-      const greetingChannelId = await settings.get("greetingChannel");
+      const greetingChannelId = await settings.get(Settings.GreetingChannel);
       if (greetingChannelId === channel.id) {
-        settings.remove("greetingChannel");
+        settings.remove(Settings.GreetingChannel);
       }
 
-      const levelChannelId = await settings.get("levelChannel");
+      const levelChannelId = await settings.get(Settings.LevelChannel);
       if (levelChannelId === channel.id) {
-        settings.remove("levelChannel");
+        settings.remove(Settings.LevelChannel);
       }
 
-      const announcementChannelId = await settings.get("announcementChannel");
+      const announcementChannelId = await settings.get(
+        Settings.AnnouncementChannel
+      );
 
       if (announcementChannelId === channel.id) {
-        settings.remove("announcementChannel");
+        settings.remove(Settings.AnnouncementChannel);
       }
     }
   }
 
-  @on(Events.GuildMemberAdd)
-  private async onGuildMemberAdd(guildMember: GuildMember) {
-    const isGreetingsEnabled = await this.isGreetingsEnabled(
-      guildMember.guild.id
-    );
-
-    if (!isGreetingsEnabled) {
-      return;
-    }
-
-    const greeting = await new Greeting()
-      .setGuild(guildMember.guild.name)
-      .setAvatarUrl(guildMember.displayAvatarURL(AVATAR_OPTIONS))
-      .setUsername(guildMember.user.username)
-      .setMessage("Whalecome to {guild.name}, {user.username}!")
-      .setMemberCount(guildMember.guild.memberCount)
-      .setBackgroundColour(THEME.backgroundColour)
-      .setMessageColour(THEME.primaryTextColour)
-      .setAvatarColour(THEME.primaryTextColour)
-      .setMemberCountColour(THEME.secondaryTextColour)
-      .setSecondaryBackgroundColour(THEME.secondaryBackgroundColour)
-      .build();
-    const channel = await this.getGreetingsChannel(guildMember.guild);
-    if (channel && channel.isTextBased()) {
-      channel.send({ files: [greeting] });
-    }
+  private initialiseManagers(): void {
+    this.levelManager = new LevelManager(this);
+    this.hungerManager = new HungerManager(this);
+    this.fishManager = new FishManager(this);
+    this.userBalanceManager = new UserBalanceManager();
+    this.greetingsManager = new GreetingsManager(this);
   }
 
-  private async getGreetingsChannel(guild: Guild): Promise<TextBasedChannel> {
-    const firstChannel = this.getFirstTextChannel(guild) as TextBasedChannel;
+  private initialiseHandlers(): void {
+    this.commandDispatcher = new DiscordCommandDispatcher(this);
+    this.discordSelectMenuHandler = new DiscordSelectMenuHandler(this);
+    this.discordButtonHandler = new DiscordButtonHandler(this);
 
-    if (!firstChannel) {
-      return null;
-    }
-
-    if (!this.guildSettings.has(guild.id)) {
-      return firstChannel;
-    }
-
-    const settings = this.guildSettings.get(guild.id);
-    const channelId = await settings.get("greetingChannel");
-
-    if (!channelId) {
-      return await this.getAnnouncementChannel(guild.id, firstChannel);
-    }
-
-    try {
-      const channel = this.client.channels.cache.has(channelId)
-        ? (this.client.channels.cache.get(channelId) as TextBasedChannel)
-        : ((await this.client.channels.fetch(channelId)) as TextBasedChannel);
-
-      return channel;
-    } catch {
-      return firstChannel;
-    }
-  }
-
-  private getFirstTextChannel(guild: Guild): GuildBasedChannel {
-    const channels = guild.channels.cache;
-    return channels.find(
-      (c) =>
-        c.type === ChannelType.GuildText &&
-        c.permissionsFor(guild.members.me).has(["SendMessages", "AttachFiles"])
-    );
-  }
-
-  private async isGreetingsEnabled(guildId: string): Promise<boolean> {
-    if (!this.guildSettings.has(guildId)) {
-      return false;
-    }
-
-    const settings = this.guildSettings.get(guildId);
-
-    return await settings.get("greetings", false);
+    this.commandDispatcher.ready = true;
+    this.discordSelectMenuHandler.ready = true;
+    this.discordButtonHandler.ready = true;
   }
 }

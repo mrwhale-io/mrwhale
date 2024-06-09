@@ -197,11 +197,7 @@ export default class extends DiscordCommand {
     item: FishingRod | Bait,
     itemType: ItemTypes
   ) {
-    await this.botClient.userBalanceManager.addToUserBalance(
-      userId,
-      guildId,
-      -item.cost
-    );
+    await this.botClient.addToUserBalance(userId, guildId, -item.cost);
     await updateOrCreateUserItem({
       userId,
       guildId,

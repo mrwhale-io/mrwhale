@@ -13,6 +13,7 @@ import {
 } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
 import { Score, ScoreInstance } from "../../database/models/score";
+import { Settings } from "../../types/settings";
 
 const TIME_FOR_EXP = 6e4;
 const MIN_EXP_EARNED = 5;
@@ -61,12 +62,12 @@ export class LevelManager {
 
     const settings = this.bot.guildSettings.get(guildId);
 
-    return await settings.get("levels", true);
+    return await settings.get(Settings.Levels, true);
   }
 
   /**
    * Retrieves all the scores for the given guild.
-   * 
+   *
    * @param guildId The Id of the guild to retrieve the scores.
    */
   static async getScores(guildId: string): Promise<ScoreInstance[]> {
@@ -172,7 +173,7 @@ export class LevelManager {
       const channel = await this.getLevelUpAnnouncementChannel(
         interactionOrMessage
       );
-      const announcementLevelUpMessage = this.getRandomLevelUpAnnouncement(
+      const announcementLevelUpMessage = await this.getRandomLevelUpAnnouncement(
         interactionOrMessage,
         newLevel
       );
@@ -209,7 +210,7 @@ export class LevelManager {
     }
 
     const settings = this.bot.guildSettings.get(guildId);
-    const channelId = await settings.get("levelChannel");
+    const channelId = await settings.get(Settings.LevelChannel);
 
     if (!channelId) {
       return await this.bot.getAnnouncementChannel(
@@ -236,13 +237,13 @@ export class LevelManager {
    *
    * @param interaction The interaction or message that triggered the level-up announcement.
    * @param newLevel The new level that the user has reached.
-   * @returns A random level-up announcement message.
+   * @returns A promise containing a random level-up announcement message.
    */
-  private getRandomLevelUpAnnouncement(
+  private async getRandomLevelUpAnnouncement(
     interaction: Interaction | Message,
     newLevel: number
-  ): string {
-    const mood = this.bot.getCurrentMood(interaction.guildId);
+  ): Promise<string> {
+    const mood = await this.bot.getCurrentMood(interaction.guildId);
     const announcements = LEVEL_UP_MESSAGES[mood];
     const message = announcements[
       Math.floor(Math.random() * announcements.length)
@@ -273,6 +274,6 @@ export class LevelManager {
 
     this.increaseExp(message, userId, guildId, expGained);
 
-    await this.bot.userBalanceManager.addToUserBalance(userId, guildId, 1);
+    await this.bot.addToUserBalance(userId, guildId, 1);
   }
 }

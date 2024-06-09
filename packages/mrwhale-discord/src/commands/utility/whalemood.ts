@@ -36,11 +36,10 @@ export default class extends DiscordCommand {
   }
 
   private async getHungerLevelEmbed(guildId: string) {
-    const hungerLevel = this.botClient.getGuildHungerLevel(guildId);
+    const hungerLevel = await this.botClient.getGuildHungerLevel(guildId);
     const currentProgress = Math.floor((hungerLevel / 100) * 100);
-    const currentMood = this.botClient.getCurrentMood(guildId);
-
-    const lastFedTimestamp = this.botClient.lastFedTimestamp(guildId);
+    const currentMood = await this.botClient.getCurrentMood(guildId);
+    const lastFedTimestamp = await this.botClient.lastFedTimestamp(guildId);
     const lastFedString = lastFedTimestamp
       ? formatDistanceToNowStrict(lastFedTimestamp, { addSuffix: true })
       : "Never";

@@ -6,6 +6,7 @@ import {
 
 import { DiscordCommand } from "../../client/command/discord-command";
 import { PREFIX_MAX_LENGTH } from "../../constants";
+import { Settings } from "../../types/settings";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -48,7 +49,7 @@ export default class extends DiscordCommand {
     const settings = this.botClient.guildSettings.get(guildId);
 
     if (settings) {
-      settings.set("prefix", prefix);
+      settings.set(Settings.Prefix, prefix);
       return "Successfully set the prefix for this server.";
     } else {
       return "Could not set prefix for this server.";

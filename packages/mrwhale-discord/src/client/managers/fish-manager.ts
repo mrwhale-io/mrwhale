@@ -309,7 +309,7 @@ export class FishManager {
       const { guildId } = messageOrInteraction;
 
       // Check if fish can spawn in the guild
-      const canSpawnFish = this.canSpawnFish(guildId);
+      const canSpawnFish = await this.canSpawnFish(guildId);
       if (!canSpawnFish) {
         return;
       }
@@ -324,7 +324,7 @@ export class FishManager {
       const fish = await this.generateFish(messageOrInteraction);
 
       // Send a notification about the fish spawn
-      await this.generateFishSpawnNotification(messageOrInteraction, fish);
+      this.generateFishSpawnNotification(messageOrInteraction, fish);
 
       // Schedule the fish to despawn after a specified time
       this.scheduleFishDespawn(messageOrInteraction, guildId);
@@ -381,7 +381,7 @@ export class FishManager {
     const announcementChannel = await this.bot.getFishingAnnouncementChannel(
       messageOrInteraction
     );
-    const currentMood = this.bot.getCurrentMood(guildId);
+    const currentMood = await this.bot.getCurrentMood(guildId);
 
     // Generate the announcement message text based on the current mood and spawned fish
     const announementMessageText = this.getFishSpawnAnnouncementMessage(
@@ -432,10 +432,10 @@ export class FishManager {
     return generatedFish;
   }
 
-  private canSpawnFish(guildId: string): boolean {
+  private async canSpawnFish(guildId: string): Promise<boolean> {
     const currentTime = Date.now();
     const lastSpawn = this.guildFishSpawn[guildId]?.lastSpawn || -Infinity;
-    const lastHungerAnnouncement = this.bot.getLastHungerAnnouncementTimestamp(
+    const lastHungerAnnouncement = await this.bot.getLastHungerAnnouncementTimestamp(
       guildId
     );
     const elapsedTimeSinceLastHungerMessage =
@@ -456,7 +456,7 @@ export class FishManager {
       messageOrInteraction
     );
     const { guildId } = messageOrInteraction;
-    const currentMood = this.bot.getCurrentMood(guildId);
+    const currentMood = await this.bot.getCurrentMood(guildId);
     const announementMessage = !guildFish
       ? this.getAllFishCaughtAnnouncementMessage()
       : this.getFishDespawnAnnouncementMessage(currentMood, guildFish);

@@ -44,7 +44,7 @@ export async function getFedRewardsEmbed(
   } = options;
 
   const userScore = await LevelManager.getUserScore(guildId, userId);
-  const currentMood = botClient.getCurrentMood(guildId);
+  const currentMood = await botClient.getCurrentMood(guildId);
   const fedMessage = getFedMessage(currentMood);
   const currentProgress = Math.floor((result.hungerLevel / 100) * 100);
   const whaleAvatar = botClient.client.user.displayAvatarURL();

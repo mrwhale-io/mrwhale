@@ -69,8 +69,7 @@ export default class extends DiscordCommand {
     guildId: string,
     transferAmount: number
   ): Promise<EmbedBuilder> {
-    const { userBalanceManager } = this.botClient;
-    const userBalance = await userBalanceManager.getUserBalance(
+    const userBalance = await this.botClient.getUserBalance(
       transferFromUser.id,
       guildId
     );
@@ -96,12 +95,12 @@ export default class extends DiscordCommand {
       return embed.setDescription(`Please enter an amount greater than zero.`);
     }
 
-    const { balance: newBalance } = await userBalanceManager.addToUserBalance(
+    const newBalance = await this.botClient.addToUserBalance(
       transferFromUser.id,
       guildId,
       -transferAmount
     );
-    await userBalanceManager.addToUserBalance(
+    await this.botClient.addToUserBalance(
       transferToUser.id,
       guildId,
       transferAmount

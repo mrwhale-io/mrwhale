@@ -9,6 +9,7 @@ import {
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
+import { Settings } from "../../types/settings";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -58,7 +59,7 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const settings = this.botClient.guildSettings.get(interaction.guildId);
     if (settings) {
-      settings.set("levelChannel", channel.id);
+      settings.set(Settings.LevelChannel, channel.id);
       return interaction.reply(
         `Successfully set level up channel to <#${channel.id}>`
       );
