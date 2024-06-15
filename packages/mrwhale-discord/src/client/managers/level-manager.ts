@@ -15,9 +15,11 @@ import { DiscordBotClient } from "../discord-bot-client";
 import { Score, ScoreInstance } from "../../database/models/score";
 import { Settings } from "../../types/settings";
 
-const TIME_FOR_EXP = 6e4;
+const TIME_FOR_EXP = 18e4;
 const MIN_EXP_EARNED = 5;
 const MAX_EXP_EARNED = 15;
+const MIN_GEMS_EARNED = 1;
+const MAX_GEMS_EARNED = 5;
 
 interface MessageMap {
   [guildId: number]: { [user: number]: number };
@@ -271,9 +273,10 @@ export class LevelManager {
     this.lastMessages[guildId][userId] = Date.now();
 
     const expGained = getRandomInt(MIN_EXP_EARNED, MAX_EXP_EARNED);
+    const gemsGained = getRandomInt(MIN_GEMS_EARNED, MAX_GEMS_EARNED);
 
     this.increaseExp(message, userId, guildId, expGained);
 
-    await this.bot.addToUserBalance(userId, guildId, 1);
+    await this.bot.addToUserBalance(userId, guildId, gemsGained);
   }
 }
