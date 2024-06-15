@@ -168,6 +168,8 @@ export class HungerManager {
     this.guildHungerLevels[guildId].level = newHungerLevel;
     this.guildHungerLevels[guildId].lastFedTimestamp = Date.now();
 
+    await this.persistHungerState(guildId, this.guildHungerLevels[guildId]);
+
     // Log the feeding action and update the user's inventory
     await logFishFed(userId, guildId, quantity);
     await useUserItem(userId, guildId, usersFish, quantity);
@@ -304,10 +306,13 @@ export class HungerManager {
    * @param guildId The Id of the guild whose hunger state needs to be updated.
    * @param hungerState The current hunger state to be saved for the guild.
    */
-  private persistHungerState(guildId: string, hungerState: HungerState): void {
+  private async persistHungerState(
+    guildId: string,
+    hungerState: HungerState
+  ): Promise<void> {
     const guildSettings = this.bot.guildSettings.get(guildId);
     if (guildSettings) {
-      guildSettings.set(Settings.HungerState, hungerState);
+      await guildSettings.set(Settings.HungerState, hungerState);
     } else {
       this.bot.logger.warn(`Guild settings not found for guildId: ${guildId}`);
     }
@@ -350,7 +355,7 @@ export class HungerManager {
 
     this.guildHungerLevels[guildId].lastUpdate = currentTime;
 
-    this.persistHungerState(guildId, this.guildHungerLevels[guildId]);
+    await this.persistHungerState(guildId, this.guildHungerLevels[guildId]);
   }
 
   /**
