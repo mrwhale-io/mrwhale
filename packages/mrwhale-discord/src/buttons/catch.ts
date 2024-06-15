@@ -3,6 +3,7 @@ import {
   ButtonInteraction,
   ButtonStyle,
   InteractionResponse,
+  Message,
 } from "discord.js";
 
 import { DiscordButton } from "../client/button/discord-button";
@@ -17,18 +18,9 @@ export default class extends DiscordButton {
 
   async action(
     interaction: ButtonInteraction
-  ): Promise<InteractionResponse<boolean>> {
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     try {
-      const { fishCaughtEmbed, catchButtons } = await this.botClient.catchFish(
-        interaction
-      );
-      const replyOptions = { embeds: [fishCaughtEmbed] };
-
-      if (catchButtons) {
-        replyOptions["components"] = [catchButtons];
-      }
-
-      return interaction.reply(replyOptions);
+      return await this.botClient.catchFish(interaction);
     } catch (error) {
       this.botClient.logger.error("Error catching fish:", error);
       return interaction.reply("An error occured while catching fish.");

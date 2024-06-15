@@ -9,18 +9,18 @@ import {
   getFishByName,
 } from "@mrwhale-io/core";
 import {
-  ActionRowBuilder,
-  ButtonBuilder,
+  ButtonInteraction,
   ChannelType,
+  ChatInputCommandInteraction,
   Client,
   ClientOptions,
   DMChannel,
   EmbedBuilder,
   Events,
   Guild,
-  GuildBasedChannel,
   GuildTextBasedChannel,
   Interaction,
+  InteractionResponse,
   Message,
   NonThreadGuildBasedChannel,
   PartialDMChannel,
@@ -56,6 +56,8 @@ import { HungerLevelFullError } from "../types/errors/hunger-level-full-error";
 import { getFedRewardsEmbed } from "../util/embed/hunger-embed-helpers";
 import { Settings } from "../types/settings";
 import { GreetingsManager } from "./managers/greetings-manager";
+import { getBotJoinedInfo } from "../util/embed/bot-info-helpers";
+import { getFirstTextChannel } from "../util/get-first-text-channel";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -392,24 +394,37 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * If successful, returns an embed with the details of the caught fish and any additional action buttons.
    * If unsuccessful due to specific known errors (e.g., no fish available, no remaining attempts), returns an embed with an appropriate error message.
    *
-   * @param interactionOrMessage - The interaction or message object from the Discord API, containing details of the user and guild.
-   * @returns A promise that resolves to an object containing the embed with the details of the caught fish or an error message, and optionally any action buttons.
+   * @param interactionOrMessage The interaction or message object from the Discord API, containing details of the user and guild.
+   * @returns A promise that resolves to the sent message containing the fish caught embed and catch buttons.
    * @throws Will throw an error if an unexpected error occurs during the process.
    */
   async catchFish(
-    interactionOrMessage: Interaction | Message
-  ): Promise<{
-    fishCaughtEmbed: EmbedBuilder;
-    catchButtons?: ActionRowBuilder<ButtonBuilder>;
-  }> {
+    interactionOrMessage:
+      | ChatInputCommandInteraction
+      | ButtonInteraction
+      | Message
+  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const {
       user: { id: userId },
     } = interactionOrMessage.member;
     const { guildId } = interactionOrMessage;
+    let messageResponse: Message;
 
     try {
       const fishingRodEquipped = await getEquippedFishingRod(userId);
       const baitEquipped = await getEquippedBait(userId, guildId);
+
+      const inProgressMessage = new EmbedBuilder()
+        .setColor(EMBED_COLOR)
+        .setDescription(
+          `🎣 <@${interactionOrMessage.member.user.id}> is fishing...`
+        );
+
+      messageResponse = await this.sendReply(
+        interactionOrMessage,
+        inProgressMessage
+      );
+
       const { fishCaught, achievements } = await this.fishManager.catchFish(
         guildId,
         userId,
@@ -426,7 +441,10 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       });
       const catchButtons = createCatchButtons(interactionOrMessage, this);
 
-      return { fishCaughtEmbed: fishCaughtEmbed, catchButtons: catchButtons };
+      return await messageResponse.edit({
+        embeds: [fishCaughtEmbed],
+        components: catchButtons ? [catchButtons] : [],
+      });
     } catch (error) {
       const nothingCaughtEmbed = new EmbedBuilder().setColor(EMBED_COLOR);
       if (
@@ -434,9 +452,10 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
         error instanceof NoAttemptsLeftError
       ) {
         nothingCaughtEmbed.setDescription(`🎣 ${error.message}`);
-        return {
-          fishCaughtEmbed: nothingCaughtEmbed,
-        };
+
+        return await messageResponse.edit({
+          embeds: [nothingCaughtEmbed],
+        });
       } else {
         this.logger.error("Error catching fish:", error);
         throw error;
@@ -458,15 +477,6 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   isOwner(userId: string): boolean {
     return userId === this.ownerId;
-  }
-
-  getFirstTextChannel(guild: Guild): GuildBasedChannel {
-    const channels = guild.channels.cache;
-    return channels.find(
-      (c) =>
-        c.type === ChannelType.GuildText &&
-        c.permissionsFor(guild.members.me).has(["SendMessages", "AttachFiles"])
-    );
   }
 
   /**
@@ -558,38 +568,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private async onGuildCreate(guild: Guild): Promise<void> {
     await this.guildStorageLoader.loadGuildSettings(guild.id);
 
-    const channel = this.getFirstTextChannel(guild);
-    const avatar = this.client.user.displayAvatarURL();
-    const embed = new EmbedBuilder()
-      .addFields([
-        {
-          name: "Official Discord server",
-          value: `[Join my Discord server!](${this.discordServer})`,
-        },
-        {
-          name: "Source code",
-          value: "https://github.com/mrwhale-io/mrwhale",
-        },
-        {
-          name: "Website",
-          value: "https://www.mrwhale.io",
-        },
-        {
-          name: "Version",
-          value: this.version,
-        },
-        { name: "Toggle levels", value: "`/levels`", inline: true },
-        {
-          name: "Set level up announcement channel",
-          value: "`/levelchannel`",
-          inline: true,
-        },
-      ])
-      .setColor(EMBED_COLOR)
-      .setDescription(
-        `Hi I'm ${this.client.user.username} a general purpose bot. Use the \`/help\` command to see my commands!`
-      )
-      .setThumbnail(avatar);
+    const channel = getFirstTextChannel(guild);
+    const embed = getBotJoinedInfo(this);
 
     if (channel && channel.isTextBased()) {
       channel.send({ embeds: [embed] });
@@ -649,5 +629,32 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.commandDispatcher.ready = true;
     this.discordSelectMenuHandler.ready = true;
     this.discordButtonHandler.ready = true;
+  }
+
+  /**
+   * Sends a reply to the interaction or message.
+   * @param interactionOrMessage The interaction or message to reply to.
+   * @param embed The embed to send as a reply.
+   * @returns A promise that resolves to the sent message.
+   */
+  private async sendReply(
+    interactionOrMessage:
+      | ChatInputCommandInteraction
+      | ButtonInteraction
+      | Message,
+    embed: EmbedBuilder
+  ): Promise<Message<boolean>> {
+    if (interactionOrMessage instanceof Message) {
+      return await interactionOrMessage.reply({
+        embeds: [embed],
+        allowedMentions: { users: [] },
+      });
+    } else {
+      return await interactionOrMessage.reply({
+        embeds: [embed],
+        allowedMentions: { users: [] },
+        fetchReply: true,
+      });
+    }
   }
 }
