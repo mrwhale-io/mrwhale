@@ -6,10 +6,12 @@ import {
   TextBasedChannel,
 } from "discord.js";
 
+import { GREETINGS } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
 import { AVATAR_OPTIONS, THEME } from "../../constants";
 import { Greeting } from "../../types/image/greeting";
 import { Settings } from "../../types/settings";
+import { getFirstTextChannel } from "../../util/get-first-text-channel";
 
 /**
  * The GreetingsManager class is responsible for greeting new users who join the guild.
@@ -49,9 +51,7 @@ export class GreetingsManager {
    * @returns A promise that resolves to the text-based channel for greetings.
    */
   private async getGreetingsChannel(guild: Guild): Promise<TextBasedChannel> {
-    const firstChannel = this.bot.getFirstTextChannel(
-      guild
-    ) as TextBasedChannel;
+    const firstChannel = getFirstTextChannel(guild) as TextBasedChannel;
 
     if (!firstChannel) {
       return null;
@@ -95,7 +95,7 @@ export class GreetingsManager {
       .setGuild(guildMember.guild.name)
       .setAvatarUrl(guildMember.displayAvatarURL(AVATAR_OPTIONS))
       .setUsername(guildMember.user.username)
-      .setMessage("Whalecome to {guild.name}, {user.username}!")
+      .setMessage("{user.username} just joined {guild.name}")
       .setMemberCount(guildMember.guild.memberCount)
       .setBackgroundColour(THEME.backgroundColour)
       .setMessageColour(THEME.primaryTextColour)
@@ -103,6 +103,24 @@ export class GreetingsManager {
       .setMemberCountColour(THEME.secondaryTextColour)
       .setSecondaryBackgroundColour(THEME.secondaryBackgroundColour)
       .build();
+  }
+
+  /**
+   * Generates a random greeting announcement.
+   *
+   * @param guildMember The guild member to generate the greeting announcement for.
+   * @returns A promise containing a random greeting announcement.
+   */
+  private async getRandomGreetingAnnouncement(
+    guildMember: GuildMember
+  ): Promise<string> {
+    const mood = await this.bot.getCurrentMood(guildMember.guild.id);
+    const greetings = GREETINGS[mood];
+    const greetingAnnouncement = greetings[
+      Math.floor(Math.random() * greetings.length)
+    ].replace("<<USER>>", `<@${guildMember.user.id}>`);
+
+    return greetingAnnouncement;
   }
 
   private async onGuildMemberAdd(guildMember: GuildMember): Promise<void> {
@@ -116,9 +134,10 @@ export class GreetingsManager {
 
     const greeting = await this.getGreetingAttachment(guildMember);
     const channel = await this.getGreetingsChannel(guildMember.guild);
+    const announcement = await this.getRandomGreetingAnnouncement(guildMember);
 
     if (channel && channel.isTextBased()) {
-      channel.send({ files: [greeting] });
+      channel.send({ content: announcement, files: [greeting] });
     }
   }
 }
