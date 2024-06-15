@@ -44,6 +44,7 @@ interface FishSpawnMap {
   [guildId: string]: {
     lastSpawn?: number;
     announcementMessage?: Message;
+    despawnTimeout?: NodeJS.Timeout;
     fish: Record<string, FishSpawnedResult>;
   };
 }
@@ -188,6 +189,9 @@ export class FishManager {
     // Use bait equipped from the user's inventory.
     await consumeBait(userId, guildId, bait.id);
 
+    // Wait for the delay specified by the fishing rod
+    await delay(fishingRod.delay);
+
     if (!fishCaught) {
       this.updateAttempts(userId, guildId);
       return { fishCaught: null, achievements: [] };
@@ -210,7 +214,7 @@ export class FishManager {
     guildId: string,
     userId: string,
     fishCaught: Fish,
-    allGuildFish: Record<string, any>
+    allGuildFish: Record<string, FishSpawnedResult>
   ): Promise<void> {
     // Find the type of fish caught in the guild and decrement it's quantity.
     // When the quantity is zero we delete the fish from the guild.
@@ -317,8 +321,8 @@ export class FishManager {
       const currentTime = Date.now();
       this.guildFishSpawn[guildId] = { lastSpawn: currentTime, fish: {} };
 
-      // Generate random delay between 30 and 60 seconds (in milliseconds)
-      const delayInMilliseconds = getRandomDelayInMilliseconds(30, 60);
+      // Generate random delay between 120 and 180 seconds (in milliseconds)
+      const delayInMilliseconds = getRandomDelayInMilliseconds(120, 180);
       await delay(delayInMilliseconds);
 
       const fish = await this.generateFish(messageOrInteraction);
@@ -354,10 +358,11 @@ export class FishManager {
     messageOrInteraction: Message | Interaction,
     guildId: string
   ): void {
-    setTimeout(() => {
+    const despawnTimeout = setTimeout(() => {
       const guildFish = this.getGuildFish(guildId);
       this.despawnFish(messageOrInteraction, guildFish);
     }, NEXT_DESPAWN_IN_MILLISECONDS);
+    this.guildFishSpawn[guildId].despawnTimeout = despawnTimeout;
   }
 
   /**
@@ -457,7 +462,7 @@ export class FishManager {
     );
     const { guildId } = messageOrInteraction;
     const currentMood = await this.bot.getCurrentMood(guildId);
-    const announementMessage = !guildFish
+    const announementMessage = !this.hasGuildFish(guildId)
       ? this.getAllFishCaughtAnnouncementMessage()
       : this.getFishDespawnAnnouncementMessage(currentMood, guildFish);
 
@@ -468,6 +473,11 @@ export class FishManager {
     const despawnAnnouncement = await announcementChannel.send(
       announementMessage
     );
+
+    const despawnTimeout = this.guildFishSpawn[guildId].despawnTimeout;
+    if (despawnTimeout) {
+      clearTimeout(despawnTimeout);
+    }
 
     setTimeout(() => {
       if (despawnAnnouncement && despawnAnnouncement.deletable) {
