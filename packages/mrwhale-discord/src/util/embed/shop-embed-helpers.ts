@@ -32,12 +32,12 @@ const SHOP_PAGE_SIZE = 5;
 /**
  * Generates an embed for the shop items based on the specified item type and user's level.
  *
- * @param options - The options for generating the shop embed.
- * @param options.itemType - The type of the items to be retrieved (e.g. "FishingRod", "Bait").
+ * @param options The options for generating the shop embed.
+ * @param options.itemType The type of the items to be retrieved (e.g. "FishingRod", "Bait").
  * @param options.discordUser - The Discord user for whom the shop items are being fetched.
  * @param options.pageNumber - The current page number for pagination.
- * @param options.guildId - The Id of the guild in which the shop is being accessed.
- * @param options.botClient - The bot client instance.
+ * @param options.guildId The Id of the guild in which the shop is being accessed.
+ * @param options.botClient The bot client instance.
  */
 export async function getShopItemsEmbed(
   options: ShopItemOptions
@@ -45,10 +45,7 @@ export async function getShopItemsEmbed(
   const { itemType, discordUser, pageNumber, guildId, botClient } = options;
 
   try {
-    const userBalance = await botClient.userBalanceManager.getUserBalance(
-      discordUser.id,
-      guildId
-    );
+    const userBalance = await botClient.getUserBalance(discordUser.id, guildId);
     const userScore = await LevelManager.getUserScore(guildId, discordUser.id);
     const userLevel = getLevelFromExp(userScore.exp);
 
