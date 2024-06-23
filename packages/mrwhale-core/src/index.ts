@@ -63,10 +63,7 @@ export {
   SQUID_DESPAWNED_ANNOUNCEMENTS,
 } from "./data/fish-despawn-announcements";
 export { HUNGRY_ANNOUNCEMENTS } from "./data/hungry-announcements";
-export {
-  FISH_CAUGHT_ANNOUNCEMENTS,
-  ALL_FISH_CAUGHT_ANNOUNCEMENTS,
-} from "./data/fish-caught-announements";
+export { ALL_FISH_CAUGHT_ANNOUNCEMENTS } from "./data/fish-caught-announements";
 export { LEVEL_UP_MESSAGES } from "./data/level-up-messages";
 export { FED_MESSAGES } from "./data/fed-messages";
 export { NO_FISH_MESSAGES } from "./data/no-fish-messages";
@@ -92,6 +89,7 @@ export {
   spawnFish,
   FishSpawnedResult,
   countFishSpawned,
+  countFishByRarity,
 } from "./helpers/fishing";
 export { Mood } from "./types/mood";
 export { Achievement } from "./types/achievement";

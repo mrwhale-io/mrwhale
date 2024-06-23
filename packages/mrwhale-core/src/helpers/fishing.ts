@@ -7,18 +7,20 @@ import { fishingRods } from "../data/fishing-rods";
 import { FishingRodNames } from "../types/fishing-rod-names";
 import { Bait } from "../types/bait";
 import { baits } from "../data/baits";
+import { FishRarity } from "../types/fish-rarity";
 
 export interface FishSpawnedResult {
   icon: string;
   worth: number;
   quantity: number;
+  rarity: FishRarity;
 }
 
 /**
  * Get a fish type by name.
  * @param fishName The name of the fish.
  */
-export function getFishByName(fishName: FishTypeNames) {
+export function getFishByName(fishName: FishTypeNames): Fish {
   return fishTypes.find((fishType) => fishType.name === fishName);
 }
 
@@ -26,7 +28,7 @@ export function getFishByName(fishName: FishTypeNames) {
  * Get a fish type by name.
  * @param fishId The id of the fish.
  */
-export function getFishById(fishId: number) {
+export function getFishById(fishId: number): Fish {
   return fishTypes.find((fishType) => fishType.id === fishId);
 }
 
@@ -34,7 +36,9 @@ export function getFishById(fishId: number) {
  * Get a fishing rod by name.
  * @param fishingRodName The name of the fishing rod.
  */
-export function getFishingRodByName(fishingRodName: FishingRodNames) {
+export function getFishingRodByName(
+  fishingRodName: FishingRodNames
+): FishingRod {
   return fishingRods.find((fishingRod) => fishingRod.name === fishingRodName);
 }
 
@@ -42,7 +46,7 @@ export function getFishingRodByName(fishingRodName: FishingRodNames) {
  * Get a fishing rod by id.
  * @param fishingRodId The id of the fishing rod.
  */
-export function getFishingRodById(fishingRodId: number) {
+export function getFishingRodById(fishingRodId: number): FishingRod {
   return fishingRods.find((fishingRod) => fishingRod.id === fishingRodId);
 }
 
@@ -50,7 +54,7 @@ export function getFishingRodById(fishingRodId: number) {
  * Get a fishing bait by name.
  * @param baitName The name of the bait.
  */
-export function getBaitByName(baitName: string) {
+export function getBaitByName(baitName: string): Bait {
   return baits.find((bait) => bait.name === baitName);
 }
 
@@ -58,7 +62,7 @@ export function getBaitByName(baitName: string) {
  * Get a fishing bait by id.
  * @param baitId The id of the bait.
  */
-export function getBaitById(baitId: number) {
+export function getBaitById(baitId: number): Bait {
   return baits.find((bait) => bait.id === baitId);
 }
 
@@ -150,9 +154,39 @@ export function catchFish(
 export function countFishSpawned(
   fishSpawned: Fish[]
 ): Record<string, FishSpawnedResult> {
-  return fishSpawned.reduce((fish, { name, worth, icon }) => {
-    fish[name] = fish[name] || { icon, worth, quantity: 0 };
+  return fishSpawned.reduce((fish, { name, worth, icon, rarity }) => {
+    fish[name] = fish[name] || { icon, worth, rarity, quantity: 0 };
     fish[name].quantity++;
     return fish;
   }, {});
+}
+
+/**
+ * Counts the number of fish by their rarity from the given collection of spawned fish.
+ *
+ * This function takes a record of fish, where each key represents a unique fish identifier,
+ * and the value is an object containing the rarity and quantity of that fish. It returns an
+ * object that maps each fish rarity to the total quantity of fish of that rarity.
+ *
+ * @param fish A record of spawned fish where the key is the fish identifier and the value contains rarity and quantity.
+ * @returns An object mapping each fish rarity to the total quantity of fish of that rarity.
+ */
+export function countFishByRarity(
+  fish: Record<string, FishSpawnedResult>
+): { [key in FishRarity]: number } {
+  const rarityCounts: { [key in FishRarity]: number } = {
+    Common: 0,
+    Uncommon: 0,
+    Rare: 0,
+    Epic: 0,
+    Legendary: 0,
+  };
+
+  Object.values(fish).forEach(({ rarity, quantity }) => {
+    if (rarityCounts[rarity] !== undefined) {
+      rarityCounts[rarity] += quantity;
+    }
+  });
+
+  return rarityCounts;
 }
