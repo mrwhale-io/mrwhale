@@ -9,6 +9,7 @@ interface FishCaughtAttributes {
   fishId: number;
   quantity: number;
   rarity: FishRarity;
+  totalFishCaught?: number;
 }
 
 export interface FishCaughtInstance
