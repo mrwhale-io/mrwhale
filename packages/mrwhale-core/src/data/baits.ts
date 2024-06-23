@@ -83,7 +83,7 @@ export const baits: Bait[] = [
     icon: "🐟",
     cost: 30,
     effectiveness: 2.0,
-    minLevel: 20,
+    minLevel: 25,
   },
   {
     id: 10,
@@ -112,7 +112,7 @@ export const baits: Bait[] = [
     icon: "🩸",
     cost: 55,
     effectiveness: 2.8,
-    minLevel: 30,
+    minLevel: 35,
   },
   {
     id: 13,
