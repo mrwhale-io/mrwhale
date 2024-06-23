@@ -1,10 +1,10 @@
 import { EmbedBuilder } from "discord.js";
-import * as pluralize from "pluralize";
 
 import {
   FED_MESSAGES,
   Fish,
   Mood,
+  code,
   getLevelFromExp,
   getRemainingExp,
   levelToExp,
@@ -13,14 +13,13 @@ import { DiscordBotClient } from "../../client/discord-bot-client";
 import { EMBED_COLOR } from "../../constants";
 import { LevelManager } from "../../client/managers/level-manager";
 import { drawHealthBar } from "../draw-health-bar";
-import { FeedResult } from "../../types/fishing/feed-result";
 
 interface RewardEmbedOptions {
-  fish: Fish;
-  quantity: number;
-  result: FeedResult;
+  fishFed: { fish: Fish; quantity: number }[];
   guildId: string;
   userId: string;
+  totalExpGained: number;
+  totalReward: number;
   botClient: DiscordBotClient;
 }
 
@@ -33,33 +32,52 @@ interface RewardEmbedOptions {
 export async function getFedRewardsEmbed(
   options: RewardEmbedOptions
 ): Promise<EmbedBuilder> {
-  const { botClient, fish, quantity, result, userId, guildId } = options;
+  const {
+    fishFed,
+    guildId,
+    userId,
+    totalExpGained,
+    totalReward,
+    botClient,
+  } = options;
 
   const userScore = await LevelManager.getUserScore(guildId, userId);
   const currentMood = await botClient.getCurrentMood(guildId);
   const fedMessage = getFedMessage(currentMood);
-  const currentProgress = Math.floor((result.hungerLevel / 100) * 100);
+  const hungerLevel = await botClient.getGuildHungerLevel(guildId);
+  const currentProgress = Math.floor((hungerLevel / 100) * 100);
   const whaleAvatar = botClient.client.user.displayAvatarURL();
   const level = getLevelFromExp(userScore.exp);
   const remainingExp = levelToExp(level) - getRemainingExp(userScore.exp);
+  const userBalance = await botClient.getUserBalance(userId, guildId);
+  const fedFishDescriptions = fishFed
+    .map(
+      ({ fish, quantity }) =>
+        `${code(`${quantity}x`)} ${fish.icon} ${fish.name}`
+    )
+    .join("\n");
 
   const embed = new EmbedBuilder()
     .setColor(EMBED_COLOR)
     .setThumbnail(whaleAvatar)
     .addFields([
       {
+        name: "Fish Fed",
+        value: fedFishDescriptions,
+      },
+      {
         name: "Gems Rewarded",
-        value: `💎 +${result.reward}`,
+        value: `💎 +${totalReward}`,
         inline: true,
       },
       {
         name: "Your Current Balance",
-        value: `💰 ${result.newBalance}`,
+        value: `💰 ${userBalance}`,
         inline: true,
       },
       {
         name: "Exp Gained",
-        value: `🆙 +${result.expGained}`,
+        value: `🆙 +${totalExpGained}`,
         inline: true,
       },
       {
@@ -71,13 +89,11 @@ export async function getFedRewardsEmbed(
       },
       {
         name: "Satiety Level",
-        value: `${drawHealthBar(result.hungerLevel)} ${currentProgress}%`,
+        value: `${drawHealthBar(hungerLevel)} ${currentProgress}%`,
       },
     ])
-    .setTitle(
-      `You just fed me ${quantity} ${pluralize(fish.name)} ${fish.icon}`
-    )
-    .setDescription(`${fedMessage}\n\nHere is your reward:`)
+    .setTitle(`You just fed Mr. Whale`)
+    .setDescription(`${fedMessage}`)
     .setFooter({
       text: "Keep feeding Mr. Whale to get more rewards!",
       iconURL: whaleAvatar,

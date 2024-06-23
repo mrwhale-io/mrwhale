@@ -188,11 +188,10 @@ export class HungerManager {
     );
 
     // Update the user's balance and get the new balance
-    const newBalance = await this.bot.addToUserBalance(userId, guildId, reward);
+    await this.bot.addToUserBalance(userId, guildId, reward);
 
     return {
       expGained: expIncreaseAmount,
-      newBalance,
       reward,
       hungerLevel: newHungerLevel,
     };

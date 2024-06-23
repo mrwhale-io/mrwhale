@@ -3,9 +3,11 @@ import {
   FishSpawnedResult,
   FishTypeNames,
   FishingRod,
+  ItemTypes,
   KeyedStorageProvider,
   ListenerDecorators,
   Mood,
+  getFishById,
   getFishByName,
 } from "@mrwhale-io/core";
 import {
@@ -58,6 +60,7 @@ import { getBotJoinedInfo } from "../util/embed/bot-info-helpers";
 import { getFirstTextChannel } from "../util/get-first-text-channel";
 import { extractUserAndGuildId } from "../util/extract-user-and-guild-id";
 import { createEmbed } from "../util/embed/create-embed";
+import { getUserItemsByType } from "../database/services/user-inventory";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -248,11 +251,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
       // Create an embed with the rewards details
       const rewardsEmbed = await getFedRewardsEmbed({
-        fish,
+        fishFed: [{ fish, quantity }],
         guildId,
         userId,
-        quantity,
-        result,
+        totalExpGained: result.expGained,
+        totalReward: result.reward,
         botClient: this,
       });
 
@@ -263,15 +266,70 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
         error instanceof InsufficientItemsError ||
         error instanceof HungerLevelFullError
       ) {
-        const errorEmbed = new EmbedBuilder()
-          .setColor(EMBED_COLOR)
-          .setDescription(error.message);
-        return errorEmbed;
+        return createEmbed(error.message);
       } else {
         this.logger.error("Error feeding fish:", error);
         throw error;
       }
     }
+  }
+
+  /**
+   * Feeds all fish in the user's inventory to Mr. Whale.
+   * This method retrieves the user's inventory, iterates over all fish types, and feeds each type to Mr. Whale.
+   * It then calculates the total experience and rewards gained, updates the user's balance, and returns an embed with the results.
+   *
+   * @param interactionOrMessage The Discord interaction object representing the command invocation.
+   * @returns An embed with the rewards and experience gained from feeding all fish.
+   */
+  async feedAll(
+    interactionOrMessage: Interaction | Message
+  ): Promise<EmbedBuilder> {
+    const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
+    const itemType: ItemTypes = "Fish";
+    const inventoryItems = await getUserItemsByType(userId, guildId, itemType);
+
+    if (!inventoryItems || inventoryItems.length === 0) {
+      throw new InventoryError(itemType);
+    }
+
+    let totalExpGained = 0;
+    let totalReward = 0;
+    const fishFed = [];
+
+    for (const item of inventoryItems) {
+      const fish = getFishById(item.itemId);
+      const quantity = item.quantity;
+      try {
+        const result = await this.hungerManager.feed(
+          interactionOrMessage,
+          fish,
+          quantity
+        );
+
+        totalExpGained += result.expGained;
+        totalReward += result.reward;
+        fishFed.push({ fish, quantity });
+      } catch (error) {
+        if (error instanceof HungerLevelFullError) {
+          break;
+        } else {
+          this.logger.error("Error feeding fish:", error);
+          throw error;
+        }
+      }
+    }
+
+    const rewardsEmbed = await getFedRewardsEmbed({
+      fishFed,
+      guildId,
+      userId,
+      totalExpGained,
+      totalReward,
+      botClient: this,
+    });
+
+    return rewardsEmbed;
   }
 
   /**
@@ -638,10 +696,9 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     error: Error,
     messageResponse: Message
   ): Promise<void> {
-    const nothingCaughtEmbed = new EmbedBuilder().setColor(EMBED_COLOR);
-
     if (error instanceof NoFishError || error instanceof NoAttemptsLeftError) {
-      nothingCaughtEmbed.setDescription(`🎣 ${error.message}`);
+      const nothingCaughtEmbed = createEmbed(error.message);
+      `🎣 ${error.message}`;
       await messageResponse.edit({
         embeds: [nothingCaughtEmbed],
       });
