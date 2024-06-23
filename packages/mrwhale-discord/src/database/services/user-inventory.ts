@@ -11,6 +11,7 @@ interface UserItemCreateOptions {
   itemId: number;
   itemType: ItemTypes;
   equipped?: boolean;
+  quantity?: number;
 }
 
 /**
@@ -88,6 +89,7 @@ export async function getUserItemById(
  * @param options.guildId The Id of the guild.
  * @param options.itemId The Id of the item.
  * @param options.itemType The type of the item (e.g., "FishingRod", "Bait").
+ * @param options.quantity The number of items to buy.
  * @param [options.equipped=false] Whether the item is equipped by the user.
  *
  * @returns - A promise that resolves when the item has been updated or created.
@@ -98,6 +100,7 @@ export async function updateOrCreateUserItem({
   itemId,
   itemType,
   equipped = false,
+  quantity = 1,
 }: UserItemCreateOptions): Promise<UserInventoryInstance> {
   let userItem = await getUserItemById(userId, guildId, itemId, itemType);
 
@@ -112,7 +115,7 @@ export async function updateOrCreateUserItem({
     });
   }
 
-  userItem.quantity++;
+  userItem.quantity += quantity;
   userItem.save();
 
   return userItem;
