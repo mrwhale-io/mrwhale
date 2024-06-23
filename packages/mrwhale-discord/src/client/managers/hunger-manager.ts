@@ -18,6 +18,8 @@ import { InsufficientItemsError } from "../../types/errors/Insufficient-items-er
 import { FeedResult } from "../../types/fishing/feed-result";
 import { logFishFed } from "../../database/services/fish-fed";
 import { Settings } from "../../types/settings";
+import { LevelManager } from "./level-manager";
+import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
@@ -50,7 +52,10 @@ interface HungerLevelMap {
 export class HungerManager {
   private guildHungerLevels: HungerLevelMap;
 
-  constructor(private bot: DiscordBotClient) {
+  constructor(
+    private bot: DiscordBotClient,
+    private levelManager: LevelManager
+  ) {
     this.guildHungerLevels = {};
     this.bot.client.on(
       Events.MessageCreate,
@@ -124,18 +129,18 @@ export class HungerManager {
    * Feeds Mr. Whale with the specified quantity of a given fish, updating the user's inventory,
    * Mr. Whale's hunger level, and awarding the user with experience points and rewards.
    *
-   * @param guildId The Id of the guild where the feeding action is taking place.
-   * @param userId The Id of the user performing the feeding action.
+   * @param interactionOrMessage The interaction or message triggering the feed action.
    * @param fish The fish being fed to Mr. Whale.
    * @param quantity The quantity of the fish being fed.
    * @returns A Promise that resolves to a FeedResult containing the amount of exp gained, the reward given, and the new hunger level.
    */
   async feed(
-    guildId: string,
-    userId: string,
+    interactionOrMessage: Message<boolean> | Interaction,
     fish: Fish,
     quantity: number
   ): Promise<FeedResult> {
+    const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
+
     // Retrieve the user's fish item from their inventory
     const usersFish = await getUserItemById(userId, guildId, fish.id, "Fish");
 
@@ -174,8 +179,20 @@ export class HungerManager {
     await logFishFed(userId, guildId, quantity);
     await useUserItem(userId, guildId, usersFish, quantity);
 
+    // Award EXP to the user
+    await this.levelManager.increaseExp(
+      interactionOrMessage,
+      userId,
+      guildId,
+      expIncreaseAmount
+    );
+
+    // Update the user's balance and get the new balance
+    const newBalance = await this.bot.addToUserBalance(userId, guildId, reward);
+
     return {
       expGained: expIncreaseAmount,
+      newBalance,
       reward,
       hungerLevel: newHungerLevel,
     };

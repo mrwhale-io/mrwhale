@@ -8,6 +8,7 @@ export const achievements: Achievement[] = [
     description: "Catch your first fish.",
     icon: "🎣",
     criteria: { type: "catch_fish", quantity: 1 },
+    exp: 15,
   },
   {
     id: 2,
@@ -15,6 +16,7 @@ export const achievements: Achievement[] = [
     description: "Catch 10 fish.",
     icon: "🐟",
     criteria: { type: "catch_fish", quantity: 10 },
+    exp: 15,
   },
   {
     id: 3,
@@ -22,6 +24,7 @@ export const achievements: Achievement[] = [
     description: "Catch 50 fish.",
     icon: "🐠",
     criteria: { type: "catch_fish", quantity: 50 },
+    exp: 25,
   },
   {
     id: 4,
@@ -29,6 +32,7 @@ export const achievements: Achievement[] = [
     description: "Catch 100 fish.",
     icon: "🐡",
     criteria: { type: "catch_fish", quantity: 100 },
+    exp: 50,
   },
   {
     id: 5,
@@ -36,6 +40,7 @@ export const achievements: Achievement[] = [
     description: "Catch 500 fish.",
     icon: "🐬",
     criteria: { type: "catch_fish", quantity: 500 },
+    exp: 100,
   },
   {
     id: 6,
@@ -43,6 +48,7 @@ export const achievements: Achievement[] = [
     description: "Collect all types of fishing rods.",
     icon: "🎣",
     criteria: { type: "collect_rod", quantity: fishingRods.length },
+    exp: 75,
   },
   {
     id: 7,
@@ -50,6 +56,7 @@ export const achievements: Achievement[] = [
     description: "Catch a rare fish.",
     icon: "🦑",
     criteria: { type: "catch_rarity", rarity: "Rare" },
+    exp: 15,
   },
   {
     id: 8,
@@ -58,6 +65,7 @@ export const achievements: Achievement[] = [
       "Catch a legendary fish (e.g., Giant Squid or Colossal Squid).",
     icon: "🦈",
     criteria: { type: "catch_rarity", rarity: "Legendary" },
+    exp: 25,
   },
   {
     id: 9,
@@ -65,6 +73,7 @@ export const achievements: Achievement[] = [
     description: "Accumulate 10,000 gems.",
     icon: "💎",
     criteria: { type: "accumulate_gems", quantity: 10000 },
+    exp: 50,
   },
   {
     id: 10,
@@ -72,6 +81,7 @@ export const achievements: Achievement[] = [
     description: "Spend 10,000 gems in the shop.",
     icon: "💰",
     criteria: { type: "spend_gems", quantity: 10000 },
+    exp: 50,
   },
   {
     id: 11,
@@ -79,5 +89,6 @@ export const achievements: Achievement[] = [
     description: "Catch a fish on your first attempt.",
     icon: "🍀",
     criteria: { type: "first_attempt" },
+    exp: 15,
   },
 ];

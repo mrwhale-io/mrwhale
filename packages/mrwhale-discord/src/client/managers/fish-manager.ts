@@ -1,9 +1,18 @@
-import { Events, Interaction, Message } from "discord.js";
+import {
+  ButtonInteraction,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  Events,
+  Interaction,
+  Message,
+} from "discord.js";
 
 import {
   ALL_FISH_CAUGHT_ANNOUNCEMENTS,
+  Achievement,
   Bait,
   FISH_DESPAWNED_ANNOUNCEMENTS,
+  FISH_RARITY_ICONS,
   FISH_SPAWNED_ANNOUNCEMENTS,
   Fish,
   FishSpawnedResult,
@@ -15,6 +24,7 @@ import {
   SQUID_DESPAWNED_ANNOUNCEMENTS,
   SQUID_SPAWNED_ANNOUNCEMENTS,
   catchFish,
+  countFishByRarity,
   getFishByName,
   getFishingRodById,
   spawnFish,
@@ -22,15 +32,21 @@ import {
 import { DiscordBotClient } from "../discord-bot-client";
 import { delay, getRandomDelayInMilliseconds } from "../../util/delay-helpers";
 import { getActiveUsers } from "../../util/get-active-users";
-import { getUniqueFishingRodIds } from "../../database/services/fishing-rods";
+import {
+  getEquippedFishingRod,
+  getUniqueFishingRodIds,
+} from "../../database/services/fishing-rods";
 import { updateOrCreateUserItem } from "../../database/services/user-inventory";
 import { logFishCaught } from "../../database/services/fish-caught";
 import { NoFishError } from "../../types/errors/no-fish-error";
 import { NoAttemptsLeftError } from "../../types/errors/no-attempts-left-error";
 import { RemainingAttempts } from "../../types/fishing/remaining-attempts";
-import { consumeBait } from "../../database/services/bait";
-import { checkAndAwardAchievements } from "../../database/services/achievements";
+import { consumeBait, getEquippedBait } from "../../database/services/bait";
+import { checkAndAwardFishingAchievements } from "../../database/services/achievements";
 import { CatchResult } from "../../types/fishing/catch-result";
+import { EMBED_COLOR } from "../../constants";
+import { LevelManager } from "./level-manager";
+import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 
 const ATTEMPT_REGEN_INTERVAL = 15 * 60 * 1000; // 15 minutes
 const NEXT_SPAWN_IN_MILLISECONDS = 60 * 60 * 1000; // 1 hour
@@ -45,6 +61,7 @@ interface FishSpawnMap {
     lastSpawn?: number;
     announcementMessage?: Message;
     despawnTimeout?: NodeJS.Timeout;
+    nextDespawnTimestamp?: number;
     fish: Record<string, FishSpawnedResult>;
   };
 }
@@ -72,7 +89,10 @@ export class FishManager {
   private guildFishSpawn: FishSpawnMap;
   private remainingAttempts: RemainingAttemptsMap;
 
-  constructor(private bot: DiscordBotClient) {
+  constructor(
+    private bot: DiscordBotClient,
+    private levelManager: LevelManager
+  ) {
     this.guildFishSpawn = {};
     this.remainingAttempts = {};
     this.bot.client.on(Events.MessageCreate, (message: Message) =>
@@ -149,34 +169,72 @@ export class FishManager {
   }
 
   /**
-   * Attempts to catch a fish for the specified user in the given guild using the provided fishing rod and bait.
-   * Throws specific errors if no fish are available to catch or if the user has no remaining attempts.
-   * If successful, returns the caught and achievements. If no fish is caught, decrements the user's remaining attempts.
+   * Attempts to catch a fish for the user in the specified guild.
+   * Performs necessary checks, handles bait consumption, applies a delay based on the fishing rod,
+   * updates the user's attempts, handles the caught fish, and awards any achievements.
    *
-   * @param guildId The identifier of the guild where the fishing attempt is taking place.
-   * @param userId The identifier of the user attempting to catch a fish.
-   * @param fishingRod The fishing rod being used by the user.
-   * @param bait The bait being used by the user.
+   * @param interactionOrMessage The interaction or message object from the Discord API, containing details of the user and guild.
    * @returns A promise that resolves to the caught Fish object, or null if no fish is caught.
    * @throws NoFishError if there are no fish available to catch in the guild.
    * @throws NoAttemptsLeftError if the user has no remaining attempts to catch fish.
    */
   async catchFish(
-    guildId: string,
-    userId: string,
-    fishingRod: FishingRod,
-    bait: Bait
+    interactionOrMessage:
+      | ChatInputCommandInteraction
+      | ButtonInteraction
+      | Message
   ): Promise<CatchResult> {
+    const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
+
     // Check if there are any fish available to catch in the guild
     if (!this.hasGuildFish(guildId)) {
       throw new NoFishError();
     }
 
+    const fishingRodEquipped = await getEquippedFishingRod(userId, guildId);
+
     // Check if the user has any remaining attempts to catch fish
-    if (!this.hasRemainingAttempts(userId, guildId, fishingRod)) {
+    if (!this.hasRemainingAttempts(userId, guildId, fishingRodEquipped)) {
       throw new NoAttemptsLeftError();
     }
 
+    const baitEquipped = await getEquippedBait(userId, guildId);
+    const fishCaught = await this.attemptFishCatch(
+      userId,
+      guildId,
+      fishingRodEquipped,
+      baitEquipped
+    );
+
+    if (!fishCaught) {
+      this.updateAttempts(userId, guildId);
+      return this.createCatchResult(null, [], baitEquipped, fishingRodEquipped);
+    }
+
+    // Handle the caught fish (e.g., add to inventory, update guild state)
+    await this.handleFishCaught(guildId, userId, fishCaught);
+
+    // Check whether the user has earned any achievements
+    const achievements = await checkAndAwardFishingAchievements(
+      interactionOrMessage,
+      fishCaught,
+      this.levelManager
+    );
+
+    return this.createCatchResult(
+      fishCaught,
+      achievements,
+      baitEquipped,
+      fishingRodEquipped
+    );
+  }
+
+  private async attemptFishCatch(
+    userId: string,
+    guildId: string,
+    fishingRod: FishingRod,
+    bait: Bait
+  ): Promise<Fish> {
     const allGuildFish = this.getGuildFish(guildId);
     const catchableFish = this.getCatchableFish(allGuildFish);
     const fishCaught = catchFish(
@@ -192,32 +250,17 @@ export class FishManager {
     // Wait for the delay specified by the fishing rod
     await delay(fishingRod.delay);
 
-    if (!fishCaught) {
-      this.updateAttempts(userId, guildId);
-      return { fishCaught: null, achievements: [] };
-    }
-
-    // Handle the caught fish (e.g., add to inventory, update guild state)
-    await this.handleFishCaught(guildId, userId, fishCaught, allGuildFish);
-
-    // Check whether the user has earned any achievements
-    const achievements = await checkAndAwardAchievements(
-      userId,
-      guildId,
-      fishCaught
-    );
-
-    return { fishCaught, achievements };
+    return fishCaught;
   }
 
   private async handleFishCaught(
     guildId: string,
     userId: string,
-    fishCaught: Fish,
-    allGuildFish: Record<string, FishSpawnedResult>
+    fishCaught: Fish
   ): Promise<void> {
     // Find the type of fish caught in the guild and decrement it's quantity.
     // When the quantity is zero we delete the fish from the guild.
+    const allGuildFish = this.getGuildFish(guildId);
     const guildFish = allGuildFish[fishCaught.name];
     if (guildFish) {
       guildFish.quantity--;
@@ -327,11 +370,11 @@ export class FishManager {
 
       const fish = await this.generateFish(messageOrInteraction);
 
-      // Send a notification about the fish spawn
-      this.generateFishSpawnNotification(messageOrInteraction, fish);
-
       // Schedule the fish to despawn after a specified time
       this.scheduleFishDespawn(messageOrInteraction, guildId);
+
+      // Send a notification about the fish spawn
+      this.generateFishSpawnNotification(messageOrInteraction, fish);
     } catch (error) {
       this.bot.logger.error("Error while spawning fish:", error);
     }
@@ -363,6 +406,8 @@ export class FishManager {
       this.despawnFish(messageOrInteraction, guildFish);
     }, NEXT_DESPAWN_IN_MILLISECONDS);
     this.guildFishSpawn[guildId].despawnTimeout = despawnTimeout;
+    this.guildFishSpawn[guildId].nextDespawnTimestamp =
+      Date.now() + NEXT_DESPAWN_IN_MILLISECONDS;
   }
 
   /**
@@ -386,16 +431,12 @@ export class FishManager {
     const announcementChannel = await this.bot.getFishingAnnouncementChannel(
       messageOrInteraction
     );
-    const currentMood = await this.bot.getCurrentMood(guildId);
 
-    // Generate the announcement message text based on the current mood and spawned fish
-    const announementMessageText = this.getFishSpawnAnnouncementMessage(
-      currentMood,
-      fish
-    );
-    const announcementMessage = await announcementChannel.send(
-      announementMessageText
-    );
+    // Generate the embed containing the spawn information
+    const spawnEmbed = await this.getSpawnEmbedAnnouncement(guildId, fish);
+    const announcementMessage = await announcementChannel.send({
+      embeds: [spawnEmbed],
+    });
 
     this.guildFishSpawn[guildId].announcementMessage = announcementMessage;
   }
@@ -463,7 +504,7 @@ export class FishManager {
     const { guildId } = messageOrInteraction;
     const currentMood = await this.bot.getCurrentMood(guildId);
     const announementMessage = !this.hasGuildFish(guildId)
-      ? this.getAllFishCaughtAnnouncementMessage()
+      ? this.getAllFishCaughtAnnouncementMessage(currentMood)
       : this.getFishDespawnAnnouncementMessage(currentMood, guildFish);
 
     this.deleteAnnouncementMessage(guildId);
@@ -484,6 +525,50 @@ export class FishManager {
         despawnAnnouncement.delete().catch(() => null);
       }
     }, DELETE_ANNOUNCEMENT_AFTER);
+  }
+
+  private async getSpawnEmbedAnnouncement(
+    guildId: string,
+    fish: Record<string, FishSpawnedResult>
+  ) {
+    const currentMood = await this.bot.getCurrentMood(guildId);
+    const fishCountsByRarity = countFishByRarity(fish);
+
+    // Generate the announcement message text based on the current mood and spawned fish
+    const announementMessageText = this.getFishSpawnAnnouncementMessage(
+      currentMood,
+      fish
+    );
+
+    const nextDespawnTimestamp = this.guildFishSpawn[guildId]
+      .nextDespawnTimestamp;
+    const nextDespawnTimeInSeconds = Math.floor(nextDespawnTimestamp / 1000);
+    const spawnAnnouncement = new EmbedBuilder()
+      .setColor(EMBED_COLOR)
+      .setTitle("Fish Spawn Alert")
+      .setDescription(announementMessageText)
+      .addFields({
+        name: "Time Limit",
+        value: `⏳ The fish will despawn <t:${nextDespawnTimeInSeconds}:R>`,
+        inline: false,
+      })
+      .setFooter({
+        text: "Use /catch to start fishing. Happy fishing!",
+      })
+      .setTimestamp();
+
+    for (const [key, value] of Object.entries(fishCountsByRarity)) {
+      if (value < 1) {
+        continue;
+      }
+      spawnAnnouncement.addFields({
+        name: `${FISH_RARITY_ICONS[key]} ${key} Fish`,
+        value: `${value}`,
+        inline: true,
+      });
+    }
+
+    return spawnAnnouncement;
   }
 
   private getFishSpawnAnnouncementMessage(
@@ -508,8 +593,10 @@ export class FishManager {
     });
   }
 
-  private getAllFishCaughtAnnouncementMessage(): string {
-    return this.getRandomAnnouncement(ALL_FISH_CAUGHT_ANNOUNCEMENTS);
+  private getAllFishCaughtAnnouncementMessage(currentMood: Mood): string {
+    return this.getRandomAnnouncement(
+      ALL_FISH_CAUGHT_ANNOUNCEMENTS[currentMood]
+    );
   }
 
   private getFishAnnouncementMessage(
@@ -550,5 +637,19 @@ export class FishManager {
 
   private getRandomAnnouncement(announcements: string[]): string {
     return announcements[Math.floor(Math.random() * announcements.length)];
+  }
+
+  private createCatchResult(
+    fishCaught: Fish | null,
+    achievements: Achievement[],
+    baitUsed: Bait,
+    fishingRodUsed: FishingRod
+  ): CatchResult {
+    return {
+      fishCaught,
+      achievements,
+      baitUsed,
+      fishingRodUsed,
+    };
   }
 }

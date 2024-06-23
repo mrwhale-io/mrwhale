@@ -7,7 +7,7 @@ import { Score } from "../models/score";
 import { HIGHSCORE_PAGE_LIMIT } from "../../constants";
 import { ScoreResult } from "../../types/scores/score-result";
 import { MappedScores } from "../../types/scores/mapped-scores";
-import { getAllFishCaughtByGuild } from "./fish-caught";
+import { getPaginatedGuildFishCaught } from "./fish-caught";
 import { FishCaught, FishCaughtInstance } from "../models/fish-caught";
 import { fetchUser } from "./user";
 import {
@@ -79,7 +79,7 @@ export async function getGuildExpScores(
     const totalPlayerScores = await Score.count({ where: { guildId } });
     const offset = (page - 1) * HIGHSCORE_PAGE_LIMIT;
     const totalPages = Math.ceil(totalPlayerScores / HIGHSCORE_PAGE_LIMIT);
-  
+
     const scores = await Score.findAll({
       where: {
         guildId,
@@ -213,7 +213,7 @@ export async function getGuildFishCaughtScores(
   const guildId = messageOrInteraction.guildId;
 
   try {
-    const { count, rows: scores } = await getAllFishCaughtByGuild(
+    const { count, rows: scores } = await getPaginatedGuildFishCaught(
       guildId,
       page
     );
