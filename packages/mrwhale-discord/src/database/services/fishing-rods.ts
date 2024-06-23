@@ -15,12 +15,19 @@ import { getUserItemsByType, updateOrCreateUserItem } from "./user-inventory";
  * basic fishing rod.
  *
  * @param userId The Id of the user to get the equipped fishing rod for.
+ * @param guildId The of the guild.
  */
 export async function getEquippedFishingRod(
-  userId: string
+  userId: string,
+  guildId: string
 ): Promise<FishingRod> {
   const userInventory = await UserInventory.findOne({
-    where: { userId: userId, itemType: "FishingRod", equipped: true },
+    where: {
+      userId: userId,
+      guildId: guildId,
+      itemType: "FishingRod",
+      equipped: true,
+    },
   });
 
   if (!userInventory) {
