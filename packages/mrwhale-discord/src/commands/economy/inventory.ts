@@ -20,6 +20,7 @@ import { UserInventoryInstance } from "../../database/models/user-inventory";
 import { addFishingRodToUserInventory } from "../../database/services/fishing-rods";
 import { getUserAchievements } from "../../database/services/achievements";
 import { formatAchievements } from "../../util/format-achievements";
+import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -50,7 +51,7 @@ export default class extends DiscordCommand {
     interactionOrMessage: ChatInputCommandInteraction | Message
   ) {
     try {
-      const { userId, guildId } = this.getUserAndGuildId(interactionOrMessage);
+      const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
       const userBalance = await this.botClient.getUserBalance(userId, guildId);
       const inventoryItems = await getUserItemsFromInventory(userId, guildId);
 
@@ -88,14 +89,6 @@ export default class extends DiscordCommand {
       this.botClient.logger.error("Error fetching inventory:", error);
       return interactionOrMessage.reply("Could not fetch your inventory.");
     }
-  }
-
-  private getUserAndGuildId(
-    interactionOrMessage: ChatInputCommandInteraction | Message
-  ) {
-    const userId = interactionOrMessage.member.user.id;
-    const guildId = interactionOrMessage.guildId;
-    return { userId, guildId };
   }
 
   private buildUserFishInventory(
@@ -139,9 +132,9 @@ export default class extends DiscordCommand {
       .map((item) => {
         const isEquipped = item.equipped;
         const fishingRod = getFishingRodById(item.itemId);
-        return `${code(`${item.quantity}x`)} ${fishingRod.name} ${
-          isEquipped ? " " + code("[Equipped]") : ""
-        }`;
+        return `${code(`${item.quantity}x`)} ${fishingRod.icon} ${
+          fishingRod.name
+        } ${isEquipped ? " " + code("[Equipped]") : ""}`;
       })
       .join("\n");
   }
