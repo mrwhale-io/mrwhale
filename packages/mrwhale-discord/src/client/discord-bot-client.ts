@@ -42,10 +42,8 @@ import { FishManager } from "./managers/fish-manager";
 import { DiscordButton } from "./button/discord-button";
 import { DiscordButtonLoader } from "./button/discord-button-loader";
 import { DiscordButtonHandler } from "./button/discord-button-handler";
-import { getEquippedFishingRod } from "../database/services/fishing-rods";
 import { UserBalanceManager } from "./managers/user-balance-manager";
 import { createCatchButtons } from "../util/button/catch-buttons-helpers";
-import { getEquippedBait } from "../database/services/bait";
 import { NoFishError } from "../types/errors/no-fish-error";
 import { NoAttemptsLeftError } from "../types/errors/no-attempts-left-error";
 import { RemainingAttempts } from "../types/fishing/remaining-attempts";
@@ -58,6 +56,8 @@ import { Settings } from "../types/settings";
 import { GreetingsManager } from "./managers/greetings-manager";
 import { getBotJoinedInfo } from "../util/embed/bot-info-helpers";
 import { getFirstTextChannel } from "../util/get-first-text-channel";
+import { extractUserAndGuildId } from "../util/extract-user-and-guild-id";
+import { createEmbed } from "../util/embed/create-embed";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -147,6 +147,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private discordSelectMenuLoader: DiscordSelectMenuLoader;
   private guildStorageLoader: GuildStorageLoader;
   private discordButtonsLoader: DiscordButtonLoader;
+  private activeFishers: Set<string> = new Set();
 
   constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
@@ -178,7 +179,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   /**
    * Gets the unique bot prefix of the specified guild.
    *
-   * @param guildId The ID of the guild to get unique prefix for.
+   * @param guildId The Id of the guild to get unique prefix for.
    */
   async getPrefix(guildId: string): Promise<string> {
     if (!this.guildSettings.has(guildId)) {
@@ -197,7 +198,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * It ensures that the settings for the specified guild are loaded and initialized
    * into memory, making them readily accessible for the bot's operations.
    *
-   * @param guildId The ID of the guild to load settings for.
+   * @param guildId The Id of the guild to load settings for.
    * @returns A promise that resolves once the guild settings have been loaded.
    */
   async loadGuildSettings(guildId: string): Promise<void> {
@@ -212,7 +213,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * the database and the in-memory storage, effectively clearing any stored data
    * related to that guild.
    *
-   * @param guildId The ID of the guild to delete settings for.
+   * @param guildId The Id of the guild to delete settings for.
    * @returns A promise that resolves once the guild settings have been deleted.
    */
   async deleteGuildSettings(guildId: string): Promise<void> {
@@ -233,35 +234,16 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     fishName: FishTypeNames,
     quantity: number
   ): Promise<EmbedBuilder> {
-    const {
-      user: { id: userId },
-    } = interactionOrMessage.member;
-    const { guildId } = interactionOrMessage;
+    const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
 
     try {
       const fish = getFishByName(fishName);
 
       // Attempt to feed Mr. Whale with the specified fish and quantity
       const result = await this.hungerManager.feed(
-        guildId,
-        userId,
+        interactionOrMessage,
         fish,
         quantity
-      );
-
-      // Award EXP to the user
-      this.levelManager.increaseExp(
-        interactionOrMessage,
-        userId,
-        guildId,
-        result.expGained
-      );
-
-      // Update the user's balance and get the new balance
-      const { balance } = await this.userBalanceManager.addToUserBalance(
-        userId,
-        guildId,
-        result.reward
       );
 
       // Create an embed with the rewards details
@@ -270,7 +252,6 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
         guildId,
         userId,
         quantity,
-        balance,
         result,
         botClient: this,
       });
@@ -370,9 +351,9 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * This method delegates the balance update to the user balance manager,
    * ensuring that the user's balance is correctly adjusted by the specified amount.
    *
-   * @param userId - The ID of the user whose balance is to be updated.
-   * @param guildId - The ID of the guild in which the user's balance is to be updated.
-   * @param amount - The amount to add to the user's balance. This can be positive or negative.
+   * @param userId The Id of the user whose balance is to be updated.
+   * @param guildId The Id of the guild in which the user's balance is to be updated.
+   * @param amount The amount to add to the user's balance. This can be positive or negative.
    * @returns A promise that resolves to the updated balance of the user.
    */
   async addToUserBalance(
@@ -390,9 +371,10 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Attempts to catch a fish for the user in the specified guild, taking into account their equipped fishing rod and bait.
-   * If successful, returns an embed with the details of the caught fish and any additional action buttons.
-   * If unsuccessful due to specific known errors (e.g., no fish available, no remaining attempts), returns an embed with an appropriate error message.
+   * Initiates the fishing process for a user in a guild. If the user is already fishing,
+   * it sends a message indicating that they must wait until the current fishing attempt is complete.
+   * Otherwise, it proceeds with the fishing process, sends a message indicating the fishing is in progress,
+   * and then handles the result of the fishing attempt.
    *
    * @param interactionOrMessage The interaction or message object from the Discord API, containing details of the user and guild.
    * @returns A promise that resolves to the sent message containing the fish caught embed and catch buttons.
@@ -404,62 +386,56 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       | ButtonInteraction
       | Message
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
-    const {
-      user: { id: userId },
-    } = interactionOrMessage.member;
-    const { guildId } = interactionOrMessage;
+    const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
     let messageResponse: Message;
 
-    try {
-      const fishingRodEquipped = await getEquippedFishingRod(userId);
-      const baitEquipped = await getEquippedBait(userId, guildId);
+    const activeFisherKey = `${guildId}-${userId}`;
 
-      const inProgressMessage = new EmbedBuilder()
-        .setColor(EMBED_COLOR)
-        .setDescription(
-          `🎣 <@${interactionOrMessage.member.user.id}> is fishing...`
-        );
+    // Check if the user is already in the process of fishing.
+    if (this.isUserFishing(activeFisherKey)) {
+      const alreadyFishingEmbed = createEmbed(
+        "You are already fishing. Please wait until your current fishing attempt is complete."
+      );
+      return this.sendReply(interactionOrMessage, alreadyFishingEmbed, true);
+    }
+
+    // Mark the user as currently fishing
+    // This is to prevent more than one fishing action to occur at the same time
+    this.activeFishers.add(activeFisherKey);
+
+    try {
+      const inProgressMessage = createEmbed(
+        `🎣 <@${interactionOrMessage.member.user.id}> is fishing...`
+      );
 
       messageResponse = await this.sendReply(
         interactionOrMessage,
         inProgressMessage
       );
 
-      const { fishCaught, achievements } = await this.fishManager.catchFish(
-        guildId,
-        userId,
-        fishingRodEquipped,
-        baitEquipped
+      const catchResult = await this.fishManager.catchFish(
+        interactionOrMessage
       );
+
+      // Generate the embed with all the caught fish details
       const fishCaughtEmbed = await getCaughtFishEmbed({
-        fishCaught,
+        fishCaught: catchResult.fishCaught,
         interaction: interactionOrMessage,
-        fishingRodUsed: fishingRodEquipped,
-        baitUsed: baitEquipped,
-        achievements,
+        fishingRodUsed: catchResult.fishingRodUsed,
+        baitUsed: catchResult.baitUsed,
+        achievements: catchResult.achievements,
         botClient: this,
       });
       const catchButtons = createCatchButtons(interactionOrMessage, this);
 
-      return await messageResponse.edit({
+      await messageResponse.edit({
         embeds: [fishCaughtEmbed],
         components: catchButtons ? [catchButtons] : [],
       });
     } catch (error) {
-      const nothingCaughtEmbed = new EmbedBuilder().setColor(EMBED_COLOR);
-      if (
-        error instanceof NoFishError ||
-        error instanceof NoAttemptsLeftError
-      ) {
-        nothingCaughtEmbed.setDescription(`🎣 ${error.message}`);
-
-        return await messageResponse.edit({
-          embeds: [nothingCaughtEmbed],
-        });
-      } else {
-        this.logger.error("Error catching fish:", error);
-        throw error;
-      }
+      this.handleFishingError(error, messageResponse);
+    } finally {
+      this.activeFishers.delete(activeFisherKey);
     }
   }
 
@@ -576,13 +552,6 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
   }
 
-  @on(Events.GuildDelete)
-  private async onGuildDelete(guild: Guild): Promise<void> {
-    const guildId = guild.id;
-    await this.guildStorageLoader.deleteGuildSettings(guildId);
-    await LevelManager.removeAllScoresForGuild(guildId);
-  }
-
   @on(Events.ChannelDelete)
   private async onChannelDelete(
     channel: DMChannel | NonThreadGuildBasedChannel
@@ -615,8 +584,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   private initialiseManagers(): void {
     this.levelManager = new LevelManager(this);
-    this.hungerManager = new HungerManager(this);
-    this.fishManager = new FishManager(this);
+    this.hungerManager = new HungerManager(this, this.levelManager);
+    this.fishManager = new FishManager(this, this.levelManager);
     this.userBalanceManager = new UserBalanceManager();
     this.greetingsManager = new GreetingsManager(this);
   }
@@ -631,10 +600,15 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.discordButtonHandler.ready = true;
   }
 
+  private isUserFishing(activeFisherKey: string): boolean {
+    return this.activeFishers.has(activeFisherKey);
+  }
+
   /**
    * Sends a reply to the interaction or message.
    * @param interactionOrMessage The interaction or message to reply to.
    * @param embed The embed to send as a reply.
+   * @param ephemeral Whether the reply is ephemeral or not.
    * @returns A promise that resolves to the sent message.
    */
   private async sendReply(
@@ -642,7 +616,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       | ChatInputCommandInteraction
       | ButtonInteraction
       | Message,
-    embed: EmbedBuilder
+    embed: EmbedBuilder,
+    ephemeral: boolean = false
   ): Promise<Message<boolean>> {
     if (interactionOrMessage instanceof Message) {
       return await interactionOrMessage.reply({
@@ -654,7 +629,25 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
         embeds: [embed],
         allowedMentions: { users: [] },
         fetchReply: true,
+        ephemeral,
       });
+    }
+  }
+
+  private async handleFishingError(
+    error: Error,
+    messageResponse: Message
+  ): Promise<void> {
+    const nothingCaughtEmbed = new EmbedBuilder().setColor(EMBED_COLOR);
+
+    if (error instanceof NoFishError || error instanceof NoAttemptsLeftError) {
+      nothingCaughtEmbed.setDescription(`🎣 ${error.message}`);
+      await messageResponse.edit({
+        embeds: [nothingCaughtEmbed],
+      });
+    } else {
+      this.logger.error("Error catching fish:", error);
+      throw error;
     }
   }
 }

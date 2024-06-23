@@ -14,7 +14,6 @@ export default class extends DiscordCommand {
       type: "fishing",
       usage: "<prefix>catch",
       guildOnly: true,
-      cooldown: 3000,
     });
   }
 
