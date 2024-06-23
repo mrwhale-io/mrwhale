@@ -1,4 +1,5 @@
 import { EmbedBuilder } from "discord.js";
+import * as pluralize from "pluralize";
 
 import {
   FED_MESSAGES,
@@ -17,7 +18,6 @@ import { FeedResult } from "../../types/fishing/feed-result";
 interface RewardEmbedOptions {
   fish: Fish;
   quantity: number;
-  balance: number;
   result: FeedResult;
   guildId: string;
   userId: string;
@@ -33,15 +33,7 @@ interface RewardEmbedOptions {
 export async function getFedRewardsEmbed(
   options: RewardEmbedOptions
 ): Promise<EmbedBuilder> {
-  const {
-    botClient,
-    fish,
-    quantity,
-    balance,
-    result,
-    userId,
-    guildId,
-  } = options;
+  const { botClient, fish, quantity, result, userId, guildId } = options;
 
   const userScore = await LevelManager.getUserScore(guildId, userId);
   const currentMood = await botClient.getCurrentMood(guildId);
@@ -62,7 +54,7 @@ export async function getFedRewardsEmbed(
       },
       {
         name: "Your Current Balance",
-        value: `💰 ${balance}`,
+        value: `💰 ${result.newBalance}`,
         inline: true,
       },
       {
@@ -82,7 +74,9 @@ export async function getFedRewardsEmbed(
         value: `${drawHealthBar(result.hungerLevel)} ${currentProgress}%`,
       },
     ])
-    .setTitle(`You just fed me ${quantity} ${fish.name} ${fish.icon}`)
+    .setTitle(
+      `You just fed me ${quantity} ${pluralize(fish.name)} ${fish.icon}`
+    )
     .setDescription(`${fedMessage}\n\nHere is your reward:`)
     .setFooter({
       text: "Keep feeding Mr. Whale to get more rewards!",
