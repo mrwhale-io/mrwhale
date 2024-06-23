@@ -7,6 +7,7 @@ import {
   Message,
   bold,
 } from "discord.js";
+import * as pluralize from "pluralize";
 
 import {
   Bait,
@@ -25,6 +26,8 @@ import { EMBED_COLOR } from "../../constants";
 import { updateOrCreateUserItem } from "../../database/services/user-inventory";
 import { getFishingRodsOwnedByPlayer } from "../../database/services/fishing-rods";
 import { LevelManager } from "../../client/managers/level-manager";
+import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
+import { pascalCaseToWords } from "../../util/pascal-case-to-words";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -53,6 +56,13 @@ export default class extends DiscordCommand {
           .setDescription("The name of the item to buy.")
           .setRequired(true)
           .setAutocomplete(true)
+      )
+      .addIntegerOption((option) =>
+        option
+          .setName("quantity")
+          .setDescription("The number of items to buy.")
+          .setMinValue(1)
+          .setRequired(false)
       );
   }
 
@@ -81,17 +91,19 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const itemType = interaction.options.getString("item_type") as ItemTypes;
     const itemName = interaction.options.getString("item_name");
+    const quantity = interaction.options.getInteger("quantity") || 1;
 
-    return this.buyItem(itemType, itemName, interaction);
+    return this.buyItem(itemType, itemName, quantity, interaction);
   }
 
   private async buyItem(
     itemType: ItemTypes,
     itemName: string,
+    quantity: number,
     interactionOrMessage: ChatInputCommandInteraction | Message
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     try {
-      const { userId, guildId } = this.getUserAndGuildId(interactionOrMessage);
+      const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
       const userBalance = await this.botClient.getUserBalance(userId, guildId);
 
       const item = this.findShopItem(itemType, itemName);
@@ -108,33 +120,44 @@ export default class extends DiscordCommand {
 
       if (await this.userAlreadyOwnsItem(itemType, itemName, userId, guildId)) {
         return interactionOrMessage.reply(
-          `You already own this${itemType
-            .replace(/([A-Z][a-z])/g, " $1")
-            .toLowerCase()}.`
+          `You already own this${pascalCaseToWords(itemType)}.`
         );
       }
 
       if (!hasUnlockedItem) {
         return interactionOrMessage.reply(
-          `You have not unlocked this${itemType
-            .replace(/([A-Z][a-z])/g, " $1")
-            .toLowerCase()}.`
+          `You have not unlocked this${pascalCaseToWords(itemType)}.`
         );
       }
 
-      if (userBalance < item.cost) {
+      if (itemType === "FishingRod" && quantity > 1) {
         return interactionOrMessage.reply(
-          "You do not have enough gems to buy this item."
+          `You can only own one of each${pascalCaseToWords(itemType)}.`
         );
       }
 
-      await this.processPurchase(userId, guildId, item, itemType);
+      const itemCost = item.cost * quantity;
+      if (userBalance < itemCost) {
+        return interactionOrMessage.reply(
+          `You do not have enough gems to buy ${
+            quantity > 1 ? "these items." : "this item."
+          }`
+        );
+      }
 
-      const newBalance = userBalance - item.cost;
+      await this.processPurchase(
+        interactionOrMessage,
+        item,
+        itemType,
+        quantity
+      );
+
+      const newBalance = userBalance - itemCost;
       const embed = this.createPurchaseSuccessEmbed(
         item.name,
-        item.cost,
-        newBalance
+        itemCost,
+        newBalance,
+        quantity
       );
 
       return interactionOrMessage.reply({ embeds: [embed] });
@@ -192,40 +215,41 @@ export default class extends DiscordCommand {
   }
 
   private async processPurchase(
-    userId: string,
-    guildId: string,
+    interactionOrMessage: ChatInputCommandInteraction | Message,
     item: FishingRod | Bait,
-    itemType: ItemTypes
+    itemType: ItemTypes,
+    quantity: number
   ) {
-    await this.botClient.addToUserBalance(userId, guildId, -item.cost);
+    const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
+    const itemCost = item.cost * quantity;
+    await this.botClient.addToUserBalance(userId, guildId, -itemCost);
     await updateOrCreateUserItem({
       userId,
       guildId,
       itemId: item.id,
       itemType,
+      quantity,
     });
   }
 
   private createPurchaseSuccessEmbed(
     itemName: string,
     itemCost: number,
-    newBalance: number
+    newBalance: number,
+    quantity: number
   ): EmbedBuilder {
+    const quantitytext = quantity > 1 ? bold(`${quantity}`) : "";
+    const itemText = quantity > 1 ? pluralize(itemName) : itemName;
+
     return new EmbedBuilder()
       .setColor(EMBED_COLOR)
       .setTitle("Purchase Successful")
       .setDescription(
-        `You have successfully bought ${bold(itemName)} for ${itemCost} gems.`
+        `You have successfully bought ${quantitytext} ${bold(
+          itemText
+        )} for ${itemCost} gems.`
       )
       .setFooter({ text: `💎 Your new balance: ${newBalance}` });
-  }
-
-  private getUserAndGuildId(
-    interactionOrMessage: ChatInputCommandInteraction | Message
-  ) {
-    const userId = interactionOrMessage.member.user.id;
-    const guildId = interactionOrMessage.guildId;
-    return { userId, guildId };
   }
 
   private findShopItem(
