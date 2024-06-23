@@ -1,7 +1,11 @@
 import { FishFed, FishFedInstance } from "../models/fish-fed";
 
 /**
- * Gets the number of a specific type of fish fed by the user in a guild.
+ * Retrieves the fish fed by a user in a specific guild.
+ *
+ * @param userId The Id of the user.
+ * @param guildId The Id of the guild.
+ * @returns A promise that resolves to the FishFed instance or null if no record is found.
  */
 export async function getFishFedByUserInGuild(
   userId: string,
@@ -16,19 +20,15 @@ export async function getFishFedByUserInGuild(
 }
 
 /**
- * Gets the total number of fish fed in the guild.
- */
-export async function getTotalFishFedInGuild(guildId: string): Promise<number> {
-  const totalOfFish = await FishFed.sum("quantity", {
-    where: { guildId },
-  });
-
-  return totalOfFish;
-}
-
-/**
- * Creates a new fish fed record.
- * This is used for logging fish fed by a user in a given guild.
+ * Logs the quantity of fish fed by a user in a specific guild.
+ *
+ * This function checks if there is an existing record of the fish fed by the user in the guild.
+ * If a record exists, it updates the quantity. If no record exists, it creates a new record.
+ *
+ * @param userId The Id of the user.
+ * @param guildId The Id of the guild.
+ * @param quantity The quantity of fish fed.
+ * @returns A promise that resolves once the operation is complete.
  */
 export async function logFishFed(
   userId: string,
