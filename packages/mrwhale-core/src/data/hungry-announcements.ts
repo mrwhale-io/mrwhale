@@ -2,14 +2,14 @@ import { Mood } from "../types/mood";
 
 export const HUNGRY_ANNOUNCEMENTS: Record<string, string[]> = {
   [Mood.Happy]: [
-    "🐳 My stomach's rumbling again. Time for a snack break.",
+    "🐳 My stomach's rumbling again. Time for a snack break!",
     "🐳 My appetite is growing. Better grab some snacks before it gets worse.",
     "🐳 It seems I'm in need of some sustenance.",
     "🐳 Attention: The hunger meter is rising. I need food.",
     "🐳 Reporting from the depths of hunger. It's time to eat.",
     "🐳 The hunger pangs are real. I need to eat now.",
     "🐳 I'm feeling hungry again.",
-    "🐳 Hunger strikes once more. Time for a snack.",
+    "🐳 Hunger strikes once more. Time for a snack!",
     "🐳 Attention, everyone! The hunger wave is approaching. Time to eat.",
   ],
   [Mood.Okay]: [
