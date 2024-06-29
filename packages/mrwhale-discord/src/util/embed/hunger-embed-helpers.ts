@@ -12,7 +12,7 @@ import {
 import { DiscordBotClient } from "../../client/discord-bot-client";
 import { EMBED_COLOR } from "../../constants";
 import { LevelManager } from "../../client/managers/level-manager";
-import { drawHealthBar } from "../draw-health-bar";
+import { drawHungerHealthBar } from "../draw-hunger-health-bar";
 
 interface RewardEmbedOptions {
   fishFed: { fish: Fish; quantity: number }[];
@@ -45,7 +45,6 @@ export async function getFedRewardsEmbed(
   const currentMood = await botClient.getCurrentMood(guildId);
   const fedMessage = getFedMessage(currentMood);
   const hungerLevel = await botClient.getGuildHungerLevel(guildId);
-  const currentProgress = Math.floor((hungerLevel / 100) * 100);
   const whaleAvatar = botClient.client.user.displayAvatarURL();
   const level = getLevelFromExp(userScore.exp);
   const remainingExp = levelToExp(level) - getRemainingExp(userScore.exp);
@@ -89,7 +88,7 @@ export async function getFedRewardsEmbed(
       },
       {
         name: "Satiety Level",
-        value: `${drawHealthBar(hungerLevel)} ${currentProgress}%`,
+        value: `${drawHungerHealthBar(hungerLevel)}`,
       },
     ])
     .setTitle(`You just fed Mr. Whale`)
