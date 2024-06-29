@@ -10,6 +10,7 @@ import { FISH_RARITY_ICONS } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
 import { getFishCaughtByRarity } from "../../database/services/fish-caught";
+import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -40,7 +41,7 @@ export default class extends DiscordCommand {
     interactionOrMessage: ChatInputCommandInteraction | Message
   ) {
     try {
-      const { userId, guildId } = this.getUserAndGuildId(interactionOrMessage);
+      const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
       const embed = new EmbedBuilder()
         .setColor(EMBED_COLOR)
         .setAuthor({
@@ -79,13 +80,5 @@ export default class extends DiscordCommand {
       this.botClient.logger.error("Error fetching fish caught:", error);
       return interactionOrMessage.reply("Could not fetch fish caught stats.");
     }
-  }
-
-  private getUserAndGuildId(
-    interactionOrMessage: ChatInputCommandInteraction | Message
-  ) {
-    const userId = interactionOrMessage.member.user.id;
-    const guildId = interactionOrMessage.guildId;
-    return { userId, guildId };
   }
 }

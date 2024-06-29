@@ -8,6 +8,7 @@ import {
 
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
+import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -39,9 +40,9 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const user = message.mentions.users.first();
     const embed = await this.bestow(
+      message,
       message.author,
       user,
-      message.guildId,
       transferAmount
     );
 
@@ -54,9 +55,9 @@ export default class extends DiscordCommand {
     const user = interaction.options.getUser("user");
     const transferAmount = interaction.options.getInteger("amount");
     const embed = await this.bestow(
+      interaction,
       interaction.user,
       user,
-      interaction.guildId,
       transferAmount
     );
 
@@ -64,11 +65,12 @@ export default class extends DiscordCommand {
   }
 
   private async bestow(
+    interactionOrMessage: ChatInputCommandInteraction | Message,
     transferFromUser: User,
     transferToUser: User,
-    guildId: string,
     transferAmount: number
   ): Promise<EmbedBuilder> {
+    const { guildId } = extractUserAndGuildId(interactionOrMessage);
     const userBalance = await this.botClient.getUserBalance(
       transferFromUser.id,
       guildId
@@ -96,13 +98,13 @@ export default class extends DiscordCommand {
     }
 
     const newBalance = await this.botClient.addToUserBalance(
+      interactionOrMessage,
       transferFromUser.id,
-      guildId,
       -transferAmount
     );
     await this.botClient.addToUserBalance(
+      interactionOrMessage,
       transferToUser.id,
-      guildId,
       transferAmount
     );
 

@@ -16,6 +16,7 @@ import {
   equipUserItem,
   getUserItemByName,
 } from "../../database/services/user-inventory";
+import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -80,7 +81,7 @@ export default class extends DiscordCommand {
     interactionOrMessage: ChatInputCommandInteraction | Message
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     try {
-      const { userId, guildId } = this.getUserAndGuildId(interactionOrMessage);
+      const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
       const userItem = await getUserItemByName(userId, guildId, itemName);
       if (!userItem) {
         return interactionOrMessage.reply("Item not found in your inventory.");
@@ -105,13 +106,5 @@ export default class extends DiscordCommand {
         "An error occurred while trying to equip the item."
       );
     }
-  }
-
-  private getUserAndGuildId(
-    interactionOrMessage: ChatInputCommandInteraction | Message
-  ) {
-    const userId = interactionOrMessage.member.user.id;
-    const guildId = interactionOrMessage.guildId;
-    return { userId, guildId };
   }
 }
