@@ -1,6 +1,5 @@
 import { FishRarity } from "@mrwhale-io/core";
 import { FishCaught, FishCaughtInstance } from "../models/fish-caught";
-import { HIGHSCORE_PAGE_LIMIT } from "../../constants";
 
 /**
  * Retrieves the details of a specific fish caught by a user in a guild.
@@ -23,31 +22,6 @@ export async function getUserFishCatchDetails(
   return await FishCaught.findOne({
     where: { userId, guildId, fishId, rarity },
   });
-}
-
-/**
- * Retrieves a paginated list of all fish caught in a specific guild.
- *
- * This function fetches the fish caught data for a specified guild, providing
- * pagination support. It returns the total count of records and the rows of
- * fish caught data sorted by quantity in descending order.
- *
- * @param guildId The Id of the guild whose fish catch data is to be retrieved.
- * @param page The page number for pagination.
- * @returns A promise that resolves to an object containing the total count of fish
- *          caught records and an array of FishCaughtInstance objects for the specified page.
- */
-export async function getPaginatedGuildFishCaught(
-  guildId: string,
-  page: number
-): Promise<{ count: number; rows: FishCaughtInstance[] }> {
-  const { count, rows } = await FishCaught.findAndCountAll({
-    where: { guildId },
-    limit: HIGHSCORE_PAGE_LIMIT,
-    offset: HIGHSCORE_PAGE_LIMIT * (page - 1),
-    order: [["quantity", "DESC"]],
-  });
-  return { count, rows };
 }
 
 /**
