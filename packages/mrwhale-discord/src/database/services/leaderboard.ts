@@ -6,9 +6,7 @@ import { getLevelFromExp } from "@mrwhale-io/core";
 import { Score } from "../models/score";
 import { HIGHSCORE_PAGE_LIMIT } from "../../constants";
 import { ScoreResult } from "../../types/scores/score-result";
-import { MappedScores } from "../../types/scores/mapped-scores";
-import { getPaginatedGuildFishCaught } from "./fish-caught";
-import { FishCaught, FishCaughtInstance } from "../models/fish-caught";
+import { FishCaught } from "../models/fish-caught";
 import { fetchUser } from "./user";
 import {
   createExpLeaderboardTable,
@@ -210,31 +208,57 @@ export async function getGuildFishCaughtScores(
   messageOrInteraction: Message | ChatInputCommandInteraction,
   page: number
 ): Promise<ScoreResult> {
-  const guildId = messageOrInteraction.guildId;
-
   try {
-    const { count, rows: scores } = await getPaginatedGuildFishCaught(
-      guildId,
-      page
-    );
+    const guildId = messageOrInteraction.guildId;
+    const cacheKey = `topFishCaughtScores:${guildId}:${page}`;
+    const cachedData = leaderboardCache.get<ScoreResult>(cacheKey);
 
-    const scoreSumTotals = countFishCaught(scores);
-    const pages = Math.ceil(count / HIGHSCORE_PAGE_LIMIT);
-    const offset = HIGHSCORE_PAGE_LIMIT * (page - 1);
+    if (cachedData) {
+      return cachedData;
+    }
 
-    const mappedScoresPromises: Promise<MappedScores>[] = Object.entries(
-      scoreSumTotals
-    ).map(async ([userId, quantity]) => {
-      const user = await fetchUser(messageOrInteraction.client, userId);
+    const totalFishCaughtScores = await FishCaught.count({
+      distinct: true,
+      col: "userId",
+    });
+    const offset = (page - 1) * HIGHSCORE_PAGE_LIMIT;
+    const totalPages = Math.ceil(totalFishCaughtScores / HIGHSCORE_PAGE_LIMIT);
+
+    const fishCaught = await FishCaught.findAll({
+      where: { guildId },
+      attributes: [
+        "userId",
+        [sequelize.fn("SUM", sequelize.col("quantity")), "totalFishCaught"],
+      ],
+      group: ["userId"],
+      order: [[sequelize.literal("totalFishCaught"), "DESC"]],
+      limit: HIGHSCORE_PAGE_LIMIT,
+      offset: offset,
+      raw: true,
+    });
+
+    const mappedScoresPromises = fishCaught.map(async (fishCaught) => {
+      const user = await fetchUser(
+        messageOrInteraction.client,
+        fishCaught.userId
+      );
       return {
-        exp: quantity,
+        exp: fishCaught.totalFishCaught,
+        level: getLevelFromExp(fishCaught.totalFishCaught),
         user: user ? user : null,
       };
     });
-
     const mappedScores = await Promise.all(mappedScoresPromises);
+    const topScorePage: ScoreResult = {
+      scores: mappedScores,
+      total: totalFishCaughtScores,
+      pages: totalPages,
+      offset,
+    };
 
-    return { scores: mappedScores, total: count, pages, offset };
+    leaderboardCache.set(cacheKey, topScorePage);
+
+    return topScorePage;
   } catch {
     throw new Error("Failed to fetch fish caught scores.");
   }
@@ -351,14 +375,4 @@ async function getFishCaughtLeaderboardTable(
     ),
     pages: fishCaughtScores.pages,
   };
-}
-
-function countFishCaught(
-  fishCaught: FishCaughtInstance[]
-): Record<string, number> {
-  return fishCaught.reduce((score, { userId, quantity }) => {
-    score[userId] = score[userId] || 0;
-    score[userId] += quantity;
-    return score;
-  }, {});
 }
