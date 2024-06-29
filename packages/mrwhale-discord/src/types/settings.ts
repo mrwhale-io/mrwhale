@@ -5,6 +5,8 @@ export enum Settings {
   AnnouncementChannel = "announcementChannel",
   Greetings = "greetings",
   GreetingChannel = "greetingChannel",
+  FishingAnnouncements = "fishingAnnouncements",
+  HungerAnnouncements = "hungerAnnouncements",
   HungerState = "hungerState",
   Levels = "levels",
   LevelChannel = "levelChannel",

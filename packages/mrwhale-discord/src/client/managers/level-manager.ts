@@ -51,13 +51,16 @@ export class LevelManager {
   }
 
   /**
-   * Checks if the leveling system is enabled for a specific guild.
-   * If no settings are found for the guild, it defaults to true.
+   * Checks whether the level-up notifications are enabled for a specific guild.
    *
-   * @param guildId The Id of the guild to check the leveling system status.
-   * @returns A promise that resolves to a boolean indicating whether the leveling system is enabled.
+   * This method retrieves the settings for the specified guild and determines if the level-up
+   * notifications are enabled. If the settings for the guild are not found, it defaults to true,
+   * indicating that level-up notifications are enabled by default.
+   *
+   * @param guildId The Id of the guild to check the level-up notifications setting for.
+   * @returns A promise that resolves to a boolean indicating whether level-up notifications are enabled.
    */
-  async isLevelsEnabled(guildId: string): Promise<boolean> {
+  async areLevelUpsEnabled(guildId: string): Promise<boolean> {
     if (!this.bot.guildSettings.has(guildId)) {
       return true;
     }
@@ -170,8 +173,9 @@ export class LevelManager {
     score.save();
 
     const newLevel = getLevelFromExp(score.exp);
+    const areLevelsEnabled = await this.areLevelUpsEnabled(guildId);
 
-    if (newLevel > level) {
+    if (newLevel > level && areLevelsEnabled) {
       const channel = await this.getLevelUpAnnouncementChannel(
         interactionOrMessage
       );
@@ -255,10 +259,9 @@ export class LevelManager {
   }
 
   private async onMessage(message: Message): Promise<void> {
-    const isEnabled = await this.isLevelsEnabled(message.guildId);
     const isDmChannel = message.channel.type === ChannelType.DM;
 
-    if (message.author.bot || isDmChannel || !isEnabled) {
+    if (message.author.bot || isDmChannel) {
       return;
     }
 

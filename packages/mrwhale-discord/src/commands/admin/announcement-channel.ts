@@ -15,7 +15,8 @@ export default class extends DiscordCommand {
   constructor() {
     super({
       name: "announcementchannel",
-      description: "Set the announcement channel.",
+      description:
+        "Set the announcement channel. All bot announcements will default to this.",
       type: "admin",
       usage: "<prefix>announcementchannel <channel>",
       guildOnly: true,

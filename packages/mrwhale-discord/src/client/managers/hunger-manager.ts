@@ -236,12 +236,14 @@ export class HungerManager {
       : -Infinity;
     const elapsedTimeSinceSpawnMessage =
       currentTime - fishSpawnMessageTimestamp;
+    const areAnnouncementsEnabled = await this.areAnnouncementsEnabled(guildId);
 
     // Check if it's time to send a hunger announcement
     if (
       elapsedTimeSinceHungerMessage <=
         NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS ||
-      elapsedTimeSinceSpawnMessage <= DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT
+      elapsedTimeSinceSpawnMessage <= DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT ||
+      !areAnnouncementsEnabled
     ) {
       return;
     }
@@ -265,6 +267,16 @@ export class HungerManager {
         announcements
       );
     }
+  }
+
+  private async areAnnouncementsEnabled(guildId: string): Promise<boolean> {
+    if (!this.bot.guildSettings.has(guildId)) {
+      return true;
+    }
+
+    const settings = this.bot.guildSettings.get(guildId);
+
+    return await settings.get(Settings.HungerAnnouncements, true);
   }
 
   private async sendRandomHungerAnnouncement(
