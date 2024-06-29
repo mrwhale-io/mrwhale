@@ -1,15 +1,8 @@
 import { ChatInputCommandInteraction, Message } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
-import {
-  PageResult,
-  getEmbedWithPaginatorButtons,
-} from "../../util/paginator-buttons";
-import {
-  createLeaderboardTable,
-  getGlobalScores,
-  getGuildScores,
-} from "../../util/leaderboard";
+import { getEmbedWithPaginatorButtons } from "../../util/button/paginator-buttons";
+import { getLeaderboardTable } from "../../database/services/leaderboard";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -22,88 +15,50 @@ export default class extends DiscordCommand {
       guildOnly: true,
       cooldown: 5000,
     });
+    this.slashCommandData.addStringOption((option) =>
+      option
+        .setName("leaderboard")
+        .setDescription("The category of leaderboard.")
+        .addChoices(
+          { name: "Exp", value: "exp" },
+          { name: "Fish caught", value: "fishcaught" }
+        )
+    );
     this.slashCommandData.addBooleanOption((option) =>
       option
         .setName("global")
-        .setDescription("Fetch the global leaderboard.")
+        .setDescription("Whether this is a global leaderboard.")
         .setRequired(false)
     );
   }
 
-  async action(message: Message, [command]: [string]): Promise<Message> {
-    try {
-      const page = 1;
-      const isGlobal = command && command.toLowerCase().trim() === "global";
-      if (isGlobal) {
-        const mappedGlobalScores = await getGlobalScores(message, page);
-        const embed = await createLeaderboardTable(
-          mappedGlobalScores,
-          page,
-          "Global leaderboard"
-        );
-        return message.reply({
-          embeds: [embed],
-          allowedMentions: { users: [] },
-        });
-      }
-      const mappedGuildScores = await getGuildScores(message, page);
-      const embed = await createLeaderboardTable(
-        mappedGuildScores,
-        page,
-        `${message.guild.name} leaderboard`
-      );
-      return message.reply({
-        embeds: [embed],
-        allowedMentions: { users: [] },
-      });
-    } catch {
-      return message.reply("Could not fetch leaderboard.");
-    }
-  }
+  async action(message: Message): Promise<void> {}
 
   async slashCommandAction(interaction: ChatInputCommandInteraction) {
     try {
-      const global = interaction.options.getBoolean("global") || false;
-      if (global) {
-        return this.getGlobalHighScoreEmbed(interaction);
-      }
-      return await this.getGuildHighScoreEmbed(interaction);
+      const leaderboard = interaction.options.getString("leaderboard") || "exp";
+      const isGlobal = interaction.options.getBoolean("global") || false;
+
+      return await this.getHighScoreEmbed(interaction, leaderboard, isGlobal);
     } catch {
       return interaction.reply("Could not fetch leaderboard.");
     }
   }
 
-  private async getGlobalHighScoreEmbed(
-    interaction: ChatInputCommandInteraction
-  ) {
-    const fetchGlobalScoresEmbed = async (
-      page: number
-    ): Promise<PageResult> => {
-      const mappedGlobalScores = await getGlobalScores(interaction, page);
-      const embed = await createLeaderboardTable(
-        mappedGlobalScores,
-        page,
-        "Global leaderboard"
-      );
-      return { embed, pages: mappedGlobalScores.pages };
-    };
-    return await getEmbedWithPaginatorButtons(
-      interaction,
-      fetchGlobalScoresEmbed
-    );
-  }
-
-  private async getGuildHighScoreEmbed(
-    interaction: ChatInputCommandInteraction
+  private async getHighScoreEmbed(
+    interaction: ChatInputCommandInteraction,
+    type: string,
+    isGlobal: boolean = false
   ) {
     const fetchGuildScoresEmbed = async (page: number) => {
-      const mappedGuildScores = await getGuildScores(interaction, page);
-      const embed = await createLeaderboardTable(
-        mappedGuildScores,
+      const { table, pages } = await getLeaderboardTable(
+        interaction,
+        type,
         page,
-        `${interaction.guild.name} leaderboard`
+        isGlobal
       );
-      return { embed, pages: mappedGuildScores.pages };
+
+      return { embed: table, pages };
     };
     return await getEmbedWithPaginatorButtons(
       interaction,

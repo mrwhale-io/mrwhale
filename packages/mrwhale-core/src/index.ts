@@ -26,6 +26,7 @@ export {
   DEFAULT_COMMAND_RATE_LIMIT,
   DEFAULT_COMMAND_COOLDOWN_DURATION,
   DEFAULT_RANK_THEME,
+  FISH_RARITY_ICONS,
 } from "./constants";
 export { BotClient } from "./client/bot-client";
 export { Command } from "./client/command/command";
@@ -49,3 +50,53 @@ export {
 } from "./util/markdown-helpers";
 export { InfoBuilder } from "./util/info-builder";
 export { applyText } from "./util/apply-text";
+export { fishTypes } from "./data/fish-types";
+export { GREETINGS } from "./data/greetings";
+export {
+  FISH_SPAWNED_ANNOUNCEMENTS,
+  SHARK_SPAWNED_ANNOUNCEMENTS,
+  SQUID_SPAWNED_ANNOUNCEMENTS,
+} from "./data/fish-spawn-announcements";
+export {
+  FISH_DESPAWNED_ANNOUNCEMENTS,
+  SHARK_DESPAWNED_ANNOUNCEMENTS,
+  SQUID_DESPAWNED_ANNOUNCEMENTS,
+} from "./data/fish-despawn-announcements";
+export { HUNGRY_ANNOUNCEMENTS } from "./data/hungry-announcements";
+export { ALL_FISH_CAUGHT_ANNOUNCEMENTS } from "./data/fish-caught-announements";
+export { LEVEL_UP_MESSAGES } from "./data/level-up-messages";
+export { FED_MESSAGES } from "./data/fed-messages";
+export { NO_FISH_MESSAGES } from "./data/no-fish-messages";
+export { fishingRods } from "./data/fishing-rods";
+export { achievements } from "./data/achievements";
+export { baits } from "./data/baits";
+export {
+  getAchievementByName,
+  getAchievementById,
+} from "./helpers/achievements";
+export { Fish } from "./types/fish";
+export { Bait } from "./types/bait";
+export { FishTypeNames } from "./types/fish-type-names";
+export { ItemTypes } from "./types/item-types";
+export {
+  catchFish,
+  getFishById,
+  getFishByName,
+  getFishingRodById,
+  getFishingRodByName,
+  getBaitById,
+  getBaitByName,
+  spawnFish,
+  FishSpawnedResult,
+  countFishSpawned,
+  countFishByRarity,
+} from "./helpers/fishing";
+export { Mood } from "./types/mood";
+export { Achievement } from "./types/achievement";
+export { FishingRodNames } from "./types/fishing-rod-names";
+export { HungerLevel } from "./types/hunger-level";
+export { FishingRod } from "./types/fishing-rod";
+export { BaseItem } from "./types/base-item";
+export { AchievementNames } from "./types/achievement-names";
+export { AchievementCriteria } from "./types/achievement-criteria";
+export { FishRarity } from "./types/fish-rarity";

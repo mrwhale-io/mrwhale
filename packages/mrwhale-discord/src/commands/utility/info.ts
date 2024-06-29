@@ -1,16 +1,11 @@
-import { TimeUtilities } from "@mrwhale-io/core";
 import {
   ChatInputCommandInteraction,
-  EmbedBuilder,
   InteractionResponse,
   Message,
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
-import { EMBED_COLOR } from "../../constants";
-
-const FRACTIONAL_DIGITS = 2;
-const MEM_UNIT = 1024;
+import { getBotInfo } from "../../util/embed/bot-info-helpers";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -20,70 +15,21 @@ export default class extends DiscordCommand {
       type: "utility",
       usage: "<prefix>info",
       aliases: ["uptime", "stats", "version", "about"],
-      cooldown: 3000,
+      cooldown: 10000,
     });
   }
 
   async action(
     message: Message
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
-    return this.getInfo(message);
+    const botInfoEmbed = getBotInfo(message, this.botClient);
+    return message.reply({ embeds: [botInfoEmbed] });
   }
 
   async slashCommandAction(
     interaction: ChatInputCommandInteraction
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
-    return this.getInfo(interaction);
-  }
-
-  private getInfo(
-    message: Message | ChatInputCommandInteraction
-  ): Promise<InteractionResponse<boolean>> | Promise<Message<boolean>> {
-    const avatar = this.botClient.client.user.displayAvatarURL();
-    const memoryUsage = process.memoryUsage().heapUsed / MEM_UNIT / MEM_UNIT;
-
-    const embed = new EmbedBuilder()
-      .addFields([
-        {
-          name: "Official Discord server",
-          value: `[Join my Discord server!](${this.botClient.discordServer})`,
-        },
-        {
-          name: "Source code",
-          value: "https://github.com/mrwhale-io/mrwhale",
-        },
-        {
-          name: "Website",
-          value: "https://www.mrwhale.io",
-        },
-        {
-          name: "Version",
-          value: this.botClient.version,
-        },
-        {
-          name: "Servers",
-          value: `${this.botClient.client.guilds.cache.size}`,
-        },
-        {
-          name: "Loaded commands",
-          value: `${this.botClient.commands.size}`,
-        },
-        {
-          name: "Memory usage",
-          value: `${memoryUsage.toFixed(FRACTIONAL_DIGITS)} MB`,
-        },
-        {
-          name: "Bot uptime",
-          value: `${TimeUtilities.convertMs(this.botClient.client.uptime)}`,
-        },
-      ])
-      .setColor(EMBED_COLOR)
-      .setDescription(
-        `Hi I'm ${this.botClient.client.user.username} a general purpose discord bot. Use the \`help\` command to see my commands`
-      )
-      .setThumbnail(avatar)
-      .setTitle(`About ${this.botClient.client.user.username}`);
-
-    return message.reply({ embeds: [embed] });
+    const botInfoEmbed = getBotInfo(interaction, this.botClient);
+    return interaction.reply({ embeds: [botInfoEmbed] });
   }
 }

@@ -3,7 +3,7 @@ import { request } from "undici";
 
 import { HttpStatusCode } from "@mrwhale-io/core";
 import { encodeBase64 } from "../../util/encode-base64";
-import { OAuthTokenResponse } from "../../types/oauth-token-response";
+import { OAuthTokenResponse } from "../../types/api/oauth-token-response";
 import { DISCORD_API_VERSION, DISCORD_URL } from "../../constants";
 import { getDiscordUser } from "../services/user";
 

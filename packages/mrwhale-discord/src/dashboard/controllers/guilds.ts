@@ -195,7 +195,7 @@ async function deleteGuildData(req: express.Request, res: express.Response) {
 
   if (botClient.guildSettings.has(guildId)) {
     await botClient.deleteGuildSettings(guildId);
-    await botClient.createGuildSettings(guildId);
+    await botClient.loadGuildSettings(guildId);
   }
   await LevelManager.removeAllScoresForGuild(guildId);
 

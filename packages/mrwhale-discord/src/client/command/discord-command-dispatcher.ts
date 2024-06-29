@@ -12,6 +12,7 @@ import {
   TextChannel,
   User,
   ChannelType,
+  Events,
 } from "discord.js";
 
 import { DiscordBotClient } from "../discord-bot-client";
@@ -34,12 +35,12 @@ export class DiscordCommandDispatcher {
 
   constructor(bot: DiscordBotClient) {
     this.bot = bot;
-    this.bot.client.on("interactionCreate", (interaction) => {
+    this.bot.client.on(Events.InteractionCreate, (interaction) => {
       this.handleInteraction(interaction);
       this.handleAutocomplete(interaction);
     });
 
-    this.bot.client.on("messageCreate", (message) => {
+    this.bot.client.on(Events.MessageCreate, (message) => {
       this.handleMessage(message);
     });
   }
@@ -49,8 +50,9 @@ export class DiscordCommandDispatcher {
       return;
     }
 
+    const guildId = message.guildId;
     const dm = message.channel.type === ChannelType.DM;
-    const prefix = await this.bot.getPrefix(message.guildId);
+    const prefix = await this.bot.getPrefix(guildId);
 
     if (!message.content.trim().startsWith(prefix)) {
       return;
@@ -83,8 +85,12 @@ export class DiscordCommandDispatcher {
       return;
     }
 
-    const args = getCommandArgs(message.content, prefix, command.argSeparator);
+    // Check if the settings for the guild are loaded
+    if (guildId && !this.bot.guildSettings.has(guildId)) {
+      await this.bot.loadGuildSettings(guildId);
+    }
 
+    const args = getCommandArgs(message.content, prefix, command.argSeparator);
     await dispatch(command, message, args).catch((e) =>
       this.bot.logger.error(e)
     );
@@ -122,6 +128,13 @@ export class DiscordCommandDispatcher {
       return;
     }
 
+    const guildId = interaction.guildId;
+
+    // Check if the settings for the guild are loaded
+    if (guildId && !this.bot.guildSettings.has(guildId)) {
+      await this.bot.loadGuildSettings(guildId);
+    }
+
     await command
       .slashCommandAction(interaction)
       .catch((e) => this.bot.logger.error(e));
@@ -137,6 +150,13 @@ export class DiscordCommandDispatcher {
     }
     const commandName = interaction.commandName.toLowerCase();
     const command = this.bot.commands.findByNameOrAlias(commandName);
+
+    const guildId = interaction.guildId;
+
+    // Check if the settings for the guild are loaded
+    if (guildId && !this.bot.guildSettings.has(guildId)) {
+      await this.bot.loadGuildSettings(guildId);
+    }
 
     await command
       .autocomplete(interaction)
@@ -167,20 +187,18 @@ export class DiscordCommandDispatcher {
       return true;
     }
 
-    if (!rateLimit.wasNotified) {
-      rateLimit.setNotified();
-      const timeLeft = TimeUtilities.difference(
-        rateLimit.expires,
-        Date.now()
-      ).toString();
+    const timeLeft = TimeUtilities.difference(rateLimit.expires, Date.now())
+      .toString()
+      .trim();
 
-      if (timeLeft) {
-        interaction.reply({
-          content: `Command cooldown. Try again in ${timeLeft}.`,
-          ephemeral: true,
-        });
-      }
-    }
+    const cooldownMessage = `Command cooldown. Try again${
+      timeLeft ? ` in ${timeLeft}` : ""
+    }.`;
+
+    interaction.reply({
+      content: cooldownMessage,
+      ephemeral: true,
+    });
 
     return false;
   }
@@ -191,7 +209,7 @@ export class DiscordCommandDispatcher {
     user: User,
     dm: boolean
   ): boolean {
-    if (command.admin && !this.bot.isOwner(user)) {
+    if (command.admin && !this.bot.isOwner(user.id)) {
       return false;
     }
 

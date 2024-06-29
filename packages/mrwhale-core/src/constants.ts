@@ -1,4 +1,5 @@
 import { CommandTypes } from "./types/command-types";
+import { FishRarity } from "./types/fish-rarity";
 import { RankCardTheme } from "./types/rank-card-theme";
 
 export const WHALE_REGEX = /O_{1,5}O/gi;
@@ -8,6 +9,8 @@ export const DEFAULT_COMMAND_COOLDOWN_DURATION = 1000;
 
 export const COMMAND_TYPE_NAMES: CommandTypes[] = [
   "admin",
+  "economy",
+  "fishing",
   "fun",
   "game",
   "utility",
@@ -23,4 +26,12 @@ export const DEFAULT_RANK_THEME: RankCardTheme = {
   progressFillColour: "#002b3d",
   progressColour: "#71b8ce",
   font: "28px sans-serif",
+};
+
+export const FISH_RARITY_ICONS: { [key in FishRarity]: string } = {
+  Common: "🌿",
+  Uncommon: "🌟",
+  Rare: "💎",
+  Epic: "🏆",
+  Legendary: "🌈",
 };

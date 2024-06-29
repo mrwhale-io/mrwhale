@@ -15,6 +15,7 @@ import {
 } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { LevelManager } from "../../client/managers/level-manager";
+import { Settings } from "../../types/settings";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -131,6 +132,6 @@ export default class extends DiscordCommand {
 
     const settings = this.botClient.guildSettings.get(guildId);
 
-    return await settings.get("rankCard", DEFAULT_RANK_THEME);
+    return await settings.get(Settings.RankCard, DEFAULT_RANK_THEME);
   }
 }

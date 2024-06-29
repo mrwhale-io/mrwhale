@@ -1,7 +1,7 @@
 import { User } from "discord.js";
 import { request } from "undici";
 
-import { DiscordErrorResponse } from "../../types/discord-error-response";
+import { DiscordErrorResponse } from "../../types/api/discord-error-response";
 import { DISCORD_API_VERSION, DISCORD_URL } from "../../constants";
 
 /**

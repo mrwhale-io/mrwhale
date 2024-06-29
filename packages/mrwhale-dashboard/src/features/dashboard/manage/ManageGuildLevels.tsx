@@ -40,7 +40,7 @@ const ManageGuildLevels = ({ guildId, guildData }: Props) => {
       <FormGroup>
         <FormControlLabel
           control={<Switch checked={checked} onChange={handleChange} />}
-          label={checked ? "Levels Enabled" : "Levels Disabled"}
+          label={checked ? "Levels Ups Enabled" : "Levels Ups Disabled"}
           sx={{ paddingBottom: 2 }}
         />
         {checked && (

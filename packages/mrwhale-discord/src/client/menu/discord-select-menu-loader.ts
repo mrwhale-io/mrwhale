@@ -1,7 +1,7 @@
 import * as glob from "glob";
 
 import { DiscordBotClient } from "../discord-bot-client";
-import { loadSelectMenu } from "../../util/load-select-menu";
+import { loadSelectMenu } from "../../util/menu/load-select-menu";
 import { DiscordSelectMenu } from "./discord-select-menu";
 
 /**

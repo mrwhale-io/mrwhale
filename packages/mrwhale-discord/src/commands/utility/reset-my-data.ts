@@ -4,28 +4,36 @@ import {
   ButtonStyle,
   CacheType,
   ChatInputCommandInteraction,
+  DiscordjsError,
+  DiscordjsErrorCodes,
   InteractionResponse,
   Message,
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
-import { LevelManager } from "../../client/managers/level-manager";
 
 export default class extends DiscordCommand {
   constructor() {
     super({
       name: "resetmydata",
-      description: "Reset all your data.",
+      description: "Resets your user data.",
       type: "utility",
       usage: "<prefix>resetmydata",
     });
+    this.slashCommandData.addBooleanOption((option) =>
+      option
+        .setName("global")
+        .setDescription("Whether to reset your data across all servers.")
+        .setRequired(false)
+    );
   }
 
   async action(_message: Message): Promise<void> {}
 
   async slashCommandAction(
     interaction: ChatInputCommandInteraction<CacheType>
-  ): Promise<InteractionResponse<boolean>> {
+  ): Promise<InteractionResponse<boolean> | Message<boolean>> {
+    const userId = interaction.user.id;
     const confirm = new ButtonBuilder()
       .setCustomId("confirm")
       .setLabel("Reset Data")
@@ -43,11 +51,11 @@ export default class extends DiscordCommand {
 
     const response = await interaction.reply({
       ephemeral: true,
-      content: `Are you sure you want to reset all your user data?`,
+      content: `Are you sure you want to reset your user data? This action is irreversible.`,
       components: [row],
     });
 
-    const collectorFilter = (i: any) => i.user.id === interaction.user.id;
+    const collectorFilter = (i: any) => i.user.id === userId;
     try {
       const confirmation = await response.awaitMessageComponent({
         filter: collectorFilter,
@@ -55,8 +63,11 @@ export default class extends DiscordCommand {
       });
 
       if (confirmation.customId === "confirm") {
-        await LevelManager.removeAllScoresForUser(interaction.member.user.id);
-        await confirmation.update({
+        const isGlobal = interaction.options.getBoolean("global") || false;
+
+        await this.botClient.resetUserData(interaction, isGlobal);
+
+        return await confirmation.update({
           content: `Your user data has been reset.`,
           components: [],
         });
@@ -66,9 +77,19 @@ export default class extends DiscordCommand {
           components: [],
         });
       }
-    } catch {
-      await interaction.editReply({
-        content: "Confirmation not received within 1 minute, cancelling.",
+    } catch (error) {
+      if (
+        error instanceof DiscordjsError &&
+        error.code === DiscordjsErrorCodes.InteractionCollectorError
+      ) {
+        return await interaction.editReply({
+          content: "Confirmation not received within 1 minute, cancelling.",
+          components: [],
+        });
+      }
+
+      return await interaction.editReply({
+        content: "An error occurred while resetting user data.",
         components: [],
       });
     }

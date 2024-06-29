@@ -7,8 +7,8 @@ import {
 
 import { COMMAND_TYPE_NAMES, CommandTypes, capitalise } from "@mrwhale-io/core";
 import { DiscordSelectMenu } from "../client/menu/discord-select-menu";
-import { SelectMenus } from "../types/select-menus";
-import { getCommandsByTypeEmbed } from "../util/help";
+import { SelectMenus } from "../types/menu/select-menus";
+import { getCommandsByTypeEmbed } from "../util/embed/help-embed-helpers";
 
 export default class extends DiscordSelectMenu {
   constructor() {
@@ -51,9 +51,11 @@ export default class extends DiscordSelectMenu {
 
   private getEmoji(commandType: CommandTypes): string {
     const emojis: Record<CommandTypes, string> = {
+      ["admin"]: "🛡️",
+      ["economy"]: "💵",
+      ["fishing"]: "🎣",
       ["fun"]: "😀",
       ["utility"]: "🔧",
-      ["admin"]: "🛡️",
       ["useful"]: "🖨️",
       ["game"]: "🎲",
       ["image"]: "🖼️",

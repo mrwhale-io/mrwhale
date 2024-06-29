@@ -1,8 +1,8 @@
 import { EmbedBuilder } from "discord.js";
 
 import { capitalise, unorderedList } from "@mrwhale-io/core";
-import { DiscordBotClient } from "../client/discord-bot-client";
-import { EMBED_COLOR } from "../constants";
+import { DiscordBotClient } from "../../client/discord-bot-client";
+import { EMBED_COLOR } from "../../constants";
 
 export async function getCommandsByTypeEmbed(
   type: string,

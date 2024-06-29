@@ -1,7 +1,7 @@
 import * as express from "express";
 
 import { HttpStatusCode } from "@mrwhale-io/core";
-import { loadCommands } from "../../util/load-commands";
+import { loadCommands } from "../../util/command/load-commands";
 
 export const commandsRouter = express.Router();
 

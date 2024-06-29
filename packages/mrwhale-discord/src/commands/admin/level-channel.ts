@@ -9,12 +9,13 @@ import {
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
+import { Settings } from "../../types/settings";
 
 export default class extends DiscordCommand {
   constructor() {
     super({
       name: "levelchannel",
-      description: "Set the level up message channel.",
+      description: "Set a channel for level up messages.",
       type: "admin",
       usage: "<prefix>levelchannel <channel>",
       guildOnly: true,
@@ -58,7 +59,7 @@ export default class extends DiscordCommand {
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     const settings = this.botClient.guildSettings.get(interaction.guildId);
     if (settings) {
-      settings.set("levelChannel", channel.id);
+      settings.set(Settings.LevelChannel, channel.id);
       return interaction.reply(
         `Successfully set level up channel to <#${channel.id}>`
       );
