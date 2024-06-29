@@ -25,13 +25,15 @@ export const LEVEL_UP_MESSAGES: Record<string, string[]> = {
     "You're now **level <<LEVEL>>**! Don't worry, you're not any more prepared for life than you were before.",
   ],
   [Mood.Grumpy]: [
+    "Oh great, you're leveling up. Now I'll have to work even harder.",
+    "You leveled up. What do you want, a medal?",
     "You've reached **level <<LEVEL>>**. Great, now you're officially overqualified for mediocrity.",
+    "Congratulations, you leveled up. Now can you let me sulk in peace?",
     "Congratulations, you've leveled up. I hope you're proud of yourself.",
     "You've reached **level <<LEVEL>>**. Try not to let it go to your head.",
     "Another level? Just what the world needed, more of you.",
-    "You've leveled up. Don't get too excited, it's not like it means anything.",
     "**Level <<LEVEL>>** reached. Try not to break anything on your way down.",
     "Congrats on leveling up. I guess even a broken clock is right twice a day.",
-    "You're now **level <<LEVEL>>**. But let's be real, it's not like it's an achievement worth celebrating.",
+    "You leveled up. Fantastic. Can I go back to being grumpy now?",
   ],
 };
