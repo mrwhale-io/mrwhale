@@ -116,7 +116,9 @@ async function getFishingRodPage(userLevel: number): Promise<ShopPage> {
     nextUnlockableFishingRod,
   } = await getFishingRodsAvailable(userLevel);
   const shopItems = availableFishingRods.map((rod) => ({
-    name: `${rod.icon} ${rod.name} ${rod.minLevel === userLevel ? "NEW" : ""}`,
+    name: `${rod.icon} ${rod.name} ${
+      rod.minLevel === userLevel ? "`NEW`" : ""
+    }`,
     value: `**Description**: ${rod.description}\n**Cost**: 💎 ${rod.cost} gems\n**Probability Multiplier**: ${rod.probabilityMultiplier}`,
   }));
 
@@ -143,7 +145,9 @@ async function getBaitPage(userLevel: number): Promise<ShopPage> {
     userLevel
   );
   const shopItems = availableBaits.map((bait) => ({
-    name: `${bait.icon} ${bait.name}`,
+    name: `${bait.icon} ${bait.name} ${
+      bait.minLevel === userLevel ? "`NEW`" : ""
+    }`,
     value: `**Description**: ${bait.description}\n**Cost**: 💎 ${bait.cost} gems\n**Effectiveness**: ${bait.effectiveness}`,
   }));
 
