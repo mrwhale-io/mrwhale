@@ -61,6 +61,7 @@ import { extractUserAndGuildId } from "../util/extract-user-and-guild-id";
 import { createEmbed } from "../util/embed/create-embed";
 import { getUserItemsByType } from "../database/services/user-inventory";
 import { checkAndAwardBalanceAchievements } from "../database/services/achievements";
+import { resetUserData } from "../database/services/user";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -587,6 +588,32 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       return channel;
     } catch {
       return message.channel;
+    }
+  }
+
+  /**
+   * Resets the user data for a specified user in either a specific guild or globally.
+   *
+   * This method clears the user's data based on the provided scope (guild-specific or global).
+   * If the `isGlobal` parameter is true, it resets the user's data across all guilds and
+   * removes all their balance entries from the cache. Otherwise, it resets the user's data
+   * only in the specified guild and removes the balance entry from the cache for that guild.
+   *
+   * @param interaction The ChatInputCommandInteraction object from the Discord API, containing details of the user and guild.
+   * @param isGlobal A boolean indicating whether to reset the user's data globally or just in the specific guild.
+   */
+  async resetUserData(
+    interaction: ChatInputCommandInteraction,
+    isGlobal: boolean
+  ) {
+    const { guildId, userId } = extractUserAndGuildId(interaction);
+
+    if (isGlobal) {
+      await resetUserData(userId);
+      this.userBalanceManager.deleteUserBalances(userId);
+    } else {
+      await resetUserData(userId, guildId);
+      this.userBalanceManager.deleteUserBalanceInGuild(userId, guildId);
     }
   }
 

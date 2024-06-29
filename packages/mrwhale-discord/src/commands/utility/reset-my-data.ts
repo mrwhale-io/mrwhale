@@ -11,7 +11,6 @@ import {
 } from "discord.js";
 
 import { DiscordCommand } from "../../client/command/discord-command";
-import { resetUserData } from "../../database/services/user";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -66,9 +65,7 @@ export default class extends DiscordCommand {
       if (confirmation.customId === "confirm") {
         const isGlobal = interaction.options.getBoolean("global") || false;
 
-        isGlobal
-          ? await resetUserData(userId)
-          : await resetUserData(userId, interaction.guildId);
+        await this.botClient.resetUserData(interaction, isGlobal);
 
         return await confirmation.update({
           content: `Your user data has been reset.`,

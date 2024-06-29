@@ -63,6 +63,53 @@ export class UserBalanceManager {
     return userBalance;
   }
 
+  /**
+   * Sets the balance for a specific user in a specific guild.
+   *
+   * This method updates the user's balance in the local cache for the specified guild.
+   * If the guild does not have any cached balances yet, it initializes an empty object for that guild.
+   * Then it sets the user's balance to the provided value.
+   *
+   * @param userId The Id of the user whose balance is being set.
+   * @param guildId The Id of the guild where the user's balance is being set.
+   * @param balance The new balance to be set for the user.
+   */
+  setUserBalance(userId: string, guildId: string, balance: number): void {
+    if (!this.usersBalances[guildId]) {
+      this.usersBalances[guildId] = {};
+    }
+
+    this.usersBalances[guildId][userId] = balance;
+  }
+
+  /**
+   * Deletes all balances for a particular user across all guilds.
+   *
+   * @param userId The Id of the user whose balances are to be deleted.
+   */
+  deleteUserBalances(userId: string): void {
+    for (const guildId in this.usersBalances) {
+      if (this.usersBalances[guildId].hasOwnProperty(userId)) {
+        delete this.usersBalances[guildId][userId];
+      }
+    }
+  }
+
+  /**
+   * Deletes the balance for a particular user in a specific guild.
+   *
+   * @param userId The Id of the user whose balance is to be deleted.
+   * @param guildId The Id of the guild where the user's balance is to be deleted.
+   */
+  deleteUserBalanceInGuild(userId: string, guildId: string): void {
+    if (
+      this.usersBalances[guildId] &&
+      this.usersBalances[guildId].hasOwnProperty(userId)
+    ) {
+      delete this.usersBalances[guildId][userId];
+    }
+  }
+
   private async getOrCreateUserBalance(
     userId: string,
     guildId: string
@@ -85,17 +132,5 @@ export class UserBalanceManager {
     this.setUserBalance(userId, guildId, userBalance.balance);
 
     return userBalance;
-  }
-
-  private setUserBalance(
-    userId: string,
-    guildId: string,
-    balance: number
-  ): void {
-    if (!this.usersBalances[guildId]) {
-      this.usersBalances[guildId] = {};
-    }
-
-    this.usersBalances[guildId][userId] = balance;
   }
 }
