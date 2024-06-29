@@ -4,12 +4,16 @@ import {
   InteractionResponse,
   Message,
 } from "discord.js";
-import { formatDistanceToNowStrict } from "date-fns";
 
 import { Mood } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
-import { drawHealthBar } from "../../util/draw-health-bar";
+import {
+  getFavoriteFish,
+  getTotalFishFedByUserInGuild,
+  getTotalFishFedInGuild,
+} from "../../database/services/fish-fed";
+import { drawHungerHealthBar } from "../../util/draw-hunger-health-bar";
 
 export default class extends DiscordCommand {
   constructor() {
@@ -24,32 +28,43 @@ export default class extends DiscordCommand {
   }
 
   async action(message: Message): Promise<Message<boolean>> {
-    const embed = await this.getHungerLevelEmbed(message.guildId);
+    const embed = await this.getHungerLevelEmbed(
+      message.author.id,
+      message.guildId
+    );
     return message.reply({ embeds: [embed] });
   }
 
   async slashCommandAction(
     interaction: ChatInputCommandInteraction
   ): Promise<InteractionResponse<boolean>> {
-    const embed = await this.getHungerLevelEmbed(interaction.guildId);
+    const embed = await this.getHungerLevelEmbed(
+      interaction.member.user.id,
+      interaction.guildId
+    );
     return interaction.reply({ embeds: [embed] });
   }
 
-  private async getHungerLevelEmbed(guildId: string) {
+  private async getHungerLevelEmbed(userId: string, guildId: string) {
     const hungerLevel = await this.botClient.getGuildHungerLevel(guildId);
-    const currentProgress = Math.floor((hungerLevel / 100) * 100);
     const currentMood = await this.botClient.getCurrentMood(guildId);
     const lastFedTimestamp = await this.botClient.lastFedTimestamp(guildId);
     const lastFedString = lastFedTimestamp
-      ? formatDistanceToNowStrict(lastFedTimestamp, { addSuffix: true })
+      ? `<t:${Math.floor(lastFedTimestamp / 1000)}:R>`
       : "Never";
-
+    const whaleAvatar = this.botClient.client.user.displayAvatarURL();
+    const totalFishFedByUser = await getTotalFishFedByUserInGuild(
+      userId,
+      guildId
+    );
+    const totalFishFedByGuild = await getTotalFishFedInGuild(guildId);
+    const favoriteFish = await getFavoriteFish(guildId);
     const embed = new EmbedBuilder()
       .setColor(EMBED_COLOR)
       .addFields([
         {
           name: "Satiety Level",
-          value: `${drawHealthBar(hungerLevel)} ${currentProgress}%`,
+          value: `${drawHungerHealthBar(hungerLevel)}`,
         },
         {
           name: "Mood",
@@ -61,10 +76,30 @@ export default class extends DiscordCommand {
           value: `⏰ ${lastFedString}`,
           inline: true,
         },
+        {
+          name: "Favourite Fish",
+          value: `${favoriteFish.icon} ${favoriteFish.name}`,
+          inline: true,
+        },
+        {
+          name: "Fish Fed",
+          value: `${totalFishFedByUser}`,
+          inline: true,
+        },
+        {
+          name: "Total Fish Fed",
+          value: `${totalFishFedByGuild}`,
+          inline: true,
+        },
       ])
       .setColor(EMBED_COLOR)
       .setTitle("❤️‍🩹 My mood and health status")
-      .setDescription(`Here is how I'm currently feeling.`);
+      .setDescription(`Here is how I'm currently feeling.`)
+      .setFooter({
+        text:
+          "Use the /feed command to increase Mr. Whale's mood and satiety level.",
+        iconURL: whaleAvatar,
+      });
 
     return embed;
   }
