@@ -47,6 +47,7 @@ import { CatchResult } from "../../types/fishing/catch-result";
 import { EMBED_COLOR } from "../../constants";
 import { LevelManager } from "./level-manager";
 import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
+import { Settings } from "../../types/settings";
 
 const ATTEMPT_REGEN_INTERVAL = 15 * 60 * 1000; // 15 minutes
 const NEXT_SPAWN_IN_MILLISECONDS = 60 * 60 * 1000; // 1 hour
@@ -421,9 +422,10 @@ export class FishManager {
     fish: Record<string, FishSpawnedResult>
   ): Promise<void> {
     const { guildId } = messageOrInteraction;
+    const areAnnouncementsEnabled = await this.areAnnouncementsEnabled(guildId);
 
     // Check if any fish have spawned in the guild before sending an announcement
-    if (!this.hasGuildFish(guildId)) {
+    if (!this.hasGuildFish(guildId) || !areAnnouncementsEnabled) {
       return;
     }
 
@@ -525,6 +527,16 @@ export class FishManager {
         despawnAnnouncement.delete().catch(() => null);
       }
     }, DELETE_ANNOUNCEMENT_AFTER);
+  }
+
+  private async areAnnouncementsEnabled(guildId: string): Promise<boolean> {
+    if (!this.bot.guildSettings.has(guildId)) {
+      return true;
+    }
+
+    const settings = this.bot.guildSettings.get(guildId);
+
+    return await settings.get(Settings.FishingAnnouncements, true);
   }
 
   private async getSpawnEmbedAnnouncement(
