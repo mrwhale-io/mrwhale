@@ -5,6 +5,7 @@ import { database } from "..";
 interface FishFedAttributes {
   userId: string;
   guildId: string;
+  fishId: number;
   quantity: number;
 }
 
@@ -16,18 +17,20 @@ export const FishFed = database.connection.define<FishFedInstance>(
   "FishFed",
   {
     userId: {
-      allowNull: false,
-      primaryKey: true,
       type: DataTypes.STRING,
+      allowNull: false,
     },
     guildId: {
-      allowNull: false,
-      primaryKey: true,
       type: DataTypes.STRING,
+      allowNull: false,
+    },
+    fishId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
     quantity: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      type: DataTypes.NUMBER,
       defaultValue: 0,
     },
   },
