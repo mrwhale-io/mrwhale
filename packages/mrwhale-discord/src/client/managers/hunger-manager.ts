@@ -25,6 +25,8 @@ import { logFishFed } from "../../database/services/fish-fed";
 import { Settings } from "../../types/settings";
 import { LevelManager } from "./level-manager";
 import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
+import { createEmbed } from "../../util/embed/create-embed";
+import { drawHungerHealthBar } from "../../util/draw-hunger-health-bar";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
@@ -301,7 +303,23 @@ export class HungerManager {
     const announcementChannel = await this.bot.getFishingAnnouncementChannel(
       interactionOrMessage
     );
-    const message = await announcementChannel.send(announcement);
+    const lastFedTimestamp = await this.lastFedTimestamp(guildId);
+    const lastFedString = lastFedTimestamp
+      ? `<t:${Math.floor(lastFedTimestamp / 1000)}:R>`
+      : "Never";
+    const hungerLevel = await this.getGuildHungerLevel(guildId);
+    const embed = createEmbed(announcement)
+      .setTitle("Hunger Alert")
+      .addFields(
+        { name: "Satiety Level", value: `${drawHungerHealthBar(hungerLevel)}` },
+        { name: "Last Fed", value: `⏰ ${lastFedString}` }
+      )
+      .setFooter({
+        text:
+          "Use the /feed command to increase Mr. Whale's mood and satiety level.",
+      })
+      .setTimestamp();
+    const message = await announcementChannel.send({ embeds: [embed] });
 
     setTimeout(() => {
       if (message && message.deletable) {

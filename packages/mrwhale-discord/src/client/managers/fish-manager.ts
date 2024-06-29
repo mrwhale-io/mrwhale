@@ -48,6 +48,7 @@ import { EMBED_COLOR } from "../../constants";
 import { LevelManager } from "./level-manager";
 import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 import { Settings } from "../../types/settings";
+import { createEmbed } from "../../util/embed/create-embed";
 
 const ATTEMPT_REGEN_INTERVAL = 15 * 60 * 1000; // 15 minutes
 const NEXT_SPAWN_IN_MILLISECONDS = 60 * 60 * 1000; // 1 hour
@@ -504,18 +505,15 @@ export class FishManager {
       messageOrInteraction
     );
     const { guildId } = messageOrInteraction;
-    const currentMood = await this.bot.getCurrentMood(guildId);
-    const announementMessage = !this.hasGuildFish(guildId)
-      ? this.getAllFishCaughtAnnouncementMessage(currentMood)
-      : this.getFishDespawnAnnouncementMessage(currentMood, guildFish);
+    const embed = await this.getDespawnEmbedAnnouncement(guildId, guildFish);
 
     this.deleteAnnouncementMessage(guildId);
 
     delete this.guildFishSpawn[guildId].fish;
 
-    const despawnAnnouncement = await announcementChannel.send(
-      announementMessage
-    );
+    const despawnAnnouncement = await announcementChannel.send({
+      embeds: [embed],
+    });
 
     const despawnTimeout = this.guildFishSpawn[guildId].despawnTimeout;
     if (despawnTimeout) {
@@ -542,7 +540,7 @@ export class FishManager {
   private async getSpawnEmbedAnnouncement(
     guildId: string,
     fish: Record<string, FishSpawnedResult>
-  ) {
+  ): Promise<EmbedBuilder> {
     const currentMood = await this.bot.getCurrentMood(guildId);
     const fishCountsByRarity = countFishByRarity(fish);
 
@@ -579,6 +577,26 @@ export class FishManager {
         inline: true,
       });
     }
+
+    return spawnAnnouncement;
+  }
+
+  private async getDespawnEmbedAnnouncement(
+    guildId: string,
+    guildFish: Record<string, FishSpawnedResult>
+  ): Promise<EmbedBuilder> {
+    const currentMood = await this.bot.getCurrentMood(guildId);
+    const hasGuildFish = this.hasGuildFish(guildId);
+
+    // Generate the announcement message text based on the current mood and spawned fish
+    const announementMessage = !hasGuildFish
+      ? this.getAllFishCaughtAnnouncementMessage(currentMood)
+      : this.getFishDespawnAnnouncementMessage(currentMood, guildFish);
+    const title = !hasGuildFish ? "All Fish Caught" : "Fish Despawn";
+
+    const spawnAnnouncement = createEmbed(announementMessage)
+      .setTitle(title)
+      .setTimestamp();
 
     return spawnAnnouncement;
   }
