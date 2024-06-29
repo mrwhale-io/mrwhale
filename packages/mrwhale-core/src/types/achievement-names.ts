@@ -7,6 +7,7 @@ export type AchievementNames =
   | "Bait and Tackle"
   | "Rod Collector"
   | "Rare Catch"
+  | "Epic Angler"
   | "Legendary Fisher"
   | "High Roller"
   | "Big Spender"

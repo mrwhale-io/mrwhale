@@ -34,7 +34,6 @@ import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
 import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
-import { EMBED_COLOR } from "../constants";
 import { DiscordBotOptions } from "../types/discord-bot-options";
 import { DiscordSelectMenu } from "./menu/discord-select-menu";
 import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
@@ -61,6 +60,7 @@ import { getFirstTextChannel } from "../util/get-first-text-channel";
 import { extractUserAndGuildId } from "../util/extract-user-and-guild-id";
 import { createEmbed } from "../util/embed/create-embed";
 import { getUserItemsByType } from "../database/services/user-inventory";
+import { checkAndAwardBalanceAchievements } from "../database/services/achievements";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -233,7 +233,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * @returns A promise that resolves to an EmbedBuilder containing the rewards details.
    */
   async feed(
-    interactionOrMessage: Interaction | Message,
+    interactionOrMessage: ChatInputCommandInteraction | Message,
     fishName: FishTypeNames,
     quantity: number
   ): Promise<EmbedBuilder> {
@@ -283,7 +283,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * @returns An embed with the rewards and experience gained from feeding all fish.
    */
   async feedAll(
-    interactionOrMessage: Interaction | Message
+    interactionOrMessage: ChatInputCommandInteraction | Message
   ): Promise<EmbedBuilder> {
     const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
     const itemType: ItemTypes = "Fish";
@@ -409,20 +409,27 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * This method delegates the balance update to the user balance manager,
    * ensuring that the user's balance is correctly adjusted by the specified amount.
    *
+   * @param interactionOrMessage The Discord interaction object representing the command invocation.
    * @param userId The Id of the user whose balance is to be updated.
-   * @param guildId The Id of the guild in which the user's balance is to be updated.
    * @param amount The amount to add to the user's balance. This can be positive or negative.
    * @returns A promise that resolves to the updated balance of the user.
    */
   async addToUserBalance(
+    interactionOrMessage: ChatInputCommandInteraction | Message,
     userId: string,
-    guildId: string,
     amount: number
   ): Promise<number> {
+    const { guildId } = extractUserAndGuildId(interactionOrMessage);
     const { balance } = await this.userBalanceManager.addToUserBalance(
       userId,
       guildId,
       amount
+    );
+
+    await checkAndAwardBalanceAchievements(
+      interactionOrMessage,
+      balance,
+      this.levelManager
     );
 
     return balance;

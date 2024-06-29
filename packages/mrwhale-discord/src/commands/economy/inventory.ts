@@ -18,7 +18,9 @@ import { EMBED_COLOR } from "../../constants";
 import { getUserItemsFromInventory } from "../../database/services/user-inventory";
 import { UserInventoryInstance } from "../../database/models/user-inventory";
 import { addFishingRodToUserInventory } from "../../database/services/fishing-rods";
-import { getUserAchievements } from "../../database/services/achievements";
+import {
+  getUserAchievements,
+} from "../../database/services/achievements";
 import { formatAchievements } from "../../util/format-achievements";
 import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 

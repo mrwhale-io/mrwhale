@@ -76,19 +76,62 @@ export async function checkAndAwardFishingAchievements(
     );
 
     if (achieved) {
-      await createUserAchievement(userId, guildId, achievement);
+      await achieve(interactionOrMessage, achievement, levelManager);
       newAchievements.push(achievement);
-      // Increase exp for the new achievement
-      await levelManager.increaseExp(
-        interactionOrMessage,
-        userId,
-        guildId,
-        achievement.exp
-      );
     }
   }
 
   return newAchievements;
+}
+
+/**
+ * Checks and awards balance achievements to a user based on the gems they have accumulated.
+ *
+ * This function retrieves the current achievements of the user, checks if any new achievements
+ * are met based on the gems accumulated, and awards new achievements if the criteria are satisfied.
+ *
+ * @param interactionOrMessage The interaction or message object from the Discord API, containing details of the user and guild.
+ * @param userBalance The current balance of the user, used to check against achievement criteria.
+ * @returns A promise that resolves to an array of new achievements that the user has been awarded.
+ */
+export async function checkAndAwardBalanceAchievements(
+  interactionOrMessage:
+    | ChatInputCommandInteraction
+    | ButtonInteraction
+    | Message,
+  userBalance: number,
+  levelManager: LevelManager
+): Promise<Achievement[]> {
+  const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
+  const userAchievements = await getUserAchievements(userId, guildId);
+  const achievedIds = userAchievements.map((ua) => ua.achievementId);
+  const newAchievements: Achievement[] = [];
+
+  for (const achievement of achievements) {
+    if (achievedIds.includes(achievement.id)) {
+      continue;
+    }
+
+    const criteria = achievement.criteria;
+    const achieved = hasAchievedBalanceAward(userBalance, criteria);
+
+    if (achieved) {
+      await achieve(interactionOrMessage, achievement, levelManager);
+      newAchievements.push(achievement);
+    }
+  }
+
+  return newAchievements;
+}
+
+function hasAchievedBalanceAward(
+  userBalance: number,
+  criteria: AchievementCriteria
+): boolean {
+  if (criteria.type === "accumulate_gems") {
+    return userBalance >= criteria.quantity;
+  }
+  return false;
 }
 
 async function hasAchievedFishingAward(
@@ -122,6 +165,24 @@ async function hasAchievedCatchFish(
     guildId
   );
   return totalFishCaught >= quantity;
+}
+
+async function achieve(
+  interactionOrMessage:
+    | ChatInputCommandInteraction
+    | ButtonInteraction
+    | Message,
+  achievement: Achievement,
+  levelManager: LevelManager
+): Promise<void> {
+  const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
+  await createUserAchievement(userId, guildId, achievement);
+  await levelManager.increaseExp(
+    interactionOrMessage,
+    userId,
+    guildId,
+    achievement.exp
+  );
 }
 
 async function createUserAchievement(

@@ -277,6 +277,6 @@ export class LevelManager {
 
     this.increaseExp(message, userId, guildId, expGained);
 
-    await this.bot.addToUserBalance(userId, guildId, gemsGained);
+    await this.bot.addToUserBalance(message, guildId, gemsGained);
   }
 }

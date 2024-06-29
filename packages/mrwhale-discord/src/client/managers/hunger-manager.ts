@@ -1,4 +1,9 @@
-import { Events, Interaction, Message } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  Events,
+  Interaction,
+  Message,
+} from "discord.js";
 
 import {
   Fish,
@@ -135,7 +140,7 @@ export class HungerManager {
    * @returns A Promise that resolves to a FeedResult containing the amount of exp gained, the reward given, and the new hunger level.
    */
   async feed(
-    interactionOrMessage: Message<boolean> | Interaction,
+    interactionOrMessage: Message<boolean> | ChatInputCommandInteraction,
     fish: Fish,
     quantity: number
   ): Promise<FeedResult> {
@@ -176,7 +181,7 @@ export class HungerManager {
     await this.persistHungerState(guildId, this.guildHungerLevels[guildId]);
 
     // Log the feeding action and update the user's inventory
-    await logFishFed(userId, guildId, quantity);
+    await logFishFed(userId, guildId, fish.id, quantity);
     await useUserItem(userId, guildId, usersFish, quantity);
 
     // Award EXP to the user
@@ -188,7 +193,7 @@ export class HungerManager {
     );
 
     // Update the user's balance and get the new balance
-    await this.bot.addToUserBalance(userId, guildId, reward);
+    await this.bot.addToUserBalance(interactionOrMessage, userId, reward);
 
     return {
       expGained: expIncreaseAmount,

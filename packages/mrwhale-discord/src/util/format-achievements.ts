@@ -9,7 +9,7 @@ export function formatAchievements(achievements: Achievement[]): string {
         (achievement) =>
           `${achievement.icon} ${bold(achievement.name)}: ${
             achievement.description
-          }`
+          } (${bold(`${achievement.exp}`)} Exp)`
       )
       .join("\n") || "You have unlocked no achievements."
   );
