@@ -27,7 +27,7 @@ interface ShopPage {
   }[];
 }
 
-const SHOP_PAGE_SIZE = 5;
+const SHOP_PAGE_SIZE = 3;
 
 /**
  * Generates an embed for the shop items based on the specified item type and user's level.
@@ -47,7 +47,7 @@ export async function getShopItemsEmbed(
   try {
     const userBalance = await botClient.getUserBalance(discordUser.id, guildId);
     const userScore = await LevelManager.getUserScore(guildId, discordUser.id);
-    const userLevel = getLevelFromExp(userScore.exp);
+    const userLevel = userScore ? getLevelFromExp(userScore.exp) : 0;
 
     const { title, description, items } = await getShopPageForItemType(
       itemType,
@@ -124,9 +124,11 @@ async function getFishingRodPage(userLevel: number): Promise<ShopPage> {
 
   return {
     title: `Fishing Rods 🎣`,
-    description: `Next Fishing Rod: ${nextUnlockableFishingRod.icon} ${bold(
-      nextUnlockableFishingRod.name
-    )}\nUnlocked at **Level ${nextUnlockableFishingRod.minLevel}**`,
+    description: nextUnlockableFishingRod
+      ? `Next Fishing Rod: ${nextUnlockableFishingRod.icon} ${bold(
+          nextUnlockableFishingRod.name
+        )}\nUnlocked at **Level ${nextUnlockableFishingRod.minLevel}**`
+      : "You've unlocked all fishing rods.",
     items: shopItems,
   };
 }
@@ -153,9 +155,11 @@ async function getBaitPage(userLevel: number): Promise<ShopPage> {
 
   return {
     title: `Bait 🪱`,
-    description: `Next Bait: ${nextUnlockableBait.icon} ${bold(
-      nextUnlockableBait.name
-    )}\nUnlocked at **Level ${nextUnlockableBait.minLevel}**`,
+    description: nextUnlockableBait
+      ? `Next Bait: ${nextUnlockableBait.icon} ${bold(
+          nextUnlockableBait.name
+        )}\nUnlocked at **Level ${nextUnlockableBait.minLevel}**`
+      : "You've unlocked all baits.",
     items: shopItems,
   };
 }
