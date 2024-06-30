@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  EmbedBuilder,
   Events,
   Interaction,
   Message,
@@ -298,11 +299,33 @@ export class HungerManager {
     const delayInMilliseconds = getRandomDelayInMilliseconds(30, 60);
     await delay(delayInMilliseconds);
 
-    const announcement =
-      announcements[Math.floor(Math.random() * announcements.length)];
-    const announcementChannel = await this.bot.getFishingAnnouncementChannel(
-      interactionOrMessage
-    );
+    try {
+      const announcement =
+        announcements[Math.floor(Math.random() * announcements.length)];
+      const announcementChannel = await this.bot.getFishingAnnouncementChannel(
+        interactionOrMessage
+      );
+      const embed = await this.getDespawnAnnouncementEmbed(
+        guildId,
+        announcement
+      );
+
+      const message = await announcementChannel.send({ embeds: [embed] });
+
+      setTimeout(() => {
+        if (message && message.deletable) {
+          message.delete().catch(() => null);
+        }
+      }, DELETE_HUNGER_ANNOUNCEMENT_AFTER);
+    } catch (error) {
+      this.bot.logger.error("Failed to send hunger announcement:", error);
+    }
+  }
+
+  private async getDespawnAnnouncementEmbed(
+    guildId: string,
+    announcement: string
+  ): Promise<EmbedBuilder> {
     const lastFedTimestamp = await this.lastFedTimestamp(guildId);
     const lastFedString = lastFedTimestamp
       ? `<t:${Math.floor(lastFedTimestamp / 1000)}:R>`
@@ -311,7 +334,10 @@ export class HungerManager {
     const embed = createEmbed(announcement)
       .setTitle("Hunger Alert")
       .addFields(
-        { name: "Satiety Level", value: `${drawHungerHealthBar(hungerLevel)}` },
+        {
+          name: "Satiety Level",
+          value: `${drawHungerHealthBar(hungerLevel)}`,
+        },
         { name: "Last Fed", value: `⏰ ${lastFedString}` }
       )
       .setFooter({
@@ -319,13 +345,8 @@ export class HungerManager {
           "Use the /feed command to increase Mr. Whale's mood and satiety level.",
       })
       .setTimestamp();
-    const message = await announcementChannel.send({ embeds: [embed] });
 
-    setTimeout(() => {
-      if (message && message.deletable) {
-        message.delete().catch(() => null);
-      }
-    }, DELETE_HUNGER_ANNOUNCEMENT_AFTER);
+    return embed;
   }
 
   private setCurrentMood(guildId: string, hungerLevel: number) {
