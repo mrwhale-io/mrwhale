@@ -24,7 +24,8 @@
     "lerna": "^7.1.4",
     "prettier": "^2.2.1",
     "reflect-metadata": "^0.1.13",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "yarn-audit-fix": "^10.0.7"
   },
   "engines": {
     "node": ">=16.10.0"
