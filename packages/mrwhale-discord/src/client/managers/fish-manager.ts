@@ -51,7 +51,7 @@ import { Settings } from "../../types/settings";
 import { createEmbed } from "../../util/embed/create-embed";
 
 const ATTEMPT_REGEN_INTERVAL = 15 * 60 * 1000; // 15 minutes
-const NEXT_SPAWN_IN_MILLISECONDS = 60 * 60 * 1000; // 1 hour
+const NEXT_SPAWN_IN_MILLISECONDS = 90 * 60 * 1000; // 1 hour and 30 minutes
 const NEXT_DESPAWN_IN_MILLISECONDS = 30 * 60 * 1000; // 30 minutes
 const DELETE_ANNOUNCEMENT_AFTER = 5 * 60 * 1000; // 5 minutes
 const DELAY_BETWEEN_HUNGER_ANNOUNCEMENT = 5 * 60 * 1000; // 5 minutes
@@ -214,7 +214,7 @@ export class FishManager {
     }
 
     // Handle the caught fish (e.g., add to inventory, update guild state)
-    await this.handleFishCaught(guildId, userId, fishCaught);
+    await this.handleFishCaught(interactionOrMessage, fishCaught);
 
     // Check whether the user has earned any achievements
     const achievements = await checkAndAwardFishingAchievements(
@@ -256,10 +256,10 @@ export class FishManager {
   }
 
   private async handleFishCaught(
-    guildId: string,
-    userId: string,
+    messageOrInteraction: Message | Interaction,
     fishCaught: Fish
   ): Promise<void> {
+    const { userId, guildId } = extractUserAndGuildId(messageOrInteraction);
     // Find the type of fish caught in the guild and decrement it's quantity.
     // When the quantity is zero we delete the fish from the guild.
     const allGuildFish = this.getGuildFish(guildId);
@@ -286,10 +286,7 @@ export class FishManager {
 
     // If we have caught all the fish in the guild we send an announcement
     if (!this.hasGuildFish(guildId)) {
-      const announcementMessage = this.getAnnouncementMessage(guildId);
-      if (announcementMessage) {
-        this.despawnFish(announcementMessage, allGuildFish);
-      }
+      this.despawnFish(messageOrInteraction, allGuildFish);
     }
   }
 
@@ -501,19 +498,18 @@ export class FishManager {
     messageOrInteraction: Message | Interaction,
     guildFish: Record<string, FishSpawnedResult>
   ): Promise<void> {
-    const announcementChannel = await this.bot.getFishingAnnouncementChannel(
-      messageOrInteraction
-    );
     const { guildId } = messageOrInteraction;
-    const embed = await this.getDespawnEmbedAnnouncement(guildId, guildFish);
+    let despawnAnnouncement: Message<false> | Message<true>;
+    const areAnnouncementsEnabled = await this.areAnnouncementsEnabled(guildId);
+    if (areAnnouncementsEnabled) {
+      despawnAnnouncement = await this.getDespawnEmbedAnnouncement(
+        messageOrInteraction,
+        guildFish
+      );
+    }
 
     this.deleteAnnouncementMessage(guildId);
-
     delete this.guildFishSpawn[guildId].fish;
-
-    const despawnAnnouncement = await announcementChannel.send({
-      embeds: [embed],
-    });
 
     const despawnTimeout = this.guildFishSpawn[guildId].despawnTimeout;
     if (despawnTimeout) {
@@ -582,9 +578,13 @@ export class FishManager {
   }
 
   private async getDespawnEmbedAnnouncement(
-    guildId: string,
+    messageOrInteraction: Message | Interaction,
     guildFish: Record<string, FishSpawnedResult>
-  ): Promise<EmbedBuilder> {
+  ): Promise<Message<false> | Message<true>> {
+    const { guildId } = messageOrInteraction;
+    const announcementChannel = await this.bot.getFishingAnnouncementChannel(
+      messageOrInteraction
+    );
     const currentMood = await this.bot.getCurrentMood(guildId);
     const hasGuildFish = this.hasGuildFish(guildId);
 
@@ -594,11 +594,15 @@ export class FishManager {
       : this.getFishDespawnAnnouncementMessage(currentMood, guildFish);
     const title = !hasGuildFish ? "All Fish Caught" : "Fish Despawn";
 
-    const spawnAnnouncement = createEmbed(announementMessage)
+    const announcementEmbed = createEmbed(announementMessage)
       .setTitle(title)
       .setTimestamp();
 
-    return spawnAnnouncement;
+    const despawnAnnouncement = await announcementChannel.send({
+      embeds: [announcementEmbed],
+    });
+
+    return despawnAnnouncement;
   }
 
   private getFishSpawnAnnouncementMessage(

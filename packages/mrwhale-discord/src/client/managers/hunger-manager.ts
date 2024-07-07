@@ -31,9 +31,9 @@ import { drawHungerHealthBar } from "../../util/draw-hunger-health-bar";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
-const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 30 * 60 * 1000; // 30 minutes
-const DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT = 5 * 60 * 1000;
-const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 5 * 60 * 1000; // 5 minutes
+const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 2 * 60 * 60 * 1000; // 2 hours
+const DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT = 5 * 60 * 1000; // 5 minutes
+const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 15 * 60 * 1000; // 15 minutes
 
 interface HungerState {
   level: number;
