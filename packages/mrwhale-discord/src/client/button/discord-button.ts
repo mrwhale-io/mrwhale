@@ -1,28 +1,25 @@
 import { ButtonBuilder, ButtonInteraction } from "discord.js";
 
 import { DEFAULT_COMMAND_RATE_LIMIT } from "@mrwhale-io/core";
-import { DiscordBotClient } from "../discord-bot-client";
 import { DiscordButtonOptions } from "../../types/button/discord-button-options";
 import { DiscordButtonRateLimiter } from "./discord-button-rate-limiter";
+import { Loadable } from "../../types/loadable";
 
-export abstract class DiscordButton {
+/**
+ * Represents an abstract class for a Discord button.
+ */
+export abstract class DiscordButton extends Loadable {
   /**
-   * The name of the discord button
-   */
-  name: string;
-
-  /**
-   * Command rate limiter.
+   * The rate limiter for the button.
    */
   readonly rateLimiter: DiscordButtonRateLimiter;
 
   /**
-   * An instance of the current discord bot client.
+   * Creates a new instance of the DiscordButton class.
+   * @param options The options for the Discord button.
    */
-  protected botClient: DiscordBotClient;
-
   constructor(options: DiscordButtonOptions) {
-    this.name = options.name;
+    super(options.name);
     this.rateLimiter = new DiscordButtonRateLimiter(
       DEFAULT_COMMAND_RATE_LIMIT,
       options.cooldown
@@ -32,23 +29,14 @@ export abstract class DiscordButton {
   /**
    * The action to be run when a button is clicked.
    * @param interaction The interaction that invoked the button.
+   * @returns A promise that resolves when the action is completed.
    */
   abstract action(interaction: ButtonInteraction): Promise<unknown>;
 
   /**
-   * Registers a new instance of this menu.
-   * @param client The bot instance.
-   */
-  register(client: DiscordBotClient): void {
-    this.botClient = client;
-    if (!this.name) {
-      throw new Error(`Button must have a name.`);
-    }
-  }
-
-  /**
    * Get an instance of the button builder.
    * @param userId The identifier of the discord user that requested the button.
+   * @returns An instance of the button builder.
    */
   getButtonBuilder?(userId: string): ButtonBuilder;
 }

@@ -2,6 +2,9 @@ import { ButtonInteraction, Message } from "discord.js";
 
 import { CommandRateLimit, CommandRateLimiter } from "@mrwhale-io/core";
 
+/**
+ * Represents a rate limiter for Discord button interactions.
+ */
 export class DiscordButtonRateLimiter extends CommandRateLimiter {
   private readonly rateLimits: Map<string, Map<string, CommandRateLimit>>;
 
@@ -11,8 +14,9 @@ export class DiscordButtonRateLimiter extends CommandRateLimiter {
   }
 
   /**
-   * Get rate limit collections.
-   * @param interaction The button interaction to rate limit.
+   * Get the rate limit for a button interaction or message.
+   * @param interaction The button interaction or message to rate limit.
+   * @returns The rate limit for the interaction.
    */
   get(interaction: ButtonInteraction | Message): CommandRateLimit {
     if (!this.rateLimits.has(interaction.channelId)) {

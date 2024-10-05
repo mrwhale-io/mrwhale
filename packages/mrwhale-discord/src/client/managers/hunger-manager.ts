@@ -233,7 +233,9 @@ export class HungerManager {
     );
     const elapsedTimeSinceHungerMessage = currentTime - lastHungerMessage;
 
-    const fishSpawnMessage = this.bot.getAnnouncementMessage(guildId);
+    const fishSpawnMessage = this.bot.fishSpawner.getAnnouncementMessage(
+      guildId
+    );
     const fishSpawnMessageTimestamp = fishSpawnMessage
       ? fishSpawnMessage.createdTimestamp
       : -Infinity;
@@ -265,10 +267,7 @@ export class HungerManager {
 
     // Send the announcement if available
     if (announcements) {
-      await this.sendRandomHungerAnnouncement(
-        interactionOrMessage,
-        announcements
-      );
+      await this.sendRandomHungerAnnouncement(guildId, announcements);
     }
   }
 
@@ -283,11 +282,9 @@ export class HungerManager {
   }
 
   private async sendRandomHungerAnnouncement(
-    interactionOrMessage: Interaction | Message,
+    guildId: string,
     announcements: string[]
   ): Promise<void> {
-    const { guildId } = interactionOrMessage;
-
     if (!this.guildHungerLevels[guildId]) {
       return;
     }
@@ -303,7 +300,7 @@ export class HungerManager {
       const announcement =
         announcements[Math.floor(Math.random() * announcements.length)];
       const announcementChannel = await this.bot.getFishingAnnouncementChannel(
-        interactionOrMessage
+        guildId
       );
       const embed = await this.getDespawnAnnouncementEmbed(
         guildId,

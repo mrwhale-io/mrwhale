@@ -1,43 +1,24 @@
-import * as glob from "glob";
-
 import { DiscordBotClient } from "../discord-bot-client";
-import { loadSelectMenu } from "../../util/menu/load-select-menu";
 import { DiscordSelectMenu } from "./discord-select-menu";
+import { BaseLoader } from "../base-loader";
 
 /**
- * Responsible for loading discord select menus.
+ * Class responsible for loading Discord select menus.
  */
-export class DiscordSelectMenuLoader {
-  private botClient: DiscordBotClient;
+export class DiscordSelectMenuLoader extends BaseLoader<DiscordSelectMenu> {
+  protected classType = DiscordSelectMenu;
+  protected directory = this.botClient.selectMenuDir;
+  protected collection = this.botClient.menus;
 
   constructor(bot: DiscordBotClient) {
-    this.botClient = bot;
+    super(bot);
   }
 
   /**
-   * Loads all discord select menus from the menus directory.
+   * Registers the loaded select menu instance.
+   * @param instance The loaded select menu instance.
    */
-  loadMenus(): void {
-    const files = [];
-    if (this.botClient.menus.size > 0) {
-      this.botClient.menus.clear();
-    }
-
-    files.push(...glob.sync(`${this.botClient.selectMenuDir}/*.js`));
-    if (this.botClient.tsNode) {
-      files.push(...glob.sync(`${this.botClient.selectMenuDir}/*.ts`));
-    }
-
-    for (const file of files) {
-      const commandLocation = file.replace(".ts", "");
-      const loadedSelectMenu: any = loadSelectMenu(commandLocation);
-      const selectMenu: DiscordSelectMenu = new loadedSelectMenu();
-      this.botClient.menus.set(selectMenu.name, selectMenu);
-      selectMenu.register(this.botClient);
-
-      this.botClient.logger.info(
-        `Discord Select Menu ${selectMenu.name} loaded`
-      );
-    }
+  protected register(instance: DiscordSelectMenu): void {
+    instance.register(this.botClient);
   }
 }

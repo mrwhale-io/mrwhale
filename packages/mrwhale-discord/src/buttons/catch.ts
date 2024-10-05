@@ -20,7 +20,7 @@ export default class extends DiscordButton {
     interaction: ButtonInteraction
   ): Promise<Message<boolean> | InteractionResponse<boolean>> {
     try {
-      return await this.botClient.catchFish(interaction);
+      return await this.botClient.fishingManager.catchFish(interaction);
     } catch (error) {
       this.botClient.logger.error("Error catching fish:", error);
       return interaction.reply("An error occured while catching fish.");

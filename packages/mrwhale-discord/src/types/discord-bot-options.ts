@@ -48,4 +48,9 @@ export interface DiscordBotOptions extends BotOptions {
    * The directory of the discord buttons.
    */
   buttonsDir: string;
+
+  /**
+   * The directory of the bot activities.
+   */
+  activitiesDir: string;
 }

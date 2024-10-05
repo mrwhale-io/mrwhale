@@ -61,6 +61,7 @@ const bot = new DiscordBotClient(
     commandsDir: path.join(__dirname, "./src/commands"),
     selectMenuDir: path.join(__dirname, "./src/select-menus"),
     buttonsDir: path.join(__dirname, "./src/buttons"),
+    activitiesDir: path.join(__dirname, "./src/activities"),
     prefix: config.prefix,
     ownerId: config.ownerId,
     discordServer: config.discordServer,
