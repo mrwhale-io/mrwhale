@@ -57,6 +57,7 @@ import { loadChannel } from "../util/load-channel";
 import { FishSpawner } from "./modules/fish-spawner";
 import { FishingAttemptTracker } from "./modules/fishing-attempt-tracker";
 import { loadGuild } from "../util/load-guild";
+import { isInvalidInteraction } from "../util/command/is-invalid-interaction";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -158,6 +159,13 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
+   * The hunger manager for the Discord bot client.
+   */
+  get hungerManager(): HungerManager {
+    return this._hungerManager;
+  }
+
+  /**
    * Retrieves the storage settings for each guild.
    *
    * This property accesses the `guildSettings` managed by the `GuildStorageLoader`.
@@ -179,11 +187,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private discordButtonHandler: DiscordButtonHandler;
 
   private greetingsManager: GreetingsManager;
-  private hungerManager: HungerManager;
   private levelManager: LevelManager;
   private userBalanceManager: UserBalanceManager;
 
   private guildStorageLoader: GuildStorageLoader;
+  private _hungerManager: HungerManager;
   private loaderManager: LoaderManager;
   private _fishingManager: FishingManager;
   private _fishingAttemptTracker: FishingAttemptTracker;
@@ -282,7 +290,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       const fish = getFishByName(fishName);
 
       // Attempt to feed Mr. Whale with the specified fish and quantity
-      const result = await this.hungerManager.feed(
+      const result = await this._hungerManager.feed(
         interactionOrMessage,
         fish,
         quantity
@@ -340,7 +348,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       const fish = getFishById(item.itemId);
       const quantity = item.quantity;
       try {
-        const result = await this.hungerManager.feed(
+        const result = await this._hungerManager.feed(
           interactionOrMessage,
           fish,
           quantity
@@ -372,19 +380,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Get the timestamp of the last hunger announcement for the guild.
-   * @param guildId The guild to get the last announcement timestamp.
-   */
-  async getLastHungerAnnouncementTimestamp(guildId: string): Promise<number> {
-    return this.hungerManager.getLastHungerAnnouncementTimestamp(guildId);
-  }
-
-  /**
    * Get Mr. Whale's current mood.
    * @param guildId The identifier of the guild.
    */
   async getCurrentMood(guildId: string): Promise<Mood> {
-    return this.hungerManager.getCurrentMood(guildId);
+    return this._hungerManager.getCurrentMood(guildId);
   }
 
   /**
@@ -392,7 +392,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * @param guildId The guild to get the last fed timestamp.
    */
   async lastFedTimestamp(guildId: string): Promise<number> {
-    return this.hungerManager.lastFedTimestamp(guildId);
+    return this._hungerManager.lastFedTimestamp(guildId);
   }
 
   /**
@@ -442,7 +442,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * @param guildId The guild to get the hunger level for.
    */
   async getGuildHungerLevel(guildId: string): Promise<number> {
-    return this.hungerManager.getGuildHungerLevel(guildId);
+    return this._hungerManager.getGuildHungerLevel(guildId);
   }
 
   /**
@@ -552,6 +552,36 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this._activityScheduler.run();
   }
 
+  @on(Events.InteractionCreate)
+  private async onInteractionCreate(interaction: ChatInputCommandInteraction) {
+    if (isInvalidInteraction(interaction)) {
+      return;
+    }
+
+    const guildId = interaction.guildId;
+
+    // Trigger scheduling events based on guild activity
+    this.fishSpawner.requestFishSpawn(guildId);
+
+    await this.hungerManager.calculateAndUpdateHunger(guildId);
+    await this.hungerManager.requestHungerAnnouncement(guildId);
+  }
+
+  @on(Events.MessageCreate)
+  private async onMessage(message: Message): Promise<void> {
+    if (isInvalidInteraction(message)) {
+      return;
+    }
+
+    const guildId = message.guildId;
+
+    // Trigger scheduling events based on guild activity
+    this.fishSpawner.requestFishSpawn(guildId);
+
+    await this.hungerManager.calculateAndUpdateHunger(guildId);
+    await this.hungerManager.requestHungerAnnouncement(guildId);
+  }
+
   @on(Events.GuildCreate)
   private async onGuildCreate(guild: Guild): Promise<void> {
     await this.guildStorageLoader.loadGuildSettings(guild.id);
@@ -596,7 +626,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   private initialiseManagers(): void {
     this.levelManager = new LevelManager(this);
-    this.hungerManager = new HungerManager(this, this.levelManager);
+    this._hungerManager = new HungerManager(this, this.levelManager);
     this._fishSpawner = new FishSpawner(this);
     this._fishingAttemptTracker = new FishingAttemptTracker();
     this._fishingManager = new FishingManager(

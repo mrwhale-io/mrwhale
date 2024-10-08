@@ -1,4 +1,4 @@
-import { Events, Interaction, Message } from "discord.js";
+import { Message } from "discord.js";
 
 import {
   FishingRod,
@@ -9,16 +9,15 @@ import {
 import { DiscordBotClient } from "../discord-bot-client";
 import { getUniqueFishingRodIds } from "../../database/services/fishing-rods";
 import { Activities } from "../../types/activities/activities";
-import { isInvalidInteraction } from "../../util/command/is-invalid-interaction";
 import { Activity } from "../../types/activities/activity";
 import { fishSpawnEmbed } from "../../util/embed/fish-spawn-embed";
 import { fishDespawnEmbed } from "../../util/embed/fish-despawn-embed";
 import { Settings } from "../../types/settings";
 import { getActiveUserIds } from "../../util/get-active-user-ids";
 
-const FISH_SPAWN_INTERVAL = 60 * 1000; // 3 hours
-const FISH_DESPAWN_INTERVAL = 60 * 1000; // 30 minutes
-const DELETE_ANNOUNCEMENT_AFTER = 5 * 60 * 1000; // 5 minutes
+const FISH_SPAWN_INTERVAL = 3 * 60 * 1000; // 3 hours
+const FISH_DESPAWN_INTERVAL = 30 * 1000; // 30 minutes
+const DELETE_ANNOUNCEMENT_AFTER = 5 * 1000; // 5 minutes
 const FISH_PER_ACTIVE_USER = 5;
 
 /**
@@ -48,12 +47,6 @@ export class FishSpawner {
 
   constructor(private bot: DiscordBotClient) {
     this.guildFishSpawn = {};
-    this.bot.client.on(Events.MessageCreate, async (message) =>
-      this.checkAndScheduleFishSpawn(message)
-    );
-    this.bot.client.on(Events.InteractionCreate, async (interaction) =>
-      this.checkAndScheduleFishSpawn(interaction)
-    );
   }
 
   /**
@@ -120,18 +113,11 @@ export class FishSpawner {
   }
 
   /**
-   * Checks if it's time to schedule a fish spawn event and adds it to the activity scheduler.
+   * Requests the ActivityScheduler to schedule a fish spawn event.
    *
-   * @param messageOrInteraction The message or interaction that triggered the fish spawn.
+   * @param guildId The ID of the guild.
    */
-  private async checkAndScheduleFishSpawn(
-    messageOrInteraction: Message | Interaction
-  ): Promise<void> {
-    if (isInvalidInteraction(messageOrInteraction)) {
-      return;
-    }
-
-    const { guildId } = messageOrInteraction;
+  requestFishSpawn(guildId: string): void {
     const currentTime = Date.now();
 
     // Create a fish spawn activity
@@ -143,7 +129,9 @@ export class FishSpawner {
     };
 
     // Add the fish spawn activity to the scheduler
-    this.bot.activityScheduler.addActivity(fishSpawnActivity);
+    if (this.bot.activityScheduler.addActivity(fishSpawnActivity)) {
+      this.bot.logger.info(`Scheduled fish spawn event for guild: ${guildId}`);
+    }
   }
 
   /**

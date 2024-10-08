@@ -3,6 +3,7 @@ import { Activity } from "../../types/activities/activity";
 import { Activities } from "../../types/activities/activities";
 
 const NEXT_ACTIVITY_RUN_INTERVAL = 1000;
+const ONE_HOUR_IN_MS = 60 * 1000;
 
 /**
  * The activity scheduler is responsible for scheduling and running events.
@@ -12,16 +13,6 @@ export class ActivityScheduler {
    * The list of activities scheduled.
    */
   readonly activities: Activity[];
-
-  /**
-   * Cooldowns for each guild to prevent spamming activities.
-   */
-  private guildCooldowns: { [guildId: string]: number } = {}; // Store cooldown end times for each guild
-
-  /**
-   * The cooldown duration for each guild.
-   */
-  private cooldownDuration: number = 3 * 60 * 1000;
 
   constructor(private botClient: DiscordBotClient) {
     this.activities = [];
@@ -48,6 +39,25 @@ export class ActivityScheduler {
   }
 
   /**
+   * Get the next scheduled activity for a guild of a specific type.
+   * @param guildId The guild to check for the next activity.
+   * @param activityType The type of activity to check for.
+   * @returns The next scheduled activity, or null if no activity is scheduled.
+   */
+  getUpcomingActivityByType(
+    guildId: string,
+    activityType: Activities
+  ): Activity | null {
+    // Find the next scheduled activity for the given guild and activity type
+    const upcomingActivity = this.activities.find(
+      (activity) =>
+        activity.guildId === guildId && activity.name === activityType
+    );
+
+    return upcomingActivity || null;
+  }
+
+  /**
    * Check if a specific event type is already scheduled for a guild
    * @param guildId The guild to check
    * @param eventType The type of event to check for (e.g., 'fishSpawn')
@@ -65,33 +75,33 @@ export class ActivityScheduler {
    * @returns True if the activity was added, false otherwise.
    */
   addActivity(activity: Activity): boolean {
-    console.log(activity);
     // Check if the same type of event is already scheduled for the guild
-    if (this.isEventAlreadyScheduled(activity)) {
+    if (this.hasScheduledEvent(activity.guildId, activity.name)) {
       return false;
     }
 
-    // Check if the guild is in cooldown period
-    if (this.isGuildInCooldown(activity.guildId)) {
-      return false;
-    }
+    // Loop to check and reschedule until no overlap exists with previous or next activities
+    let hasConflict: boolean;
+    do {
+      hasConflict = false;
 
-    // Check for overlapping activities in the same guild
-    if (this.isActivityOverlapping(activity)) {
-      return false;
-    }
+      if (this.handlePreviousActivityConflict(activity)) {
+        hasConflict = true;
+      }
+
+      if (this.handleNextActivityConflict(activity)) {
+        hasConflict = true;
+      }
+    } while (hasConflict);
 
     this.activities.push(activity);
-    this.activities.sort((a, b) => a.startTime - b.startTime); // Sort events by time
-
-    // Update the cooldown end time for the guild
-    this.updateCooldown(activity);
+    this.activities.sort((a, b) => a.startTime - b.startTime);
 
     return true;
   }
 
   /**
-   * Run the activity scheduler.
+   * Remove an activity from the scheduler.
    */
   run(): void {
     setInterval(async () => {
@@ -112,7 +122,7 @@ export class ActivityScheduler {
       }
     }, NEXT_ACTIVITY_RUN_INTERVAL); // Check every second
   }
-
+  
   private async startActivity(activity: Activity): Promise<void> {
     const activityHandler = this.botClient.activities.get(activity.name);
 
@@ -155,72 +165,114 @@ export class ActivityScheduler {
       await activity.notificationMessage.delete().catch(() => null);
     }
   }
+  
+  private handlePreviousActivityConflict(activity: Activity): boolean {
+    const previousActivity = this.getPreviousActivity(activity);
 
-  /**
-   * Check if the same type of event is already scheduled for the guild.
-   * @param activity The activity to check.
-   */
-  private isEventAlreadyScheduled(activity: Activity): boolean {
-    if (this.hasScheduledEvent(activity.guildId, activity.name)) {
-      this.botClient.logger.info(
-        `Cannot add activity ${activity.name} in guild ${activity.guildId}: event already scheduled.`
-      );
+    if (
+      previousActivity &&
+      activity.startTime < previousActivity.endTime + ONE_HOUR_IN_MS
+    ) {
+      this.rescheduleActivityAfterPrevious(activity, previousActivity);
       return true;
     }
+
+    return false;
+  }
+
+  private handleNextActivityConflict(activity: Activity): boolean {
+    const nextActivity = this.getNextActivity(activity);
+
+    if (
+      nextActivity &&
+      activity.endTime > nextActivity.startTime - ONE_HOUR_IN_MS
+    ) {
+      this.rescheduleActivityBeforeNext(activity, nextActivity);
+      return true;
+    }
+
     return false;
   }
 
   /**
-   * Check if the guild is currently in the cooldown period.
-   * @param guildId The guild to check.
+   * Reschedule an activity to ensure a 1-hour gap after the previous event.
+   * @param activity The activity to reschedule.
+   * @param previousActivity The previous activity.
+   * @returns The rescheduled activity.
    */
-  private isGuildInCooldown(guildId: string): boolean {
-    const currentTime = Date.now();
-    const guildCooldownEndTime = this.guildCooldowns[guildId] || 0;
-    if (currentTime < guildCooldownEndTime) {
-      this.botClient.logger.info(
-        `Cannot add activity in guild ${guildId}: cooldown period active.`
-      );
-      return true;
-    }
-    return false;
+  private rescheduleActivityAfterPrevious(
+    activity: Activity,
+    previousActivity: Activity
+  ): void {
+    const activityDuration = activity.endTime - activity.startTime;
+    activity.startTime = previousActivity.endTime + ONE_HOUR_IN_MS;
+    activity.endTime = activity.startTime + activityDuration;
+
+    this.botClient.logger.info(
+      `Activity ${activity.name} in guild ${
+        activity.guildId
+      } was rescheduled to ensure a 1-hour gap after the previous event. New start time: ${new Date(
+        activity.startTime
+      )}, new end time: ${new Date(activity.endTime)}`
+    );
   }
 
   /**
-   * Check if the new activity overlaps with existing ones in the same guild.
-   * @param activity The activity to check overlap.
+   * Reschedule an activity to ensure a 1-hour gap before the next event.
+   * @param activity The activity to reschedule.
+   * @param nextActivity The next activity.
+   * @returns The rescheduled activity
    */
-  private isActivityOverlapping(activity: Activity): boolean {
-    if (this.checkActivityOverlap(activity)) {
-      this.botClient.logger.info(
-        `Cannot add activity ${activity.name} in guild ${activity.guildId}: overlapping activity detected.`
-      );
-      return true;
-    }
-    return false;
+  private rescheduleActivityBeforeNext(
+    activity: Activity,
+    nextActivity: Activity
+  ): void {
+    const activityDuration = activity.endTime - activity.startTime;
+    activity.startTime =
+      nextActivity.startTime - ONE_HOUR_IN_MS - activityDuration;
+    activity.endTime = activity.startTime + activityDuration;
+
+    this.botClient.logger.info(
+      `Activity ${activity.name} in guild ${
+        activity.guildId
+      } was rescheduled to ensure a 1-hour gap before the next event. New start time: ${new Date(
+        activity.startTime
+      )}, new end time: ${new Date(activity.endTime)}`
+    );
   }
 
   /**
-   * Update the cooldown period for the guild after adding an activity.
-   * @param activity The activity to update the cooldown for.
+   * This method finds the next activity that occurs after the provided activity's end time.
+   * @param activity The activity to check for the next event.
    */
-  private updateCooldown(activity: Activity): void {
-    this.guildCooldowns[activity.guildId] =
-      activity.endTime + this.cooldownDuration;
+  private getNextActivity(activity: Activity): Activity | null {
+    return (
+      this.activities.find((existingActivity) => {
+        return (
+          existingActivity.guildId === activity.guildId &&
+          existingActivity.startTime >= activity.endTime
+        );
+      }) || null
+    );
   }
 
   /**
-   * Check if the new activity overlaps with an existing one in any way.
-   * @param activity The activity to check.
+   * This method finds the previous activity that ends before the provided activity's start time.
+   * @param activity The activity to check for the previous event.
+   * @returns The previous activity, or null if no previous activity is found.
    */
-  private checkActivityOverlap(activity: Activity): boolean {
-    return this.activities.some((existingActivity) => {
+  private getPreviousActivity(activity: Activity): Activity | null {
+    // Find the previous activity that ends before the current activity's start time
+    const previousActivities = this.activities.filter((existingActivity) => {
       return (
         existingActivity.guildId === activity.guildId &&
-        // Check if the new activity overlaps with an existing one in any way
-        activity.startTime < existingActivity.endTime &&
-        activity.endTime > existingActivity.startTime
+        existingActivity.endTime <= activity.startTime
       );
     });
+
+    // Sort by end time in descending order and return the most recent one
+    previousActivities.sort((a, b) => b.endTime - a.endTime);
+
+    return previousActivities.length > 0 ? previousActivities[0] : null;
   }
 }

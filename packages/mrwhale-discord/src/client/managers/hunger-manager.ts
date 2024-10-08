@@ -1,10 +1,4 @@
-import {
-  ChatInputCommandInteraction,
-  EmbedBuilder,
-  Events,
-  Interaction,
-  Message,
-} from "discord.js";
+import { ChatInputCommandInteraction, EmbedBuilder, Message } from "discord.js";
 
 import {
   Fish,
@@ -13,7 +7,6 @@ import {
   Mood,
 } from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
-import { delay, getRandomDelayInMilliseconds } from "../../util/delay-helpers";
 import { HungerLevelFullError } from "../../types/errors/hunger-level-full-error";
 import {
   getUserItemById,
@@ -28,18 +21,18 @@ import { LevelManager } from "./level-manager";
 import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 import { createEmbed } from "../../util/embed/create-embed";
 import { drawHungerHealthBar } from "../../util/draw-hunger-health-bar";
+import { Activities } from "../../types/activities/activities";
+import { Activity } from "../../types/activities/activity";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
-const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 2 * 60 * 60 * 1000; // 2 hours
-const DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT = 5 * 60 * 1000; // 5 minutes
-const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 15 * 60 * 1000; // 15 minutes
+const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 6 * 60 * 1000; // 2 hours
+const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 15 * 1000; // 15 minutes
 
 interface HungerState {
   level: number;
   mood: Mood;
   lastUpdate: number;
-  lastHungerAnnouncement?: number;
   lastFedTimestamp?: number;
 }
 
@@ -65,16 +58,6 @@ export class HungerManager {
     private levelManager: LevelManager
   ) {
     this.guildHungerLevels = {};
-    this.bot.client.on(
-      Events.MessageCreate,
-      async (message: Message) =>
-        await this.updateHungerAndSendAnnouncement(message)
-    );
-    this.bot.client.on(
-      Events.InteractionCreate,
-      async (interaction: Interaction) =>
-        await this.updateHungerAndSendAnnouncement(interaction)
-    );
   }
 
   /**
@@ -85,19 +68,6 @@ export class HungerManager {
    */
   async getGuildHungerLevel(guildId: string): Promise<number> {
     return this.getHungerStateProperty(guildId, "level");
-  }
-
-  /**
-   * Retrieves the timestamp of the last hunger announcement for the specified guild.
-   * @param guildId The identifier of the guild.
-   * @returns The timestamp of the last hunger announcement, or -Infinity if not available.
-   */
-  async getLastHungerAnnouncementTimestamp(guildId: string): Promise<number> {
-    return this.getHungerStateProperty(
-      guildId,
-      "lastHungerAnnouncement",
-      -Infinity
-    );
   }
 
   /**
@@ -205,51 +175,17 @@ export class HungerManager {
     };
   }
 
-  private async getHungerStateProperty<T>(
-    guildId: string,
-    property: keyof HungerState,
-    defaultValue?: T
-  ): Promise<T> {
-    try {
-      await this.initialiseGuildHungerState(guildId);
-
-      return (this.guildHungerLevels[guildId][property] as T) ?? defaultValue;
-    } catch (error) {
-      this.bot.logger.error(
-        `Failed to get ${property} for guild ${guildId}:`,
-        error
-      );
-      throw new Error(`Could not retrieve ${property} for guild ${guildId}.`);
-    }
-  }
-
-  private async sendHungryAnnouncement(
-    interactionOrMessage: Interaction | Message
-  ): Promise<void> {
-    const currentTime = Date.now();
-    const { guildId } = interactionOrMessage;
-    const lastHungerMessage = await this.getLastHungerAnnouncementTimestamp(
-      guildId
-    );
-    const elapsedTimeSinceHungerMessage = currentTime - lastHungerMessage;
-
-    const fishSpawnMessage = this.bot.fishSpawner.getAnnouncementMessage(
-      guildId
-    );
-    const fishSpawnMessageTimestamp = fishSpawnMessage
-      ? fishSpawnMessage.createdTimestamp
-      : -Infinity;
-    const elapsedTimeSinceSpawnMessage =
-      currentTime - fishSpawnMessageTimestamp;
+  /**
+   * Sends a hunger announcement to the guild if Mr. Whale is hungry.
+   * The announcement is sent based on the predefined conditions for each hunger level.
+   *
+   * @param guildId The identifier of the guild to send the announcement to.
+   * @returns A Promise that resolves when the announcement is sent.
+   */
+  async sendHungryAnnouncement(guildId: string): Promise<void> {
     const areAnnouncementsEnabled = await this.areAnnouncementsEnabled(guildId);
 
-    // Check if it's time to send a hunger announcement
-    if (
-      elapsedTimeSinceHungerMessage <=
-        NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS ||
-      elapsedTimeSinceSpawnMessage <= DELAY_BETWEEN_FISH_SPAWN_ANNOUNCEMENT ||
-      !areAnnouncementsEnabled
-    ) {
+    if (!areAnnouncementsEnabled) {
       return;
     }
 
@@ -271,6 +207,87 @@ export class HungerManager {
     }
   }
 
+  /**
+   * Adjusts the guild's hunger level based on the time elapsed since the last update.
+   * This method ensures that the hunger level decreases over time and updates the mood accordingly.
+   * If the guild does not have a hunger state, it initializes it to a default value.
+   * The method also updates the last update timestamp to the current time.
+   *
+   * @param guildId The Id of the guild to update the hunger level for.
+   * @returns A promise that resolves when the hunger level has been calculated and updated.
+   */
+  async calculateAndUpdateHunger(guildId: string): Promise<void> {
+    // Initialise hunger state if it doesn't exist
+    await this.initialiseGuildHungerState(guildId);
+
+    const currentTime = Date.now();
+    const { lastUpdate = currentTime, level } = this.guildHungerLevels[guildId];
+    const elapsedTime = currentTime - lastUpdate;
+
+    // Calculate the decrease in hunger level
+    const decreaseAmount = this.calculateHungerDecrease(elapsedTime);
+
+    // Update the hunger level and ensure it doesn't go below 0
+    this.guildHungerLevels[guildId].level = Math.max(level - decreaseAmount, 0);
+
+    // Update the guild's mood based on the new hunger level
+    this.setCurrentMood(guildId, this.guildHungerLevels[guildId].level);
+
+    this.guildHungerLevels[guildId].lastUpdate = currentTime;
+
+    await this.persistHungerState(guildId, this.guildHungerLevels[guildId]);
+  }
+
+  /**
+   * Schedules the next hunger announcement for the specified guild.
+   * This method schedules a hunger announcement to be sent after a predefined time interval.
+   *
+   * @param guildId The identifier of the guild to schedule the hunger announcement for.
+   */
+  async requestHungerAnnouncement(guildId: string): Promise<void> {
+    const areAnnouncementsEnabled = await this.areAnnouncementsEnabled(guildId);
+    if (!areAnnouncementsEnabled) {
+      return;
+    }
+
+    const currentTime = Date.now();
+
+    // Schedule the next hunger update
+    const hungerAnnouncementActivity: Activity = {
+      name: Activities.HungerAnnouncement,
+      guildId,
+      startTime: currentTime + NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS,
+      endTime:
+        currentTime +
+        NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS +
+        DELETE_HUNGER_ANNOUNCEMENT_AFTER,
+    };
+
+    if (this.bot.activityScheduler.addActivity(hungerAnnouncementActivity)) {
+      this.bot.logger.info(
+        `Scheduled hunger announcement for guild: ${guildId}`
+      );
+    }
+  }
+
+  private async getHungerStateProperty<T>(
+    guildId: string,
+    property: keyof HungerState,
+    defaultValue?: T
+  ): Promise<T> {
+    try {
+      await this.initialiseGuildHungerState(guildId);
+
+      return (this.guildHungerLevels[guildId][property] as T) ?? defaultValue;
+    } catch (error) {
+      this.bot.logger.error(
+        `Failed to get ${property} for guild ${guildId}:`,
+        error
+      );
+      throw new Error(`Could not retrieve ${property} for guild ${guildId}.`);
+    }
+  }
+
   private async areAnnouncementsEnabled(guildId: string): Promise<boolean> {
     if (!this.bot.guildSettings.has(guildId)) {
       return true;
@@ -288,13 +305,6 @@ export class HungerManager {
     if (!this.guildHungerLevels[guildId]) {
       return;
     }
-    // Send the announcement message to the appropriate channel.
-    const currentTime = Date.now();
-    this.guildHungerLevels[guildId].lastHungerAnnouncement = currentTime;
-
-    // Generate random delay between 30 and 60 seconds (in milliseconds)
-    const delayInMilliseconds = getRandomDelayInMilliseconds(30, 60);
-    await delay(delayInMilliseconds);
 
     try {
       const announcement =
@@ -302,7 +312,7 @@ export class HungerManager {
       const announcementChannel = await this.bot.getFishingAnnouncementChannel(
         guildId
       );
-      const embed = await this.getDespawnAnnouncementEmbed(
+      const embed = await this.getHungerAnnouncementEmbed(
         guildId,
         announcement
       );
@@ -319,7 +329,7 @@ export class HungerManager {
     }
   }
 
-  private async getDespawnAnnouncementEmbed(
+  private async getHungerAnnouncementEmbed(
     guildId: string,
     announcement: string
   ): Promise<EmbedBuilder> {
@@ -356,16 +366,6 @@ export class HungerManager {
     }
   }
 
-  private async updateHungerAndSendAnnouncement(
-    interactionOrMessage: Interaction | Message
-  ): Promise<void> {
-    const { guildId } = interactionOrMessage;
-    if (guildId) {
-      await this.calculateAndUpdateHunger(guildId);
-      await this.sendHungryAnnouncement(interactionOrMessage);
-    }
-  }
-
   /**
    * Persists the current hunger state for a given guild.
    *
@@ -393,38 +393,7 @@ export class HungerManager {
    * @returns The calculated hunger decrease amount.
    */
   private calculateHungerDecrease(elapsedTime: number): number {
-    return (elapsedTime / (1000 * 60)) * HUNGER_DECREASE_RATE;
-  }
-
-  /**
-   * Adjusts the guild's hunger level based on the time elapsed since the last update.
-   * This method ensures that the hunger level decreases over time and updates the mood accordingly.
-   * If the guild does not have a hunger state, it initializes it to a default value.
-   * The method also updates the last update timestamp to the current time.
-   *
-   * @param guildId The Id of the guild to update the hunger level for.
-   * @returns A promise that resolves when the hunger level has been calculated and updated.
-   */
-  private async calculateAndUpdateHunger(guildId: string): Promise<void> {
-    // Initialise hunger state if it doesn't exist
-    await this.initialiseGuildHungerState(guildId);
-
-    const currentTime = Date.now();
-    const { lastUpdate = currentTime, level } = this.guildHungerLevels[guildId];
-    const elapsedTime = currentTime - lastUpdate;
-
-    // Calculate the decrease in hunger level
-    const decreaseAmount = this.calculateHungerDecrease(elapsedTime);
-
-    // Update the hunger level and ensure it doesn't go below 0
-    this.guildHungerLevels[guildId].level = Math.max(level - decreaseAmount, 0);
-
-    // Update the guild's mood based on the new hunger level
-    this.setCurrentMood(guildId, this.guildHungerLevels[guildId].level);
-
-    this.guildHungerLevels[guildId].lastUpdate = currentTime;
-
-    await this.persistHungerState(guildId, this.guildHungerLevels[guildId]);
+    return (elapsedTime / (1000 * 60 * 6)) * HUNGER_DECREASE_RATE;
   }
 
   /**

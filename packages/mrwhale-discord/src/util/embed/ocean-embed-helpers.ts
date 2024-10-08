@@ -11,10 +11,10 @@ export async function getOceanEmbed(
   botClient: DiscordBotClient
 ): Promise<EmbedBuilder> {
   const guildId = interaction.guildId;
-  const fish = botClient.getGuildFish(guildId);
+  const fish = botClient.fishSpawner.getGuildFish(guildId);
   const embed = new EmbedBuilder().setColor(EMBED_COLOR);
 
-  if (!botClient.hasGuildFish(guildId)) {
+  if (!botClient.fishSpawner.hasGuildFish(guildId)) {
     return embed.setDescription("The ocean is currently devoid of any life.");
   }
 
