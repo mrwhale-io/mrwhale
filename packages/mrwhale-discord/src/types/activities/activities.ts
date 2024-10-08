@@ -4,5 +4,4 @@
 export enum Activities {
   FishSpawn = "fishSpawn",
   HungerAnnouncement = "hungerAnnouncement",
-  TreasureHunt = "treasureHunt",
 }

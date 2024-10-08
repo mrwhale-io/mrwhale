@@ -4,5 +4,4 @@ import { Activities } from "./activities";
 export const activityNames: Record<Activities, string> = {
   fishSpawn: "Fish Spawn Event",
   hungerAnnouncement: "Hunger Announcement",
-  treasureHunt: "Treasure Hunt",
 };

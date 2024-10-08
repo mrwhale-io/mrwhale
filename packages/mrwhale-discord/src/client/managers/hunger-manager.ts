@@ -26,8 +26,8 @@ import { Activity } from "../../types/activities/activity";
 
 const HUNGER_DECREASE_RATE = 1;
 const FULL_HUNGER_LEVEL = 100;
-const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 6 * 60 * 1000; // 2 hours
-const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 15 * 1000; // 15 minutes
+const NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS = 6 * 60 * 60 * 1000; // 6 hours
+const DELETE_HUNGER_ANNOUNCEMENT_AFTER = 15 * 60 * 1000; // 15 minutes
 
 interface HungerState {
   level: number;

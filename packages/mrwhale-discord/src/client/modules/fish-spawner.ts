@@ -15,9 +15,9 @@ import { fishDespawnEmbed } from "../../util/embed/fish-despawn-embed";
 import { Settings } from "../../types/settings";
 import { getActiveUserIds } from "../../util/get-active-user-ids";
 
-const FISH_SPAWN_INTERVAL = 3 * 60 * 1000; // 3 hours
-const FISH_DESPAWN_INTERVAL = 30 * 1000; // 30 minutes
-const DELETE_ANNOUNCEMENT_AFTER = 5 * 1000; // 5 minutes
+const FISH_SPAWN_INTERVAL = 3 * 60 * 60 * 1000; // 3 hours
+const FISH_DESPAWN_INTERVAL = 30 * 60 * 1000; // 30 minutes
+const DELETE_ANNOUNCEMENT_AFTER = 5 * 60 * 1000; // 5 minutes
 const FISH_PER_ACTIVE_USER = 5;
 
 /**

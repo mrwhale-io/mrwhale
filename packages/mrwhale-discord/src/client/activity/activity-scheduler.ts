@@ -3,7 +3,7 @@ import { Activity } from "../../types/activities/activity";
 import { Activities } from "../../types/activities/activities";
 
 const NEXT_ACTIVITY_RUN_INTERVAL = 1000;
-const ONE_HOUR_IN_MS = 60 * 1000;
+const ONE_HOUR_IN_MS = 60 * 60 * 1000;
 
 /**
  * The activity scheduler is responsible for scheduling and running events.
@@ -101,7 +101,10 @@ export class ActivityScheduler {
   }
 
   /**
-   * Remove an activity from the scheduler.
+   * Runs the activity scheduler.
+   *
+   * The activity scheduler periodically checks for activities and starts or ends them based on their start and end times.
+   * It uses a setInterval function to run the scheduler at a specified interval.
    */
   run(): void {
     setInterval(async () => {
@@ -122,7 +125,7 @@ export class ActivityScheduler {
       }
     }, NEXT_ACTIVITY_RUN_INTERVAL); // Check every second
   }
-  
+
   private async startActivity(activity: Activity): Promise<void> {
     const activityHandler = this.botClient.activities.get(activity.name);
 
@@ -165,7 +168,7 @@ export class ActivityScheduler {
       await activity.notificationMessage.delete().catch(() => null);
     }
   }
-  
+
   private handlePreviousActivityConflict(activity: Activity): boolean {
     const previousActivity = this.getPreviousActivity(activity);
 
