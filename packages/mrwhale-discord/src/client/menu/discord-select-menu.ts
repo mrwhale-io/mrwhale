@@ -7,26 +7,16 @@ import {
 } from "discord.js";
 
 import { DiscordSelectMenuOptions } from "../../types/menu/discord-select-menu-options";
-import { DiscordBotClient } from "../discord-bot-client";
+import { Loadable } from "../../types/loadable";
 
-export abstract class DiscordSelectMenu {
-  /**
-   * The name of the discord select menu.
-   */
-  name: string;
-
+export abstract class DiscordSelectMenu extends Loadable {
   /**
    * The type of discord select menu.
    */
   type: SelectMenuType;
 
-  /**
-   * An instance of the current discord bot client.
-   */
-  protected botClient: DiscordBotClient;
-
   constructor(options: DiscordSelectMenuOptions) {
-    this.name = options.name;
+    super(options.name);
     this.type = options.type ?? ComponentType.StringSelect;
   }
 
@@ -35,17 +25,6 @@ export abstract class DiscordSelectMenu {
    * @param interaction The interaction that invoked the menu.
    */
   abstract action(interaction: AnySelectMenuInteraction): Promise<unknown>;
-
-  /**
-   * Registers a new instance of this menu.
-   * @param client The bot instance.
-   */
-  register(client: DiscordBotClient): void {
-    this.botClient = client;
-    if (!this.name) {
-      throw new Error(`Select menu must have a name.`);
-    }
-  }
 
   /**
    * Get an instance of the select menu builder.

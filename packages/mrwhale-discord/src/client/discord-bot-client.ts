@@ -1,8 +1,6 @@
 import {
   BotClient,
-  FishSpawnedResult,
   FishTypeNames,
-  FishingRod,
   ItemTypes,
   KeyedStorageProvider,
   ListenerDecorators,
@@ -11,7 +9,6 @@ import {
   getFishByName,
 } from "@mrwhale-io/core";
 import {
-  ButtonInteraction,
   ChannelType,
   ChatInputCommandInteraction,
   Client,
@@ -21,8 +18,6 @@ import {
   Events,
   Guild,
   GuildTextBasedChannel,
-  Interaction,
-  InteractionResponse,
   Message,
   NonThreadGuildBasedChannel,
   PartialDMChannel,
@@ -34,21 +29,15 @@ import { DiscordCommandDispatcher } from "./command/discord-command-dispatcher";
 import { DiscordCommand } from "./command/discord-command";
 import { GuildStorageLoader } from "./storage/guild-storage-loader";
 import { LevelManager } from "./managers/level-manager";
+import { LoaderManager } from "./managers/loader-manager";
 import { DiscordBotOptions } from "../types/discord-bot-options";
 import { DiscordSelectMenu } from "./menu/discord-select-menu";
-import { DiscordSelectMenuLoader } from "./menu/discord-select-menu-loader";
 import { DiscordSelectMenuHandler } from "./menu/discord-select-menu-handler";
 import { HungerManager } from "./managers/hunger-manager";
-import { FishManager } from "./managers/fish-manager";
+import { FishingManager } from "./managers/fishing-manager";
 import { DiscordButton } from "./button/discord-button";
-import { DiscordButtonLoader } from "./button/discord-button-loader";
 import { DiscordButtonHandler } from "./button/discord-button-handler";
 import { UserBalanceManager } from "./managers/user-balance-manager";
-import { createCatchButtons } from "../util/button/catch-buttons-helpers";
-import { NoFishError } from "../types/errors/no-fish-error";
-import { NoAttemptsLeftError } from "../types/errors/no-attempts-left-error";
-import { RemainingAttempts } from "../types/fishing/remaining-attempts";
-import { getCaughtFishEmbed } from "../util/embed/fish-caught-embed-helpers";
 import { InventoryError } from "../types/errors/inventory-error";
 import { InsufficientItemsError } from "../types/errors/Insufficient-items-error";
 import { HungerLevelFullError } from "../types/errors/hunger-level-full-error";
@@ -62,9 +51,19 @@ import { createEmbed } from "../util/embed/create-embed";
 import { getUserItemsByType } from "../database/services/user-inventory";
 import { checkAndAwardBalanceAchievements } from "../database/services/achievements";
 import { resetUserData } from "../database/services/user";
+import { ActivityHandler } from "./activity/activity-handler";
+import { ActivityScheduler } from "./activity/activity-scheduler";
+import { loadChannel } from "../util/load-channel";
+import { FishSpawner } from "./modules/fish-spawner";
+import { FishingAttemptTracker } from "./modules/fishing-attempt-tracker";
+import { loadGuild } from "../util/load-guild";
+import { isInvalidInteraction } from "../util/command/is-invalid-interaction";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
+/**
+ * Represents a Discord bot client that extends the `BotClient` class and provides additional functionality specific to Discord.
+ */
 export class DiscordBotClient extends BotClient<DiscordCommand> {
   /**
    * The discord client.
@@ -112,14 +111,59 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly buttonDir: string;
 
   /**
+   * The directory of the bot activities.
+   */
+  readonly activitiesDir: string;
+
+  /**
    * Contains discord select menus.
    */
   readonly menus: Map<string, DiscordSelectMenu>;
 
   /**
+   * Contains the activities for the bot.
+   */
+  readonly activities: Map<string, ActivityHandler>;
+
+  /**
    * Contains discord select menus.
    */
   readonly buttons: Map<string, DiscordButton>;
+
+  /**
+   * The activity scheduler for the Discord bot client.
+   */
+  get activityScheduler(): ActivityScheduler {
+    return this._activityScheduler;
+  }
+
+  /**
+   * The fish manager for the Discord bot client.
+   */
+  get fishingManager(): FishingManager {
+    return this._fishingManager;
+  }
+
+  /**
+   * The fishing attempt tracker for the Discord bot client.
+   */
+  get fishingAttemptTracker(): FishingAttemptTracker {
+    return this._fishingAttemptTracker;
+  }
+
+  /**
+   * The fish spawner for the Discord bot client.
+   */
+  get fishSpawner(): FishSpawner {
+    return this._fishSpawner;
+  }
+
+  /**
+   * The hunger manager for the Discord bot client.
+   */
+  get hungerManager(): HungerManager {
+    return this._hungerManager;
+  }
 
   /**
    * Retrieves the storage settings for each guild.
@@ -143,15 +187,16 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private discordButtonHandler: DiscordButtonHandler;
 
   private greetingsManager: GreetingsManager;
-  private fishManager: FishManager;
-  private hungerManager: HungerManager;
   private levelManager: LevelManager;
   private userBalanceManager: UserBalanceManager;
 
-  private discordSelectMenuLoader: DiscordSelectMenuLoader;
   private guildStorageLoader: GuildStorageLoader;
-  private discordButtonsLoader: DiscordButtonLoader;
-  private activeFishers: Set<string> = new Set();
+  private _hungerManager: HungerManager;
+  private loaderManager: LoaderManager;
+  private _fishingManager: FishingManager;
+  private _fishingAttemptTracker: FishingAttemptTracker;
+  private _fishSpawner: FishSpawner;
+  private _activityScheduler: ActivityScheduler;
 
   constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
@@ -164,16 +209,17 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.clientSecret = botOptions.clientSecret;
     this.selectMenuDir = botOptions.selectMenuDir;
     this.buttonDir = botOptions.buttonsDir;
+    this.activitiesDir = botOptions.activitiesDir;
     this.menus = new Map<string, DiscordSelectMenu>();
     this.buttons = new Map<string, DiscordButton>();
+    this.activities = new Map<string, ActivityHandler>();
     this.commandLoader.commandType = DiscordCommand.name;
     this.commandLoader.loadCommands();
-    this.discordSelectMenuLoader = new DiscordSelectMenuLoader(this);
-    this.discordSelectMenuLoader.loadMenus();
-    this.discordButtonsLoader = new DiscordButtonLoader(this);
-    this.discordButtonsLoader.loadButtons();
+    this.loaderManager = new LoaderManager(this);
+    this.loaderManager.loadAll();
     this.guildStorageLoader = new GuildStorageLoader(this);
     this.guildStorageLoader.init();
+
     if (botOptions.discordBotList) {
       this.discordBotList = botOptions.discordBotList;
     }
@@ -244,7 +290,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       const fish = getFishByName(fishName);
 
       // Attempt to feed Mr. Whale with the specified fish and quantity
-      const result = await this.hungerManager.feed(
+      const result = await this._hungerManager.feed(
         interactionOrMessage,
         fish,
         quantity
@@ -302,7 +348,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       const fish = getFishById(item.itemId);
       const quantity = item.quantity;
       try {
-        const result = await this.hungerManager.feed(
+        const result = await this._hungerManager.feed(
           interactionOrMessage,
           fish,
           quantity
@@ -334,56 +380,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Returns all the fish for the given guild.
-   * @param guildId The identifier of the guild.
-   */
-  getGuildFish(guildId: string): Record<string, FishSpawnedResult> {
-    return this.fishManager.getGuildFish(guildId);
-  }
-
-  /**
-   * Gets the remaining fishing attempts allowed for the user.
-   */
-  getRemainingFishingAttempts(
-    userId: string,
-    guildId: string,
-    fishingRod: FishingRod
-  ): RemainingAttempts {
-    return this.fishManager.getRemainingAttempts(userId, guildId, fishingRod);
-  }
-
-  /**
-   * Get the timestamp of the last hunger announcement for the guild.
-   * @param guildId The guild to get the last announcement timestamp.
-   */
-  async getLastHungerAnnouncementTimestamp(guildId: string): Promise<number> {
-    return this.hungerManager.getLastHungerAnnouncementTimestamp(guildId);
-  }
-
-  /**
-   * Get the spawn announcement message from the specified guild.
-   * @param guildId The Id of the guild to get the announcement message from.
-   */
-  getAnnouncementMessage(guildId: string): Message<boolean> {
-    return this.fishManager.getAnnouncementMessage(guildId);
-  }
-
-  /**
-   * Returns whether the guild has any fish.
-   * @param guildId The identifier of the guild.
-   */
-  hasGuildFish(guildId: string): boolean {
-    const guildFish = this.getGuildFish(guildId);
-
-    return guildFish && Object.keys(guildFish).length > 0;
-  }
-
-  /**
    * Get Mr. Whale's current mood.
    * @param guildId The identifier of the guild.
    */
   async getCurrentMood(guildId: string): Promise<Mood> {
-    return this.hungerManager.getCurrentMood(guildId);
+    return this._hungerManager.getCurrentMood(guildId);
   }
 
   /**
@@ -391,7 +392,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * @param guildId The guild to get the last fed timestamp.
    */
   async lastFedTimestamp(guildId: string): Promise<number> {
-    return this.hungerManager.lastFedTimestamp(guildId);
+    return this._hungerManager.lastFedTimestamp(guildId);
   }
 
   /**
@@ -437,80 +438,11 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Initiates the fishing process for a user in a guild. If the user is already fishing,
-   * it sends a message indicating that they must wait until the current fishing attempt is complete.
-   * Otherwise, it proceeds with the fishing process, sends a message indicating the fishing is in progress,
-   * and then handles the result of the fishing attempt.
-   *
-   * @param interactionOrMessage The interaction or message object from the Discord API, containing details of the user and guild.
-   * @returns A promise that resolves to the sent message containing the fish caught embed and catch buttons.
-   * @throws Will throw an error if an unexpected error occurs during the process.
-   */
-  async catchFish(
-    interactionOrMessage:
-      | ChatInputCommandInteraction
-      | ButtonInteraction
-      | Message
-  ): Promise<Message<boolean> | InteractionResponse<boolean>> {
-    const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
-    let messageResponse: Message;
-
-    const activeFisherKey = `${guildId}-${userId}`;
-
-    // Check if the user is already in the process of fishing.
-    if (this.isUserFishing(activeFisherKey)) {
-      const alreadyFishingEmbed = createEmbed(
-        "You are already fishing. Please wait until your current fishing attempt is complete."
-      );
-      return this.sendReply(interactionOrMessage, alreadyFishingEmbed, true);
-    }
-
-    // Mark the user as currently fishing
-    // This is to prevent more than one fishing action to occur at the same time
-    this.activeFishers.add(activeFisherKey);
-
-    try {
-      const inProgressMessage = createEmbed(
-        `🎣 <@${interactionOrMessage.member.user.id}> is fishing...`
-      );
-
-      messageResponse = await this.sendReply(
-        interactionOrMessage,
-        inProgressMessage
-      );
-
-      const catchResult = await this.fishManager.catchFish(
-        interactionOrMessage
-      );
-
-      // Generate the embed with all the caught fish details
-      const fishCaughtEmbed = await getCaughtFishEmbed({
-        fishCaught: catchResult.fishCaught,
-        interaction: interactionOrMessage,
-        fishingRodUsed: catchResult.fishingRodUsed,
-        baitUsed: catchResult.baitUsed,
-        achievements: catchResult.achievements,
-        botClient: this,
-      });
-      const catchButtons = createCatchButtons(interactionOrMessage, this);
-
-      await messageResponse.edit({
-        embeds: [fishCaughtEmbed],
-        components: catchButtons ? [catchButtons] : [],
-      });
-    } catch (error) {
-      this.handleFishingError(error, messageResponse);
-    } finally {
-      this.activeFishers.delete(activeFisherKey);
-    }
-  }
-
-  /**
    * Get the hunger level for the given guild.
    * @param guildId The guild to get the hunger level for.
    */
   async getGuildHungerLevel(guildId: string): Promise<number> {
-    return this.hungerManager.getGuildHungerLevel(guildId);
+    return this._hungerManager.getGuildHungerLevel(guildId);
   }
 
   /**
@@ -540,55 +472,40 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       defaultChannel.id
     );
 
-    try {
-      const channel = this.client.channels.cache.has(channelId)
-        ? (this.client.channels.cache.get(channelId) as TextBasedChannel)
-        : ((await this.client.channels.fetch(channelId)) as TextBasedChannel);
-
-      return channel;
-    } catch {
-      return defaultChannel;
-    }
+    return await loadChannel(this.client, channelId, defaultChannel);
   }
 
   /**
    * Gets announcements for the fishing game. If an announcement is not set it will fallback to the
    * level channel and if a level channel has not been set it will fallback to the channel the message was sent in.
-   * @param message The message or interaction.
+   * @param guildId The identifier of the guild.
    */
   async getFishingAnnouncementChannel(
-    message: Interaction | Message
+    guildId: string
   ): Promise<TextBasedChannel> {
-    const guildId = message.guildId;
+    const guild = await loadGuild(this, guildId);
+    const firstChannel = getFirstTextChannel(guild) as TextBasedChannel;
+
     if (!this.guildSettings.has(guildId)) {
-      return message.channel;
+      return firstChannel;
     }
 
     const settings = this.guildSettings.get(guildId);
     const announcementChannelId = await settings.get(
       Settings.AnnouncementChannel
     );
-
-    if (announcementChannelId) {
-      return await this.getAnnouncementChannel(guildId, message.channel);
-    }
-
-    const levelupChannelId = await settings.get(
-      Settings.LevelChannel,
-      message.id
+    const levelupChannelId = await settings.get(Settings.LevelChannel);
+    const levelupChannel = await loadChannel(
+      this.client,
+      levelupChannelId,
+      firstChannel
     );
 
-    try {
-      const channel = this.client.channels.cache.has(levelupChannelId)
-        ? (this.client.channels.cache.get(levelupChannelId) as TextBasedChannel)
-        : ((await this.client.channels.fetch(
-            levelupChannelId
-          )) as TextBasedChannel);
-
-      return channel;
-    } catch {
-      return message.channel;
+    if (announcementChannelId) {
+      return await this.getAnnouncementChannel(guildId, levelupChannel);
     }
+
+    return levelupChannel;
   }
 
   /**
@@ -630,6 +547,39 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
     this.initialiseHandlers();
     this.initialiseManagers();
+
+    this._activityScheduler = new ActivityScheduler(this);
+    this._activityScheduler.run();
+  }
+
+  @on(Events.InteractionCreate)
+  private async onInteractionCreate(interaction: ChatInputCommandInteraction) {
+    if (isInvalidInteraction(interaction)) {
+      return;
+    }
+
+    const guildId = interaction.guildId;
+
+    // Trigger scheduling events based on guild activity
+    this.fishSpawner.requestFishSpawn(guildId);
+
+    await this.hungerManager.calculateAndUpdateHunger(guildId);
+    await this.hungerManager.requestHungerAnnouncement(guildId);
+  }
+
+  @on(Events.MessageCreate)
+  private async onMessage(message: Message): Promise<void> {
+    if (isInvalidInteraction(message)) {
+      return;
+    }
+
+    const guildId = message.guildId;
+
+    // Trigger scheduling events based on guild activity
+    this.fishSpawner.requestFishSpawn(guildId);
+
+    await this.hungerManager.calculateAndUpdateHunger(guildId);
+    await this.hungerManager.requestHungerAnnouncement(guildId);
   }
 
   @on(Events.GuildCreate)
@@ -676,8 +626,15 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   private initialiseManagers(): void {
     this.levelManager = new LevelManager(this);
-    this.hungerManager = new HungerManager(this, this.levelManager);
-    this.fishManager = new FishManager(this, this.levelManager);
+    this._hungerManager = new HungerManager(this, this.levelManager);
+    this._fishSpawner = new FishSpawner(this);
+    this._fishingAttemptTracker = new FishingAttemptTracker();
+    this._fishingManager = new FishingManager(
+      this,
+      this._fishSpawner,
+      this._fishingAttemptTracker,
+      this.levelManager
+    );
     this.userBalanceManager = new UserBalanceManager();
     this.greetingsManager = new GreetingsManager(this);
   }
@@ -690,55 +647,5 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.commandDispatcher.ready = true;
     this.discordSelectMenuHandler.ready = true;
     this.discordButtonHandler.ready = true;
-  }
-
-  private isUserFishing(activeFisherKey: string): boolean {
-    return this.activeFishers.has(activeFisherKey);
-  }
-
-  /**
-   * Sends a reply to the interaction or message.
-   * @param interactionOrMessage The interaction or message to reply to.
-   * @param embed The embed to send as a reply.
-   * @param ephemeral Whether the reply is ephemeral or not.
-   * @returns A promise that resolves to the sent message.
-   */
-  private async sendReply(
-    interactionOrMessage:
-      | ChatInputCommandInteraction
-      | ButtonInteraction
-      | Message,
-    embed: EmbedBuilder,
-    ephemeral: boolean = false
-  ): Promise<Message<boolean>> {
-    if (interactionOrMessage instanceof Message) {
-      return await interactionOrMessage.reply({
-        embeds: [embed],
-        allowedMentions: { users: [] },
-      });
-    } else {
-      return await interactionOrMessage.reply({
-        embeds: [embed],
-        allowedMentions: { users: [] },
-        fetchReply: true,
-        ephemeral,
-      });
-    }
-  }
-
-  private async handleFishingError(
-    error: Error,
-    messageResponse: Message
-  ): Promise<void> {
-    if (error instanceof NoFishError || error instanceof NoAttemptsLeftError) {
-      const nothingCaughtEmbed = createEmbed(error.message);
-      `🎣 ${error.message}`;
-      await messageResponse.edit({
-        embeds: [nothingCaughtEmbed],
-      });
-    } else {
-      this.logger.error("Error catching fish:", error);
-      throw error;
-    }
   }
 }

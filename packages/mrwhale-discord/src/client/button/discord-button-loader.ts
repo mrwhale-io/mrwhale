@@ -1,41 +1,24 @@
-import * as glob from "glob";
-
 import { DiscordBotClient } from "../discord-bot-client";
+import { BaseLoader } from "../base-loader";
 import { DiscordButton } from "./discord-button";
-import { loadButton } from "../../util/button/load-button";
 
 /**
- * Responsible for loading discord buttons.
+ * Class responsible for loading Discord buttons.
  */
-export class DiscordButtonLoader {
-  private botClient: DiscordBotClient;
+export class DiscordButtonLoader extends BaseLoader<DiscordButton> {
+  protected classType = DiscordButton;
+  protected directory = this.botClient.buttonDir;
+  protected collection = this.botClient.buttons;
 
   constructor(bot: DiscordBotClient) {
-    this.botClient = bot;
+    super(bot);
   }
 
   /**
-   * Loads all discord buttons from the button directory.
+   * Registers the loaded button instance.
+   * @param instance The loaded button instance.
    */
-  loadButtons(): void {
-    const files = [];
-    if (this.botClient.buttons.size > 0) {
-      this.botClient.buttons.clear();
-    }
-
-    files.push(...glob.sync(`${this.botClient.buttonDir}/*.js`));
-    if (this.botClient.tsNode) {
-      files.push(...glob.sync(`${this.botClient.buttonDir}/*.ts`));
-    }
-
-    for (const file of files) {
-      const commandLocation = file.replace(".ts", "");
-      const loadedButton: any = loadButton(commandLocation);
-      const button: DiscordButton = new loadedButton();
-      this.botClient.buttons.set(button.name, button);
-      button.register(this.botClient);
-
-      this.botClient.logger.info(`Discord Button ${button.name} loaded`);
-    }
+  protected register(instance: DiscordButton): void {
+    instance.register(this.botClient);
   }
 }

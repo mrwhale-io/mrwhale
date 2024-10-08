@@ -29,16 +29,32 @@ export async function getCaughtFishEmbed(
 ): Promise<EmbedBuilder> {
   const embed = new EmbedBuilder().setColor(EMBED_COLOR);
   const {
-    achievements,
     interaction,
     botClient,
-    baitUsed,
     fishingRodUsed,
     fishCaught,
   } = fishCaughtOptions;
+
+  setFooterText(embed, botClient, interaction, fishingRodUsed);
+
+  if (!fishCaught) {
+    setNoFishCaughtEmbed(embed);
+    return embed;
+  }
+
+  setFishCaughtEmbedFields(embed, fishCaughtOptions);
+  return embed;
+}
+
+function setFooterText(
+  embed: EmbedBuilder,
+  botClient: DiscordBotClient,
+  interaction: Interaction | Message,
+  fishingRodUsed: FishingRod
+): void {
   const userId = interaction.member.user.id;
   const guildId = interaction.guildId;
-  const remainingFishingAttempts = botClient.getRemainingFishingAttempts(
+  const remainingFishingAttempts = botClient.fishingAttemptTracker.getRemainingAttempts(
     userId,
     guildId,
     fishingRodUsed
@@ -48,14 +64,25 @@ export async function getCaughtFishEmbed(
   embed.setFooter({
     text: `You have ${remainingFishingAttempts.attempts} ${attemptText} remaining.`,
   });
+}
 
-  if (!fishCaught) {
-    const noFishMessage =
-      NO_FISH_MESSAGES[Math.floor(Math.random() * NO_FISH_MESSAGES.length)];
+function setNoFishCaughtEmbed(embed: EmbedBuilder): void {
+  const noFishMessage =
+    NO_FISH_MESSAGES[Math.floor(Math.random() * NO_FISH_MESSAGES.length)];
+  embed.setTitle(`Tough Luck!`).setDescription(noFishMessage);
+}
 
-    embed.setTitle(`Tough Luck!`).setDescription(noFishMessage);
-    return embed;
-  }
+function setFishCaughtEmbedFields(
+  embed: EmbedBuilder,
+  fishCaughtOptions: FishCaughtEmbedOptions
+): void {
+  const {
+    achievements,
+    interaction,
+    baitUsed,
+    fishingRodUsed,
+    fishCaught,
+  } = fishCaughtOptions;
 
   embed
     .setTitle(`${fishCaught.icon} ${fishCaught.name} Caught!`)
@@ -89,6 +116,4 @@ export async function getCaughtFishEmbed(
         inline: true,
       }
     );
-
-  return embed;
 }

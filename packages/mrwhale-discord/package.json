@@ -1,6 +1,6 @@
 {
   "name": "@mrwhale-io/discord",
-  "version": "3.2.0",
+  "version": "4.0.0",
   "private": true,
   "description": "Mr. Whale discord chat bot integration.",
   "author": "Thomas Bowen <ttbowen11@hotmail.co.uk>",
@@ -27,8 +27,8 @@
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
   },
   "dependencies": {
-    "@mrwhale-io/commands": "^2.0.1",
-    "@mrwhale-io/core": "^1.5.0",
+    "@mrwhale-io/commands": "^2.0.2",
+    "@mrwhale-io/core": "^1.5.1",
     "axios": "^0.21.1",
     "canvacord": "^5.4.10",
     "canvas": "^2.11.2",
