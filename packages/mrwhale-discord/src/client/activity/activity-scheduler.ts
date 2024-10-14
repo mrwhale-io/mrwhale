@@ -14,6 +14,8 @@ export class ActivityScheduler {
    */
   readonly activities: Activity[];
 
+  private activityTimeoutId: NodeJS.Timeout | null = null;
+
   constructor(private botClient: DiscordBotClient) {
     this.activities = [];
   }
@@ -101,13 +103,29 @@ export class ActivityScheduler {
   }
 
   /**
+   * Remove an activity from the scheduler.
+   * @param activity The activity to remove.
+   */
+  removeActivity(activity: Activity): void {
+    const index = this.activities.findIndex(
+      (existingActivity) =>
+        existingActivity.guildId === activity.guildId &&
+        existingActivity.name === activity.name
+    );
+
+    if (index !== -1) {
+      this.activities.splice(index, 1);
+    }
+  }
+
+  /**
    * Runs the activity scheduler.
    *
    * The activity scheduler periodically checks for activities and starts or ends them based on their start and end times.
    * It uses a setInterval function to run the scheduler at a specified interval.
    */
   run(): void {
-    setInterval(async () => {
+    this.activityTimeoutId = setInterval(async () => {
       const currentTime = Date.now();
       if (this.activities.length === 0) {
         return;
@@ -124,6 +142,18 @@ export class ActivityScheduler {
         this.activities.shift();
       }
     }, NEXT_ACTIVITY_RUN_INTERVAL); // Check every second
+  }
+
+  /**
+   * Stops the activity scheduler.
+   *
+   * This method clears the interval used to run the scheduler, effectively stopping the scheduler.
+   */
+  stop(): void {
+    // Clear the interval to stop the scheduler
+    if (this.activityTimeoutId) {
+      clearInterval(this.activityTimeoutId);
+    }
   }
 
   private async startActivity(activity: Activity): Promise<void> {

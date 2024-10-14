@@ -1,10 +1,4 @@
 import {
-  ButtonInteraction,
-  ChatInputCommandInteraction,
-  Message,
-} from "discord.js";
-
-import {
   Achievement,
   AchievementCriteria,
   Fish,
@@ -16,7 +10,6 @@ import {
 } from "../models/user-achievement";
 import { getTotalFishCaughtByUserInGuild } from "./fish-caught";
 import { LevelManager } from "../../client/managers/level-manager";
-import { extractUserAndGuildId } from "../../util/extract-user-and-guild-id";
 
 /**
  * Retrieves all achievements for a specific user in a specific guild.
@@ -45,19 +38,17 @@ export async function getUserAchievements(
  * This function retrieves the current achievements of the user, checks if any new achievements
  * are met based on the caught fish, and awards new achievements if the criteria are satisfied.
  *
- * @param interactionOrMessage The interaction or message object from the Discord API, containing details of the user and guild.
+ * @param guildId The unique identifier of the guild where the user's achievements are being checked and awarded.
+ * @param userId The unique identifier of the user whose achievements are being checked and awarded.
  * @param fish The fish that was caught, used to check against achievement criteria.
  * @returns A promise that resolves to an array of new achievements that the user has been awarded.
  */
 export async function checkAndAwardFishingAchievements(
-  interactionOrMessage:
-    | ChatInputCommandInteraction
-    | ButtonInteraction
-    | Message,
+  guildId: string,
+  userId: string,
   fish: Fish,
   levelManager: LevelManager
 ): Promise<Achievement[]> {
-  const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
   const userAchievements = await getUserAchievements(userId, guildId);
   const achievedIds = userAchievements.map((ua) => ua.achievementId);
   const newAchievements: Achievement[] = [];
@@ -76,7 +67,7 @@ export async function checkAndAwardFishingAchievements(
     );
 
     if (achieved) {
-      await achieve(interactionOrMessage, achievement, levelManager);
+      await achieve(guildId, userId, achievement, levelManager);
       newAchievements.push(achievement);
     }
   }
@@ -90,19 +81,17 @@ export async function checkAndAwardFishingAchievements(
  * This function retrieves the current achievements of the user, checks if any new achievements
  * are met based on the gems accumulated, and awards new achievements if the criteria are satisfied.
  *
- * @param interactionOrMessage The interaction or message object from the Discord API, containing details of the user and guild.
+ * @param guildId The unique identifier of the guild where the user's achievements are being checked and awarded.
+ * @param userId The unique identifier of the user whose achievements are being checked and awarded.
  * @param userBalance The current balance of the user, used to check against achievement criteria.
  * @returns A promise that resolves to an array of new achievements that the user has been awarded.
  */
 export async function checkAndAwardBalanceAchievements(
-  interactionOrMessage:
-    | ChatInputCommandInteraction
-    | ButtonInteraction
-    | Message,
+  guildId: string,
+  userId: string,
   userBalance: number,
   levelManager: LevelManager
 ): Promise<Achievement[]> {
-  const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
   const userAchievements = await getUserAchievements(userId, guildId);
   const achievedIds = userAchievements.map((ua) => ua.achievementId);
   const newAchievements: Achievement[] = [];
@@ -116,7 +105,7 @@ export async function checkAndAwardBalanceAchievements(
     const achieved = hasAchievedBalanceAward(userBalance, criteria);
 
     if (achieved) {
-      await achieve(interactionOrMessage, achievement, levelManager);
+      await achieve(guildId, userId, achievement, levelManager);
       newAchievements.push(achievement);
     }
   }
@@ -168,21 +157,13 @@ async function hasAchievedCatchFish(
 }
 
 async function achieve(
-  interactionOrMessage:
-    | ChatInputCommandInteraction
-    | ButtonInteraction
-    | Message,
+  guildId: string,
+  userId: string,
   achievement: Achievement,
   levelManager: LevelManager
 ): Promise<void> {
-  const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
   await createUserAchievement(userId, guildId, achievement);
-  await levelManager.increaseExp(
-    interactionOrMessage,
-    userId,
-    guildId,
-    achievement.exp
-  );
+  await levelManager.increaseExp(userId, guildId, achievement.exp);
 }
 
 async function createUserAchievement(

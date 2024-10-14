@@ -158,15 +158,10 @@ export class HungerManager {
     await useUserItem(userId, guildId, usersFish, quantity);
 
     // Award EXP to the user
-    await this.levelManager.increaseExp(
-      interactionOrMessage,
-      userId,
-      guildId,
-      expIncreaseAmount
-    );
+    await this.levelManager.increaseExp(userId, guildId, expIncreaseAmount);
 
     // Update the user's balance and get the new balance
-    await this.bot.addToUserBalance(interactionOrMessage, userId, reward);
+    await this.bot.addToUserBalance(guildId, userId, reward);
 
     return {
       expGained: expIncreaseAmount,
@@ -263,7 +258,8 @@ export class HungerManager {
         DELETE_HUNGER_ANNOUNCEMENT_AFTER,
     };
 
-    if (this.bot.activityScheduler.addActivity(hungerAnnouncementActivity)) {
+    const scheduler = this.bot.activitySchedulerManager.getScheduler(guildId);
+    if (scheduler.addActivity(hungerAnnouncementActivity)) {
       this.bot.logger.info(
         `Scheduled hunger announcement for guild: ${guildId}`
       );

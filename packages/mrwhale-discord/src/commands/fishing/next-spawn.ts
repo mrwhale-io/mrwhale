@@ -32,7 +32,10 @@ export default class extends DiscordCommand {
     const { guildId } = interactionOrMessage;
 
     // Fetch the next fish spawn event for the guild
-    const nextFishSpawn = this.botClient.activityScheduler.getUpcomingActivityByType(
+    const activityScheduler = this.botClient.activitySchedulerManager.getScheduler(
+      guildId
+    );
+    const nextFishSpawn = activityScheduler.getUpcomingActivityByType(
       guildId,
       Activities.FishSpawn
     );

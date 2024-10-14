@@ -5,6 +5,7 @@ interface UserBalanceAttributes {
   userId: string;
   guildId: string;
   balance: number;
+  totalBalance?: number;
 }
 
 export interface UserBalanceInstance

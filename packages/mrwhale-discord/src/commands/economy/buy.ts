@@ -223,7 +223,7 @@ export default class extends DiscordCommand {
     const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
     const itemCost = item.cost * quantity;
     await this.botClient.addToUserBalance(
-      interactionOrMessage,
+      guildId,
       userId,
       -itemCost
     );

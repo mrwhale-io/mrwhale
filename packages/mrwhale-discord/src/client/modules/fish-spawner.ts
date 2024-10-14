@@ -129,7 +129,8 @@ export class FishSpawner {
     };
 
     // Add the fish spawn activity to the scheduler
-    if (this.bot.activityScheduler.addActivity(fishSpawnActivity)) {
+    const scheduler = this.bot.activitySchedulerManager.getScheduler(guildId);
+    if (scheduler.addActivity(fishSpawnActivity)) {
       this.bot.logger.info(`Scheduled fish spawn event for guild: ${guildId}`);
     }
   }

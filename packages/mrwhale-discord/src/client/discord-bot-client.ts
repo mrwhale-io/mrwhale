@@ -52,12 +52,14 @@ import { getUserItemsByType } from "../database/services/user-inventory";
 import { checkAndAwardBalanceAchievements } from "../database/services/achievements";
 import { resetUserData } from "../database/services/user";
 import { ActivityHandler } from "./activity/activity-handler";
-import { ActivityScheduler } from "./activity/activity-scheduler";
 import { loadChannel } from "../util/load-channel";
 import { FishSpawner } from "./modules/fish-spawner";
 import { FishingAttemptTracker } from "./modules/fishing-attempt-tracker";
 import { loadGuild } from "../util/load-guild";
 import { isInvalidInteraction } from "../util/command/is-invalid-interaction";
+import { Activity } from "../types/activities/activity";
+import { Activities } from "../types/activities/activities";
+import { ActivitySchedulerManager } from "./managers/activity-scheduler-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -131,10 +133,10 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   readonly buttons: Map<string, DiscordButton>;
 
   /**
-   * The activity scheduler for the Discord bot client.
+   * The activity scheduler manager for the Discord bot client.
    */
-  get activityScheduler(): ActivityScheduler {
-    return this._activityScheduler;
+  get activitySchedulerManager(): ActivitySchedulerManager {
+    return this._activitySchedulerManager;
   }
 
   /**
@@ -189,6 +191,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private greetingsManager: GreetingsManager;
   private levelManager: LevelManager;
   private userBalanceManager: UserBalanceManager;
+  private _activitySchedulerManager: ActivitySchedulerManager;
 
   private guildStorageLoader: GuildStorageLoader;
   private _hungerManager: HungerManager;
@@ -196,7 +199,6 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private _fishingManager: FishingManager;
   private _fishingAttemptTracker: FishingAttemptTracker;
   private _fishSpawner: FishSpawner;
-  private _activityScheduler: ActivityScheduler;
 
   constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
@@ -411,17 +413,16 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * This method delegates the balance update to the user balance manager,
    * ensuring that the user's balance is correctly adjusted by the specified amount.
    *
-   * @param interactionOrMessage The Discord interaction object representing the command invocation.
+   * @param guildId The Id of the guild where the user's balance is to be updated.
    * @param userId The Id of the user whose balance is to be updated.
    * @param amount The amount to add to the user's balance. This can be positive or negative.
    * @returns A promise that resolves to the updated balance of the user.
    */
   async addToUserBalance(
-    interactionOrMessage: ChatInputCommandInteraction | Message,
+    guildId: string,
     userId: string,
     amount: number
   ): Promise<number> {
-    const { guildId } = extractUserAndGuildId(interactionOrMessage);
     const { balance } = await this.userBalanceManager.addToUserBalance(
       userId,
       guildId,
@@ -429,7 +430,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     );
 
     await checkAndAwardBalanceAchievements(
-      interactionOrMessage,
+      guildId,
+      userId,
       balance,
       this.levelManager
     );
@@ -547,9 +549,6 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
     this.initialiseHandlers();
     this.initialiseManagers();
-
-    this._activityScheduler = new ActivityScheduler(this);
-    this._activityScheduler.run();
   }
 
   @on(Events.InteractionCreate)
@@ -562,6 +561,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     // Trigger scheduling events based on guild activity
     this.fishSpawner.requestFishSpawn(guildId);
+
+    this.requestTreasureHuntActivity(guildId);
 
     await this.hungerManager.calculateAndUpdateHunger(guildId);
     await this.hungerManager.requestHungerAnnouncement(guildId);
@@ -578,12 +579,15 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     // Trigger scheduling events based on guild activity
     this.fishSpawner.requestFishSpawn(guildId);
 
+    this.requestTreasureHuntActivity(guildId);
+
     await this.hungerManager.calculateAndUpdateHunger(guildId);
     await this.hungerManager.requestHungerAnnouncement(guildId);
   }
 
   @on(Events.GuildCreate)
   private async onGuildCreate(guild: Guild): Promise<void> {
+    this.activitySchedulerManager.addScheduler(guild.id);
     await this.guildStorageLoader.loadGuildSettings(guild.id);
 
     const channel = getFirstTextChannel(guild);
@@ -592,6 +596,12 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     if (channel && channel.isTextBased()) {
       channel.send({ embeds: [embed] });
     }
+  }
+
+  @on(Events.GuildDelete)
+  private async onGuildDelete(guild: Guild): Promise<void> {
+    this.activitySchedulerManager.removeScheduler(guild.id);
+    await this.deleteGuildSettings(guild.id);
   }
 
   @on(Events.ChannelDelete)
@@ -624,6 +634,25 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
   }
 
+  private requestTreasureHuntActivity(guildId: string): void {
+    const currentTime = Date.now();
+
+    // Create a treasure hunt activity
+    const treasureHuntActivity: Activity = {
+      name: Activities.TreasureHunt,
+      guildId,
+      startTime: currentTime + 3 * 60 * 1000, // Schedule spawn after 3 hours
+      endTime: currentTime + 3 * 60 * 1000 + 2 * 60 * 1000, // Despawn after 30 minutes
+    };
+
+    // Add the treasure hunt activity to the scheduler
+    const scheduler = this.activitySchedulerManager.getScheduler(guildId);
+
+    if (scheduler.addActivity(treasureHuntActivity)) {
+      this.logger.info(`Scheduled treasure hunt event for guild: ${guildId}`);
+    }
+  }
+
   private initialiseManagers(): void {
     this.levelManager = new LevelManager(this);
     this._hungerManager = new HungerManager(this, this.levelManager);
@@ -637,6 +666,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     );
     this.userBalanceManager = new UserBalanceManager();
     this.greetingsManager = new GreetingsManager(this);
+    this._activitySchedulerManager = new ActivitySchedulerManager(this);
   }
 
   private initialiseHandlers(): void {
