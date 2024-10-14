@@ -3,6 +3,7 @@ import { ChatInputCommandInteraction, EmbedBuilder, Message } from "discord.js";
 import { code } from "@mrwhale-io/core";
 import { EMBED_COLOR } from "../../constants";
 import { ScoreResult } from "../../types/scores/score-result";
+import { MappedScores } from "../../types/scores/mapped-scores";
 
 interface LeaderboardOptions {
   scoreResult: ScoreResult;
@@ -10,6 +11,8 @@ interface LeaderboardOptions {
   title: string;
   isGlobal: boolean;
 }
+
+const TABLE_DESCRIPTION = "Here are the top players for this leaderboard.\n\n";
 
 /**
  * Creates a generic embed for the leaderboard table.
@@ -63,12 +66,12 @@ export async function createExpLeaderboardTable(
     title,
     isGlobal,
   });
-  let table = "Here are the top players for this leaderboard.\n\n";
+  let table = TABLE_DESCRIPTION;
   for (let i = 0; i < scoreResult.scores.length; i++) {
     const score = scoreResult.scores[i];
     const place = i + scoreResult.offset + 1;
     table += `${code(`#${place}`)} ${getPlaceEmoji(place)} | @${
-      score.user.username
+      score.user ? score.user.username : "Unknown User"
     } • **Exp: ${score.exp} (Level ${score.level})**\n`;
   }
 
@@ -97,16 +100,89 @@ export async function createFishCaughtLeaderboardTable(
     title,
     isGlobal,
   });
-  let table = "Here are the top players for this leaderboard.\n\n";
+  let table = TABLE_DESCRIPTION;
   for (let i = 0; i < scoreResult.scores.length; i++) {
     const score = scoreResult.scores[i];
     const place = i + scoreResult.offset + 1;
-    table += `${code(`#${place}`)} ${getPlaceEmoji(place)} | @${
-      score.user.username
-    } • **${score.exp}**\n`;
+    table = mapScoreResults(table, place, score);
   }
 
   return embed.setDescription(table);
+}
+
+/**
+ * Creates an embed for the chests opened leaderboard table.
+ * @param interactionOrMessage The discord command interaction or message.
+ * @param scoreResult Contains a list of scores results.
+ * @param page The page number.
+ * @param isGlobal Whether this is a global leaderboard or not.
+ */
+export async function createChestsOpenedLeaderboardTable(
+  interactionOrMessage: ChatInputCommandInteraction | Message,
+  chestsOpenedScores: ScoreResult,
+  page: number,
+  isGlobal: boolean = false
+) {
+  const title = isGlobal
+    ? "Chests Opened"
+    : `Chests Opened in ${interactionOrMessage.guild.name}`;
+  const embed = await createLeaderboardTable(interactionOrMessage, {
+    scoreResult: chestsOpenedScores,
+    page,
+    title,
+    isGlobal,
+  });
+  let table = TABLE_DESCRIPTION;
+  for (let i = 0; i < chestsOpenedScores.scores.length; i++) {
+    const score = chestsOpenedScores.scores[i];
+    const place = i + chestsOpenedScores.offset + 1;
+    table = mapScoreResults(table, place, score);
+  }
+
+  return embed.setDescription(table);
+}
+
+/**
+ * Creates an embed for the gems leaderboard table.
+ * @param interactionOrMessage The discord command interaction or message.
+ * @param scoreResult Contains a list of scores results.
+ * @param page The page number.
+ * @param isGlobal Whether this is a global leaderboard or not.
+ */
+export async function createGemsLeaderboardTable(
+  interactionOrMessage: ChatInputCommandInteraction | Message,
+  gemsScores: ScoreResult,
+  page: number,
+  isGlobal: boolean = false
+) {
+  const title = isGlobal
+    ? "Gems Earned"
+    : `Gems Earned in ${interactionOrMessage.guild.name}`;
+  const embed = await createLeaderboardTable(interactionOrMessage, {
+    scoreResult: gemsScores,
+    page,
+    title,
+    isGlobal,
+  });
+  let table = TABLE_DESCRIPTION;
+  for (let i = 0; i < gemsScores.scores.length; i++) {
+    const score = gemsScores.scores[i];
+    const place = i + gemsScores.offset + 1;
+    table = mapScoreResults(table, place, score);
+  }
+
+  return embed.setDescription(table);
+}
+
+function mapScoreResults(
+  table: string,
+  place: number,
+  score: MappedScores
+): string {
+  table += `${code(`#${place}`)} ${getPlaceEmoji(place)} | @${
+    score.user ? score.user.username : "Unknown"
+  } • **${score.exp}**\n`;
+  return table;
 }
 
 function getPlaceEmoji(place: number): string {
