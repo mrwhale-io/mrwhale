@@ -20,8 +20,6 @@ import {
   GuildTextBasedChannel,
   Message,
   NonThreadGuildBasedChannel,
-  PartialDMChannel,
-  TextBasedChannel,
 } from "discord.js";
 import { createDjsClient } from "discordbotlist";
 
@@ -57,9 +55,10 @@ import { FishSpawner } from "./modules/fish-spawner";
 import { FishingAttemptTracker } from "./modules/fishing-attempt-tracker";
 import { loadGuild } from "../util/load-guild";
 import { isInvalidInteraction } from "../util/command/is-invalid-interaction";
-import { Activity } from "../types/activities/activity";
-import { Activities } from "../types/activities/activities";
 import { ActivitySchedulerManager } from "./managers/activity-scheduler-manager";
+import { TreasureHuntManager } from "./managers/treasure-hunt-manager";
+import { Activities } from "../types/activities/activities";
+import { NotificationManager } from "./managers/notification-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -180,6 +179,20 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
+   * Gets the instance of the TreasureHuntManager.
+   */
+  get treasureHuntManager(): TreasureHuntManager {
+    return this._treasureHuntManager;
+  }
+
+  /**
+   * Gets the instance of the NotificationManager.
+   */
+  get notificationManager(): NotificationManager {
+    return this._notificationManager;
+  }
+
+  /**
    * The discord bot list API key.
    */
   private discordBotList?: string;
@@ -191,14 +204,16 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private greetingsManager: GreetingsManager;
   private levelManager: LevelManager;
   private userBalanceManager: UserBalanceManager;
-  private _activitySchedulerManager: ActivitySchedulerManager;
-
   private guildStorageLoader: GuildStorageLoader;
-  private _hungerManager: HungerManager;
   private loaderManager: LoaderManager;
+
+  private _activitySchedulerManager: ActivitySchedulerManager;
+  private _hungerManager: HungerManager;
+  private _treasureHuntManager: TreasureHuntManager;
   private _fishingManager: FishingManager;
   private _fishingAttemptTracker: FishingAttemptTracker;
   private _fishSpawner: FishSpawner;
+  private _notificationManager: NotificationManager;
 
   constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
@@ -456,37 +471,15 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
-   * Get the channel used for sending bot announcements.
-   * @param guildId The identifier of the guild.
-   * @param defaultChannel The channel to send if the announcement channel hasn't been set.
-   */
-  async getAnnouncementChannel(
-    guildId: string,
-    defaultChannel: DMChannel | PartialDMChannel | GuildTextBasedChannel
-  ): Promise<TextBasedChannel> {
-    if (!this.guildSettings.has(guildId)) {
-      return defaultChannel;
-    }
-
-    const settings = this.guildSettings.get(guildId);
-    const channelId = await settings.get(
-      Settings.AnnouncementChannel,
-      defaultChannel.id
-    );
-
-    return await loadChannel(this.client, channelId, defaultChannel);
-  }
-
-  /**
    * Gets announcements for the fishing game. If an announcement is not set it will fallback to the
    * level channel and if a level channel has not been set it will fallback to the channel the message was sent in.
    * @param guildId The identifier of the guild.
    */
   async getFishingAnnouncementChannel(
     guildId: string
-  ): Promise<TextBasedChannel> {
+  ): Promise<GuildTextBasedChannel> {
     const guild = await loadGuild(this, guildId);
-    const firstChannel = getFirstTextChannel(guild) as TextBasedChannel;
+    const firstChannel = getFirstTextChannel(guild) as GuildTextBasedChannel;
 
     if (!this.guildSettings.has(guildId)) {
       return firstChannel;
@@ -497,14 +490,17 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       Settings.AnnouncementChannel
     );
     const levelupChannelId = await settings.get(Settings.LevelChannel);
-    const levelupChannel = await loadChannel(
+    const levelupChannel = (await loadChannel(
       this.client,
       levelupChannelId,
       firstChannel
-    );
+    )) as GuildTextBasedChannel;
 
     if (announcementChannelId) {
-      return await this.getAnnouncementChannel(guildId, levelupChannel);
+      return await this.notificationManager.getAnnouncementChannel(
+        guildId,
+        levelupChannel
+      );
     }
 
     return levelupChannel;
@@ -559,13 +555,18 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     const guildId = interaction.guildId;
 
-    // Trigger scheduling events based on guild activity
-    this.fishSpawner.requestFishSpawn(guildId);
+    try {
+      await this.hungerManager.calculateAndUpdateHunger(guildId);
+      const scheduler = this.activitySchedulerManager.getScheduler(guildId);
+      const nextActivity = scheduler.decideNextActivity();
 
-    this.requestTreasureHuntActivity(guildId);
-
-    await this.hungerManager.calculateAndUpdateHunger(guildId);
-    await this.hungerManager.requestHungerAnnouncement(guildId);
+      await this.spawnActivity(guildId, nextActivity);
+    } catch (error) {
+      this.logger.error(
+        `Error processing interaction for guild ${guildId}:`,
+        error
+      );
+    }
   }
 
   @on(Events.MessageCreate)
@@ -576,13 +577,18 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     const guildId = message.guildId;
 
-    // Trigger scheduling events based on guild activity
-    this.fishSpawner.requestFishSpawn(guildId);
+    try {
+      await this.hungerManager.calculateAndUpdateHunger(guildId);
+      const scheduler = this.activitySchedulerManager.getScheduler(guildId);
+      const nextActivity = scheduler.decideNextActivity();
 
-    this.requestTreasureHuntActivity(guildId);
-
-    await this.hungerManager.calculateAndUpdateHunger(guildId);
-    await this.hungerManager.requestHungerAnnouncement(guildId);
+      await this.spawnActivity(guildId, nextActivity);
+    } catch (error) {
+      this.logger.error(
+        `Error processing message for guild ${guildId}:`,
+        error
+      );
+    }
   }
 
   @on(Events.GuildCreate)
@@ -634,28 +640,30 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     }
   }
 
-  private requestTreasureHuntActivity(guildId: string): void {
-    const currentTime = Date.now();
-
-    // Create a treasure hunt activity
-    const treasureHuntActivity: Activity = {
-      name: Activities.TreasureHunt,
-      guildId,
-      startTime: currentTime + 3 * 60 * 1000, // Schedule spawn after 3 hours
-      endTime: currentTime + 3 * 60 * 1000 + 2 * 60 * 1000, // Despawn after 30 minutes
-    };
-
-    // Add the treasure hunt activity to the scheduler
-    const scheduler = this.activitySchedulerManager.getScheduler(guildId);
-
-    if (scheduler.addActivity(treasureHuntActivity)) {
-      this.logger.info(`Scheduled treasure hunt event for guild: ${guildId}`);
+  private async spawnActivity(
+    guildId: string,
+    nextActivity: Activities
+  ): Promise<void> {
+    switch (nextActivity) {
+      case Activities.TreasureHunt:
+        await this.treasureHuntManager.requestTreasureHuntActivity(guildId);
+        break;
+      case Activities.FishSpawn:
+        this.fishSpawner.requestFishSpawn(guildId);
+        break;
+      case Activities.HungerAnnouncement:
+        await this.hungerManager.requestHungerAnnouncement(guildId);
+        break;
+      default:
+        throw new Error(`Unknown activity type: ${nextActivity}`);
     }
   }
 
   private initialiseManagers(): void {
     this.levelManager = new LevelManager(this);
+    this._notificationManager = new NotificationManager(this);
     this._hungerManager = new HungerManager(this, this.levelManager);
+    this._activitySchedulerManager = new ActivitySchedulerManager(this);
     this._fishSpawner = new FishSpawner(this);
     this._fishingAttemptTracker = new FishingAttemptTracker();
     this._fishingManager = new FishingManager(
@@ -666,7 +674,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     );
     this.userBalanceManager = new UserBalanceManager();
     this.greetingsManager = new GreetingsManager(this);
-    this._activitySchedulerManager = new ActivitySchedulerManager(this);
+    this._treasureHuntManager = new TreasureHuntManager(this);
   }
 
   private initialiseHandlers(): void {

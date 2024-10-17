@@ -15,6 +15,7 @@ export class ActivityScheduler {
   readonly activities: Activity[];
 
   private activityTimeoutId: NodeJS.Timeout | null = null;
+  private lastActivity: Activities = Activities.HungerAnnouncement;
 
   constructor(private botClient: DiscordBotClient) {
     this.activities = [];
@@ -156,6 +157,32 @@ export class ActivityScheduler {
     }
   }
 
+  /**
+   * Decides the next activity based on the last activity.
+   *
+   * The method cycles through the activities in the following order:
+   * - TreasureHunt -> FishSpawn
+   * - FishSpawn -> HungerAnnouncement
+   * - HungerAnnouncement -> TreasureHunt
+   *
+   * @returns The next activity to be performed.
+   */
+  decideNextActivity(): Activities {
+    switch (this.lastActivity) {
+      case Activities.TreasureHunt:
+        this.lastActivity = Activities.FishSpawn;
+        break;
+      case Activities.FishSpawn:
+        this.lastActivity = Activities.HungerAnnouncement;
+        break;
+      case Activities.HungerAnnouncement:
+      default:
+        this.lastActivity = Activities.TreasureHunt;
+        break;
+    }
+    return this.lastActivity;
+  }
+
   private async startActivity(activity: Activity): Promise<void> {
     const activityHandler = this.botClient.activities.get(activity.name);
 
@@ -290,16 +317,18 @@ export class ActivityScheduler {
   }
 
   /**
-   * This method finds the previous activity that ends before the provided activity's start time.
-   * @param activity The activity to check for the previous event.
-   * @returns The previous activity, or null if no previous activity is found.
+   * Retrieves the most recent activity that overlaps with the given activity.
+   *
+   * @param activity The activity to find the previous overlapping activity for.
+   * @returns The most recent overlapping activity, or `null` if no overlapping activities are found.
    */
   private getPreviousActivity(activity: Activity): Activity | null {
-    // Find the previous activity that ends before the current activity's start time
+    // Find all activities that overlap with the given activity
     const previousActivities = this.activities.filter((existingActivity) => {
       return (
         existingActivity.guildId === activity.guildId &&
-        existingActivity.endTime <= activity.startTime
+        existingActivity.endTime > activity.startTime - ONE_HOUR_IN_MS &&
+        existingActivity.startTime < activity.endTime
       );
     });
 

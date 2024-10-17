@@ -246,16 +246,15 @@ export class HungerManager {
     }
 
     const currentTime = Date.now();
+    const startTime = currentTime + NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS;
+    const endTime = startTime + DELETE_HUNGER_ANNOUNCEMENT_AFTER;
 
     // Schedule the next hunger update
     const hungerAnnouncementActivity: Activity = {
       name: Activities.HungerAnnouncement,
       guildId,
-      startTime: currentTime + NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS,
-      endTime:
-        currentTime +
-        NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS +
-        DELETE_HUNGER_ANNOUNCEMENT_AFTER,
+      startTime,
+      endTime,
     };
 
     const scheduler = this.bot.activitySchedulerManager.getScheduler(guildId);
@@ -313,13 +312,11 @@ export class HungerManager {
         announcement
       );
 
-      const message = await announcementChannel.send({ embeds: [embed] });
-
-      setTimeout(() => {
-        if (message && message.deletable) {
-          message.delete().catch(() => null);
-        }
-      }, DELETE_HUNGER_ANNOUNCEMENT_AFTER);
+      await this.bot.notificationManager.sendNotification(
+        announcementChannel,
+        embed,
+        DELETE_HUNGER_ANNOUNCEMENT_AFTER
+      );
     } catch (error) {
       this.bot.logger.error("Failed to send hunger announcement:", error);
     }

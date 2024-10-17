@@ -10,10 +10,12 @@ export default class extends ActivityHandler {
   }
 
   async action(activity: Activity): Promise<void> {
-    await this.botClient.fishSpawner.spawnFishInGuild(activity.guildId);
+    await this.botClient.fishSpawner.spawnFishInGuild(activity);
   }
 
   async endAction(activity: Activity): Promise<void> {
-    await this.botClient.fishSpawner.despawnFishInGuild(activity.guildId);
+    if (this.botClient.fishSpawner.hasGuildFish(activity.guildId)) {
+      await this.botClient.fishSpawner.despawnFishInGuild(activity.guildId);
+    }
   }
 }

@@ -1,5 +1,3 @@
-import { Message } from "discord.js";
-
 import {
   FishingRod,
   FishSpawnedResult,
@@ -17,7 +15,6 @@ import { getActiveUserIds } from "../../util/get-active-user-ids";
 
 const FISH_SPAWN_INTERVAL = 3 * 60 * 60 * 1000; // 3 hours
 const FISH_DESPAWN_INTERVAL = 30 * 60 * 1000; // 30 minutes
-const DELETE_ANNOUNCEMENT_AFTER = 5 * 60 * 1000; // 5 minutes
 const FISH_PER_ACTIVE_USER = 5;
 
 /**
@@ -25,8 +22,6 @@ const FISH_PER_ACTIVE_USER = 5;
  */
 interface FishSpawnDetails {
   lastSpawn?: number;
-  announcementMessage?: Message;
-  despawnTimeout?: NodeJS.Timeout;
   fish: Record<string, FishSpawnedResult>;
 }
 
@@ -68,29 +63,19 @@ export class FishSpawner {
   }
 
   /**
-   * Get the spawn announcement message.
-   * @param guildId The identifier of the guild.
-   */
-  getAnnouncementMessage(guildId: string): Message<boolean> {
-    return this.guildFishSpawn[guildId]?.announcementMessage;
-  }
-
-  /**
    * Spawns fish in a guild if certain conditions are met.
    * This method ensures that fish are only spawned in active guilds and non-bot users.
    * It also handles fish spawn notification and scheduling fish despawn.
    *
-   * @param guildId The ID of the guild.
+   * @param activity The activity object containing details about the fish spawn.
    */
-  async spawnFishInGuild(guildId: string): Promise<void> {
+  async spawnFishInGuild(activity: Activity): Promise<void> {
+    const guildId = activity.guildId;
+
     try {
       const fish = await this.generateFish(guildId);
 
-      // Store the spawned fish in the guild's fish spawn map
-      this.guildFishSpawn[guildId] = { lastSpawn: Date.now(), fish };
-
-      // Send a notification about the fish spawn
-      this.generateFishSpawnNotification(guildId, fish);
+      this.generateFishSpawnNotification(activity, fish);
     } catch (error) {
       this.bot.logger.error("Error while spawning fish:", error);
     }
@@ -103,13 +88,26 @@ export class FishSpawner {
    * @param guildFish The spawned fish details.
    */
   async despawnFishInGuild(guildId: string): Promise<void> {
-    const despawnAnnouncement = await this.handleDespawnAnnouncement(guildId);
+    const despawnAnnouncementEmbed = await fishDespawnEmbed(guildId, this.bot);
 
-    this.deleteAnnouncementMessage(guildId);
     delete this.guildFishSpawn[guildId].fish;
 
-    this.clearDespawnTimeout(guildId);
-    this.deleteDespawnAnnouncement(despawnAnnouncement);
+    const areAnnouncementsEnabled = await this.areFishingAnnouncementsEnabled(
+      guildId
+    );
+
+    if (!areAnnouncementsEnabled) {
+      return;
+    }
+
+    const announcementChannel = await this.bot.getFishingAnnouncementChannel(
+      guildId
+    );
+
+    this.bot.notificationManager.sendNotification(
+      announcementChannel,
+      despawnAnnouncementEmbed
+    );
   }
 
   /**
@@ -130,7 +128,7 @@ export class FishSpawner {
 
     // Add the fish spawn activity to the scheduler
     const scheduler = this.bot.activitySchedulerManager.getScheduler(guildId);
-    if (scheduler.addActivity(fishSpawnActivity)) {
+    if (scheduler && scheduler.addActivity(fishSpawnActivity)) {
       this.bot.logger.info(`Scheduled fish spawn event for guild: ${guildId}`);
     }
   }
@@ -142,7 +140,7 @@ export class FishSpawner {
   private async generateFish(
     guildId: string
   ): Promise<Record<string, FishSpawnedResult>> {
-    let generatedFish: Record<string, FishSpawnedResult> = {};
+    let fish: Record<string, FishSpawnedResult> = {};
     try {
       const activeUsersIds = await getActiveUserIds(guildId, this.bot);
       // Ensure there's at least one active user to calculate fish count
@@ -155,12 +153,15 @@ export class FishSpawner {
       const fishCount = activeUserCount * FISH_PER_ACTIVE_USER;
 
       // Spawn fish based on the most used fishing rod's max catchable rarity
-      generatedFish = spawnFish(fishCount, bestFishingRod.maxCatchableRarity);
+      fish = spawnFish(fishCount, bestFishingRod.maxCatchableRarity);
+
+      // Store the spawned fish in the guild's fish spawn map
+      this.guildFishSpawn[guildId] = { lastSpawn: Date.now(), fish };
     } catch (error) {
       this.bot.logger.error("Error generating fish:", error);
     }
 
-    return generatedFish;
+    return fish;
   }
 
   /**
@@ -184,20 +185,20 @@ export class FishSpawner {
   /**
    * Generates and sends a fish spawn notification in a guild.
    *
-   * @param messageOrInteraction The message or interaction that triggered the fish spawn.
+   * @param activity The activity object containing details about the fish spawn.
    * @param fish The spawned fish details.
    */
   private async generateFishSpawnNotification(
-    guildId: string,
+    activity: Activity,
     fish: Record<string, FishSpawnedResult>
   ): Promise<void> {
-    const hasGuildFish = this.hasGuildFish(guildId);
+    const guildId = activity.guildId;
     const areAnnouncementsEnabled = await this.areFishingAnnouncementsEnabled(
       guildId
     );
 
     // Check if any fish have spawned in the guild before sending an announcement
-    if (!hasGuildFish || !areAnnouncementsEnabled) {
+    if (!fish || !areAnnouncementsEnabled) {
       return;
     }
 
@@ -208,62 +209,13 @@ export class FishSpawner {
 
     // Generate the embed containing the spawn information
     const spawnEmbed = await fishSpawnEmbed(guildId, fish, this.bot);
+    const deleteAfterInMillseconds = activity.endTime - activity.startTime;
 
-    const announcementMessage = await announcementChannel.send({
-      embeds: [spawnEmbed],
-    });
-
-    this.guildFishSpawn[guildId].announcementMessage = announcementMessage;
-  }
-
-  private async handleDespawnAnnouncement(
-    guildId: string
-  ): Promise<Message<false> | Message<true> | undefined> {
-    const areAnnouncementsEnabled = await this.areFishingAnnouncementsEnabled(
-      guildId
+    this.bot.notificationManager.sendNotification(
+      announcementChannel,
+      spawnEmbed,
+      deleteAfterInMillseconds
     );
-    if (areAnnouncementsEnabled) {
-      const announcementChannel = await this.bot.getFishingAnnouncementChannel(
-        guildId
-      );
-      const despawnAnnouncementEmbed = await fishDespawnEmbed(
-        guildId,
-        this.bot
-      );
-      return await announcementChannel.send({
-        embeds: [despawnAnnouncementEmbed],
-      });
-    }
-
-    return undefined;
-  }
-
-  private clearDespawnTimeout(guildId: string): void {
-    const despawnTimeout = this.guildFishSpawn[guildId]?.despawnTimeout;
-    if (despawnTimeout) {
-      clearTimeout(despawnTimeout);
-    }
-  }
-
-  private deleteDespawnAnnouncement(
-    despawnAnnouncement: Message<false> | Message<true> | undefined
-  ): void {
-    if (despawnAnnouncement && despawnAnnouncement.deletable) {
-      setTimeout(() => {
-        despawnAnnouncement.delete().catch(() => null);
-      }, DELETE_ANNOUNCEMENT_AFTER);
-    }
-  }
-
-  private deleteAnnouncementMessage(guildId: string): void {
-    const announcementMessage = this.getAnnouncementMessage(guildId);
-
-    if (announcementMessage) {
-      if (announcementMessage.deletable) {
-        announcementMessage.delete().catch(() => null);
-      }
-      delete this.guildFishSpawn[guildId].announcementMessage;
-    }
   }
 
   private async areFishingAnnouncementsEnabled(

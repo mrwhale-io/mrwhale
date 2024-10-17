@@ -1,4 +1,10 @@
-import { ChannelType, Events, Message, TextBasedChannel } from "discord.js";
+import {
+  ChannelType,
+  Events,
+  GuildTextBasedChannel,
+  Message,
+  TextBasedChannel,
+} from "discord.js";
 
 import {
   LEVEL_UP_MESSAGES,
@@ -205,7 +211,7 @@ export class LevelManager {
     guildId: string
   ): Promise<TextBasedChannel> {
     const guild = await loadGuild(this.bot, guildId);
-    const firstChannel = getFirstTextChannel(guild) as TextBasedChannel;
+    const firstChannel = getFirstTextChannel(guild) as GuildTextBasedChannel;
 
     if (!this.bot.guildSettings.has(guildId)) {
       return firstChannel;
@@ -215,7 +221,10 @@ export class LevelManager {
     const channelId = await settings.get(Settings.LevelChannel);
 
     if (!channelId) {
-      return await this.bot.getAnnouncementChannel(guildId, firstChannel);
+      return await this.bot.notificationManager.getAnnouncementChannel(
+        guildId,
+        firstChannel
+      );
     }
 
     return await loadChannel(this.bot.client, channelId, firstChannel);
