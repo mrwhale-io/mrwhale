@@ -5,17 +5,11 @@ import { Activities } from "../types/activities/activities";
 export default class extends ActivityHandler {
   constructor() {
     super({
-      name: Activities.FishSpawn,
+      name: Activities.TreasureHunt,
     });
   }
 
   async action(activity: Activity): Promise<void> {
-    await this.botClient.fishSpawner.spawnFishInGuild(activity);
-  }
-
-  async endAction(activity: Activity): Promise<void> {
-    if (this.botClient.fishSpawner.hasGuildFish(activity.guildId)) {
-      await this.botClient.fishSpawner.despawnFishInGuild(activity.guildId);
-    }
+    return await this.botClient.treasureHuntManager.startTreasureHunt(activity);
   }
 }

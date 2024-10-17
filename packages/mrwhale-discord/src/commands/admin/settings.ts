@@ -10,10 +10,10 @@ import { Settings } from "../../types/settings";
 export default class extends DiscordCommand {
   constructor() {
     super({
-      name: "togglesettings",
+      name: "settings",
       description: "Toggle various settings on and off.",
       type: "admin",
-      usage: "<prefix>togglesettings <option>",
+      usage: "<prefix>settings <option>",
       guildOnly: true,
       callerPermissions: ["Administrator"],
     });
@@ -24,10 +24,11 @@ export default class extends DiscordCommand {
         .setDescription("Choose a setting to toggle.")
         .setRequired(true)
         .addChoices(
-          { name: "Level Ups", value: "levels" },
           { name: "Fishing Announcements", value: "fishing" },
+          { name: "Greetings", value: "greetings" },
           { name: "Hunger Announcements", value: "hunger" },
-          { name: "Greetings", value: "greetings" }
+          { name: "Level Ups", value: "levels" },
+          { name: "Treasure Hunts", value: "treasureHunts" }
         )
     );
   }
@@ -71,6 +72,10 @@ export default class extends DiscordCommand {
         settingKey = Settings.Greetings;
         settingName = "Greetings";
         defaultSetting = false;
+        break;
+      case "treasureHunts":
+        settingKey = Settings.TreasureHunts;
+        settingName = "Treasure Hunts";
         break;
       default:
         return interaction.reply("Invalid setting option.");

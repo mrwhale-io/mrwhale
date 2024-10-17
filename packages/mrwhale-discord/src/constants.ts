@@ -5,6 +5,7 @@ export const INTENTS = [
   GatewayIntentBits.Guilds,
   GatewayIntentBits.GuildMessages,
   GatewayIntentBits.GuildMembers,
+  GatewayIntentBits.GuildMessageReactions,
 ];
 export const DISCORD_URL = "https://discord.com";
 export const DISCORD_API_VERSION = "v10";

@@ -21,12 +21,13 @@ export async function fishSpawnEmbed(
     currentMood,
     fishSpawned
   );
-  const activity = botClient.activityScheduler.getCurrentRunningActivity(
+  const activityScheduler = botClient.activitySchedulerManager.getScheduler(
     guildId
   );
+  const activity = activityScheduler.getCurrentRunningActivity(guildId);
   const nextDespawnTimeInSeconds = Math.floor(activity.endTime / 1000);
   const spawnAnnouncement = createEmbed(announementMessageText)
-    .setTitle("Fish Spawn Alert")
+    .setTitle("Fish Spawn")
     .addFields({
       name: "Time Limit",
       value: `⏳ The fish will despawn <t:${nextDespawnTimeInSeconds}:R>`,

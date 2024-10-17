@@ -182,7 +182,8 @@ export class FishingManager {
 
     // Check whether the user has earned any achievements
     const achievements = await checkAndAwardFishingAchievements(
-      interactionOrMessage,
+      guildId,
+      userId,
       fishCaught,
       this.levelManager
     );

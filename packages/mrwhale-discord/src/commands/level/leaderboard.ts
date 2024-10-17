@@ -20,8 +20,10 @@ export default class extends DiscordCommand {
         .setName("leaderboard")
         .setDescription("The category of leaderboard.")
         .addChoices(
+          { name: "Chests opened", value: "chestsopened" },
           { name: "Exp", value: "exp" },
-          { name: "Fish caught", value: "fishcaught" }
+          { name: "Fish caught", value: "fishcaught" },
+          { name: "Gems", value: "gems" }
         )
     );
     this.slashCommandData.addBooleanOption((option) =>
@@ -40,7 +42,8 @@ export default class extends DiscordCommand {
       const isGlobal = interaction.options.getBoolean("global") || false;
 
       return await this.getHighScoreEmbed(interaction, leaderboard, isGlobal);
-    } catch {
+    } catch(error) {
+      this.botClient.logger.error(error);
       return interaction.reply("Could not fetch leaderboard.");
     }
   }

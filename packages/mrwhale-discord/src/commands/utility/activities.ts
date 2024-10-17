@@ -24,7 +24,10 @@ export default class extends DiscordCommand {
       return interaction.reply("This command must be used within a guild.");
     }
 
-    const scheduledActivities = this.botClient.activityScheduler.activities.filter(
+    const activityScheduler = this.botClient.activitySchedulerManager.getScheduler(
+      guildId
+    );
+    const scheduledActivities = activityScheduler.activities.filter(
       (activity) => activity.guildId === guildId
     );
 

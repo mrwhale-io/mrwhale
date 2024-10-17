@@ -3,6 +3,7 @@ import {
   Events,
   Guild,
   GuildMember,
+  GuildTextBasedChannel,
   TextBasedChannel,
 } from "discord.js";
 
@@ -12,6 +13,7 @@ import { AVATAR_OPTIONS, THEME } from "../../constants";
 import { Greeting } from "../../types/image/greeting";
 import { Settings } from "../../types/settings";
 import { getFirstTextChannel } from "../../util/get-first-text-channel";
+import { loadChannel } from "../../util/load-channel";
 
 /**
  * The GreetingsManager class is responsible for greeting new users who join the guild.
@@ -51,7 +53,7 @@ export class GreetingsManager {
    * @returns A promise that resolves to the text-based channel for greetings.
    */
   private async getGreetingsChannel(guild: Guild): Promise<TextBasedChannel> {
-    const firstChannel = getFirstTextChannel(guild) as TextBasedChannel;
+    const firstChannel = getFirstTextChannel(guild) as GuildTextBasedChannel;
 
     if (!firstChannel) {
       return null;
@@ -67,20 +69,13 @@ export class GreetingsManager {
     const channelId = await settings.get(Settings.GreetingChannel);
 
     if (!channelId) {
-      return await this.bot.getAnnouncementChannel(guildId, firstChannel);
+      return await this.bot.notificationManager.getAnnouncementChannel(
+        guildId,
+        firstChannel
+      );
     }
 
-    try {
-      const channel = this.bot.client.channels.cache.has(channelId)
-        ? (this.bot.client.channels.cache.get(channelId) as TextBasedChannel)
-        : ((await this.bot.client.channels.fetch(
-            channelId
-          )) as TextBasedChannel);
-
-      return channel;
-    } catch {
-      return firstChannel;
-    }
+    return loadChannel(this.bot.client, channelId, firstChannel);
   }
 
   /**

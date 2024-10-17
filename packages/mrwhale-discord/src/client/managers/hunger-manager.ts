@@ -158,15 +158,10 @@ export class HungerManager {
     await useUserItem(userId, guildId, usersFish, quantity);
 
     // Award EXP to the user
-    await this.levelManager.increaseExp(
-      interactionOrMessage,
-      userId,
-      guildId,
-      expIncreaseAmount
-    );
+    await this.levelManager.increaseExp(userId, guildId, expIncreaseAmount);
 
     // Update the user's balance and get the new balance
-    await this.bot.addToUserBalance(interactionOrMessage, userId, reward);
+    await this.bot.addToUserBalance(guildId, userId, reward);
 
     return {
       expGained: expIncreaseAmount,
@@ -251,19 +246,19 @@ export class HungerManager {
     }
 
     const currentTime = Date.now();
+    const startTime = currentTime + NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS;
+    const endTime = startTime + DELETE_HUNGER_ANNOUNCEMENT_AFTER;
 
     // Schedule the next hunger update
     const hungerAnnouncementActivity: Activity = {
       name: Activities.HungerAnnouncement,
       guildId,
-      startTime: currentTime + NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS,
-      endTime:
-        currentTime +
-        NEXT_HUNGER_ANNOUNCEMENT_IN_MILLISECONDS +
-        DELETE_HUNGER_ANNOUNCEMENT_AFTER,
+      startTime,
+      endTime,
     };
 
-    if (this.bot.activityScheduler.addActivity(hungerAnnouncementActivity)) {
+    const scheduler = this.bot.activitySchedulerManager.getScheduler(guildId);
+    if (scheduler.addActivity(hungerAnnouncementActivity)) {
       this.bot.logger.info(
         `Scheduled hunger announcement for guild: ${guildId}`
       );
@@ -317,13 +312,11 @@ export class HungerManager {
         announcement
       );
 
-      const message = await announcementChannel.send({ embeds: [embed] });
-
-      setTimeout(() => {
-        if (message && message.deletable) {
-          message.delete().catch(() => null);
-        }
-      }, DELETE_HUNGER_ANNOUNCEMENT_AFTER);
+      await this.bot.notificationManager.sendNotification(
+        announcementChannel,
+        embed,
+        DELETE_HUNGER_ANNOUNCEMENT_AFTER
+      );
     } catch (error) {
       this.bot.logger.error("Failed to send hunger announcement:", error);
     }

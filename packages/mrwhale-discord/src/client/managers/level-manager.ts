@@ -1,7 +1,7 @@
 import {
   ChannelType,
   Events,
-  Interaction,
+  GuildTextBasedChannel,
   Message,
   TextBasedChannel,
 } from "discord.js";
@@ -14,6 +14,9 @@ import {
 import { DiscordBotClient } from "../discord-bot-client";
 import { Score, ScoreInstance } from "../../database/models/score";
 import { Settings } from "../../types/settings";
+import { loadGuild } from "../../util/load-guild";
+import { getFirstTextChannel } from "../../util/get-first-text-channel";
+import { loadChannel } from "../../util/load-channel";
 
 const TIME_FOR_EXP = 18e4;
 const MIN_EXP_EARNED = 5;
@@ -155,13 +158,11 @@ export class LevelManager {
    * This method retrieves or creates the user's score record for the specified guild, updates the user's EXP,
    * and checks if the user has leveled up. If the user levels up, it sends a level-up announcement in the appropriate channel.
    *
-   * @param interactionOrMessage The interaction or message that triggered the EXP increase.
    * @param userId The Id of the user whose EXP is being increased.
    * @param guildId The Id of the guild where the EXP increase is taking place.
    * @param expGained The amount of EXP to give to the user
    */
   async increaseExp(
-    interactionOrMessage: Interaction | Message,
     userId: string,
     guildId: string,
     expGained: number
@@ -176,11 +177,10 @@ export class LevelManager {
     const areLevelsEnabled = await this.areLevelUpsEnabled(guildId);
 
     if (newLevel > level && areLevelsEnabled) {
-      const channel = await this.getLevelUpAnnouncementChannel(
-        interactionOrMessage
-      );
+      const channel = await this.getLevelUpAnnouncementChannel(guildId);
       const announcementLevelUpMessage = await this.getRandomLevelUpAnnouncement(
-        interactionOrMessage,
+        guildId,
+        userId,
         newLevel
       );
       channel.send({
@@ -204,58 +204,52 @@ export class LevelManager {
   /**
    * Fetches the channel where level-up announcements should be sent.
    *
-   * @param interactionOrMessage The interaction or message that triggered the level-up announcement.
+   * @param guildId The Id of the guild where the level-up announcement is taking place.
    * @returns The text channel where level-up announcements should be sent.
    */
   private async getLevelUpAnnouncementChannel(
-    interactionOrMessage: Interaction | Message
+    guildId: string
   ): Promise<TextBasedChannel> {
-    const guildId = interactionOrMessage.guildId;
+    const guild = await loadGuild(this.bot, guildId);
+    const firstChannel = getFirstTextChannel(guild) as GuildTextBasedChannel;
+
     if (!this.bot.guildSettings.has(guildId)) {
-      return interactionOrMessage.channel;
+      return firstChannel;
     }
 
     const settings = this.bot.guildSettings.get(guildId);
     const channelId = await settings.get(Settings.LevelChannel);
 
     if (!channelId) {
-      return await this.bot.getAnnouncementChannel(
+      return await this.bot.notificationManager.getAnnouncementChannel(
         guildId,
-        interactionOrMessage.channel
+        firstChannel
       );
     }
 
-    try {
-      const channel = this.bot.client.channels.cache.has(channelId)
-        ? (this.bot.client.channels.cache.get(channelId) as TextBasedChannel)
-        : ((await this.bot.client.channels.fetch(
-            channelId
-          )) as TextBasedChannel);
-
-      return channel;
-    } catch {
-      return interactionOrMessage.channel;
-    }
+    return await loadChannel(this.bot.client, channelId, firstChannel);
   }
 
   /**
    * Generates a random level-up announcement message.
    *
-   * @param interaction The interaction or message that triggered the level-up announcement.
+   * @param guildId The Id of the guild where the level-up announcement is taking place.
+   * @param userId The Id of the user who has leveled up.
    * @param newLevel The new level that the user has reached.
    * @returns A promise containing a random level-up announcement message.
    */
   private async getRandomLevelUpAnnouncement(
-    interaction: Interaction | Message,
+    guildId: string,
+    userId: string,
     newLevel: number
   ): Promise<string> {
-    const mood = await this.bot.getCurrentMood(interaction.guildId);
+    const mood = await this.bot.getCurrentMood(guildId);
     const announcements = LEVEL_UP_MESSAGES[mood];
     const message = announcements[
       Math.floor(Math.random() * announcements.length)
     ].replace("<<LEVEL>>", newLevel.toString());
 
-    return `<@${interaction.member.user.id}> ${message}`;
+    return `<@${userId}> ${message}`;
   }
 
   private async onMessage(message: Message): Promise<void> {
@@ -278,8 +272,8 @@ export class LevelManager {
     const expGained = getRandomInt(MIN_EXP_EARNED, MAX_EXP_EARNED);
     const gemsGained = getRandomInt(MIN_GEMS_EARNED, MAX_GEMS_EARNED);
 
-    this.increaseExp(message, userId, guildId, expGained);
+    this.increaseExp(userId, guildId, expGained);
 
-    await this.bot.addToUserBalance(message, userId, gemsGained);
+    await this.bot.addToUserBalance(guildId, userId, gemsGained);
   }
 }

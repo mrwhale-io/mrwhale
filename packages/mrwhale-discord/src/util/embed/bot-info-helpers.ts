@@ -31,7 +31,7 @@ const FEATURES = [
       "`/help`: Explore all available commands and see how I can assist you.",
       "`/announcementchannel`: Set the channel all my bot announcements will get sent to.",
       "`/levelchannel`: Set an announcement channel for level ups.",
-      "`/togglesettings`: Toggle various settings such as level ups and fishing announcements.",
+      "`/settings`: Toggle various settings such as level ups and fishing announcements.",
     ],
   },
   {

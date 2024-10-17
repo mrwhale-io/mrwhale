@@ -14,6 +14,9 @@ export class ActivityScheduler {
    */
   readonly activities: Activity[];
 
+  private activityTimeoutId: NodeJS.Timeout | null = null;
+  private lastActivity: Activities = Activities.HungerAnnouncement;
+
   constructor(private botClient: DiscordBotClient) {
     this.activities = [];
   }
@@ -101,13 +104,29 @@ export class ActivityScheduler {
   }
 
   /**
+   * Remove an activity from the scheduler.
+   * @param activity The activity to remove.
+   */
+  removeActivity(activity: Activity): void {
+    const index = this.activities.findIndex(
+      (existingActivity) =>
+        existingActivity.guildId === activity.guildId &&
+        existingActivity.name === activity.name
+    );
+
+    if (index !== -1) {
+      this.activities.splice(index, 1);
+    }
+  }
+
+  /**
    * Runs the activity scheduler.
    *
    * The activity scheduler periodically checks for activities and starts or ends them based on their start and end times.
    * It uses a setInterval function to run the scheduler at a specified interval.
    */
   run(): void {
-    setInterval(async () => {
+    this.activityTimeoutId = setInterval(async () => {
       const currentTime = Date.now();
       if (this.activities.length === 0) {
         return;
@@ -124,6 +143,44 @@ export class ActivityScheduler {
         this.activities.shift();
       }
     }, NEXT_ACTIVITY_RUN_INTERVAL); // Check every second
+  }
+
+  /**
+   * Stops the activity scheduler.
+   *
+   * This method clears the interval used to run the scheduler, effectively stopping the scheduler.
+   */
+  stop(): void {
+    // Clear the interval to stop the scheduler
+    if (this.activityTimeoutId) {
+      clearInterval(this.activityTimeoutId);
+    }
+  }
+
+  /**
+   * Decides the next activity based on the last activity.
+   *
+   * The method cycles through the activities in the following order:
+   * - TreasureHunt -> FishSpawn
+   * - FishSpawn -> HungerAnnouncement
+   * - HungerAnnouncement -> TreasureHunt
+   *
+   * @returns The next activity to be performed.
+   */
+  decideNextActivity(): Activities {
+    switch (this.lastActivity) {
+      case Activities.TreasureHunt:
+        this.lastActivity = Activities.FishSpawn;
+        break;
+      case Activities.FishSpawn:
+        this.lastActivity = Activities.HungerAnnouncement;
+        break;
+      case Activities.HungerAnnouncement:
+      default:
+        this.lastActivity = Activities.TreasureHunt;
+        break;
+    }
+    return this.lastActivity;
   }
 
   private async startActivity(activity: Activity): Promise<void> {
@@ -260,16 +317,18 @@ export class ActivityScheduler {
   }
 
   /**
-   * This method finds the previous activity that ends before the provided activity's start time.
-   * @param activity The activity to check for the previous event.
-   * @returns The previous activity, or null if no previous activity is found.
+   * Retrieves the most recent activity that overlaps with the given activity.
+   *
+   * @param activity The activity to find the previous overlapping activity for.
+   * @returns The most recent overlapping activity, or `null` if no overlapping activities are found.
    */
   private getPreviousActivity(activity: Activity): Activity | null {
-    // Find the previous activity that ends before the current activity's start time
+    // Find all activities that overlap with the given activity
     const previousActivities = this.activities.filter((existingActivity) => {
       return (
         existingActivity.guildId === activity.guildId &&
-        existingActivity.endTime <= activity.startTime
+        existingActivity.endTime > activity.startTime - ONE_HOUR_IN_MS &&
+        existingActivity.startTime < activity.endTime
       );
     });
 

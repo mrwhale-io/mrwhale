@@ -98,12 +98,12 @@ export default class extends DiscordCommand {
     }
 
     const newBalance = await this.botClient.addToUserBalance(
-      interactionOrMessage,
+      guildId,
       transferFromUser.id,
       -transferAmount
     );
     await this.botClient.addToUserBalance(
-      interactionOrMessage,
+      guildId,
       transferToUser.id,
       transferAmount
     );
