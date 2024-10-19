@@ -10,6 +10,7 @@ import { DiscordCommand } from "../../client/command/discord-command";
 import { EMBED_COLOR } from "../../constants";
 import {
   getFavoriteFish,
+  getTopFishFeeder,
   getTotalFishFedByUserInGuild,
   getTotalFishFedInGuild,
 } from "../../database/services/fish-fed";
@@ -32,7 +33,7 @@ export default class extends DiscordCommand {
       message.author.id,
       message.guildId
     );
-    return message.reply({ embeds: [embed] });
+    return message.reply({ embeds: [embed], allowedMentions: { users: [] } });
   }
 
   async slashCommandAction(
@@ -42,7 +43,10 @@ export default class extends DiscordCommand {
       interaction.member.user.id,
       interaction.guildId
     );
-    return interaction.reply({ embeds: [embed] });
+    return interaction.reply({
+      embeds: [embed],
+      allowedMentions: { users: [] },
+    });
   }
 
   private async getHungerLevelEmbed(userId: string, guildId: string) {
@@ -59,6 +63,7 @@ export default class extends DiscordCommand {
     );
     const totalFishFedByGuild = await getTotalFishFedInGuild(guildId);
     const favoriteFish = await getFavoriteFish(guildId);
+    const topFeeder = await getTopFishFeeder(guildId, userId);
     const embed = new EmbedBuilder()
       .setColor(EMBED_COLOR)
       .addFields([
@@ -80,6 +85,10 @@ export default class extends DiscordCommand {
           name: "Favourite Fish",
           value: `${favoriteFish.icon} ${favoriteFish.name}`,
           inline: true,
+        },
+        {
+          name: "Top Feeder",
+          value: topFeeder ? `<@${topFeeder}>` : "No top feeder yet",
         },
         {
           name: "Fish Fed",

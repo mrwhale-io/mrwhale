@@ -4,6 +4,7 @@ import {
   createChestsOpenedLeaderboardTable,
   createExpLeaderboardTable,
   createFishCaughtLeaderboardTable,
+  createFishFedLeaderboardTable,
   createGemsLeaderboardTable,
 } from "../../util/embed/leaderboard-table-helpers";
 import {
@@ -16,6 +17,10 @@ import {
 } from "./fish-caught-leaderboard";
 import { getGlobalExpScores, getGuildExpScores } from "./exp-leaderboard";
 import { getGlobalGemsScores, getGuildGemsScores } from "./gems-leaderboard";
+import {
+  getGlobalFishFedScores,
+  getGuildFishFedScores,
+} from "./fish-fed-leaderboard";
 
 /**
  * Retrieves a leaderboard table embed of the specified type.
@@ -45,6 +50,9 @@ export async function getLeaderboardTable(
         page,
         isGlobal
       );
+
+    case "fishfed":
+      return getFishFedLeaderboardTable(interactionOrMessage, page, isGlobal);
 
     case "chestsopened":
       return getChestsOpenedLeaderboardTable(
@@ -95,6 +103,26 @@ async function getFishCaughtLeaderboardTable(
       isGlobal
     ),
     pages: fishCaughtScores.pages,
+  };
+}
+
+async function getFishFedLeaderboardTable(
+  interactionOrMessage: ChatInputCommandInteraction | Message,
+  page: number,
+  isGlobal: boolean = false
+) {
+  const fishFedScores = isGlobal
+    ? await getGlobalFishFedScores(interactionOrMessage, page)
+    : await getGuildFishFedScores(interactionOrMessage, page);
+
+  return {
+    table: await createFishFedLeaderboardTable(
+      interactionOrMessage,
+      fishFedScores,
+      page,
+      isGlobal
+    ),
+    pages: fishFedScores.pages,
   };
 }
 

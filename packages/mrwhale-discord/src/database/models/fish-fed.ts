@@ -7,6 +7,7 @@ interface FishFedAttributes {
   guildId: string;
   fishId: number;
   quantity: number;
+  totalQuantity?: number;
 }
 
 export interface FishFedInstance
