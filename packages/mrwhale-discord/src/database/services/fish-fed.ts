@@ -124,3 +124,29 @@ export async function getFavoriteFish(
 
   return { name: favouriteFish.name, icon: favouriteFish.icon };
 }
+
+/**
+ * Get the guild user with the highest quantity of fish fed.
+ * @param guildId The Id of the guild.
+ * @param userId The Id of the user.
+ * @returns A promise that resolves to the user with the highest quantity of fish fed, or null if no user is found.
+ */
+export async function getTopFishFeeder(
+  guildId: string,
+  userId: string
+): Promise<string> {
+  const favoriteFishData = await FishFed.findAll({
+    attributes: [
+      "userId",
+      [sequelize.fn("SUM", sequelize.col("quantity")), "totalFed"],
+    ],
+    where: {
+      guildId,
+      userId,
+    },
+    order: [[sequelize.literal("totalFed"), "DESC"]],
+    limit: 1,
+  });
+
+  return favoriteFishData.length > 0 ? favoriteFishData[0].userId : null;
+}

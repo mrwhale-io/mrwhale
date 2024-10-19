@@ -23,6 +23,7 @@ export default class extends DiscordCommand {
           { name: "Chests opened", value: "chestsopened" },
           { name: "Exp", value: "exp" },
           { name: "Fish caught", value: "fishcaught" },
+          { name: "Fish fed", value: "fishfed" },
           { name: "Gems", value: "gems" }
         )
     );

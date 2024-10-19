@@ -45,6 +45,40 @@ export async function createLeaderboardTable(
 }
 
 /**
+ * Creates an embed for the leaderboard table.
+ * @param interactionOrMessage The discord command interaction or message.
+ * @param scoreResult Contains a list of scores results.
+ * @param page The page number.
+ * @param isGlobal Whether this is a global leaderboard or not.
+ * @param title The title of the leaderboard.
+ * @param scoreFormatter A function to format the score for the leaderboard.
+ */
+async function createGenericLeaderboardTable(
+  interactionOrMessage: Message | ChatInputCommandInteraction,
+  scoreResult: ScoreResult,
+  page: number,
+  isGlobal: boolean,
+  title: string,
+  scoreFormatter: (score: MappedScores, place: number) => string
+): Promise<EmbedBuilder> {
+  const embed = await createLeaderboardTable(interactionOrMessage, {
+    scoreResult,
+    page,
+    title,
+    isGlobal,
+  });
+
+  let table = TABLE_DESCRIPTION;
+  for (let i = 0; i < scoreResult.scores.length; i++) {
+    const score = scoreResult.scores[i];
+    const place = i + scoreResult.offset + 1;
+    table += scoreFormatter(score, place);
+  }
+
+  return embed.setDescription(table);
+}
+
+/**
  * Creates an embed for the exp leaderboard table.
  * @param interactionOrMessage The discord command interaction or message.
  * @param scoreResult Contains a list of scores results.
@@ -60,22 +94,20 @@ export async function createExpLeaderboardTable(
   const title = isGlobal
     ? "Top Global Levels"
     : `Top Levels in ${interactionOrMessage.guild.name}`;
-  const embed = await createLeaderboardTable(interactionOrMessage, {
-    scoreResult,
-    page,
-    title,
-    isGlobal,
-  });
-  let table = TABLE_DESCRIPTION;
-  for (let i = 0; i < scoreResult.scores.length; i++) {
-    const score = scoreResult.scores[i];
-    const place = i + scoreResult.offset + 1;
-    table += `${code(`#${place}`)} ${getPlaceEmoji(place)} | @${
+
+  const formatter = (score: MappedScores, place: number) =>
+    `${code(`#${place}`)} ${getPlaceEmoji(place)} | @${
       score.user ? score.user.username : "Unknown User"
     } • **Exp: ${score.exp} (Level ${score.level})**\n`;
-  }
 
-  return embed.setDescription(table);
+  return createGenericLeaderboardTable(
+    interactionOrMessage,
+    scoreResult,
+    page,
+    isGlobal,
+    title,
+    formatter
+  );
 }
 
 /**
@@ -94,20 +126,40 @@ export async function createFishCaughtLeaderboardTable(
   const title = isGlobal
     ? "Fish Caught"
     : `Fish Caught in ${interactionOrMessage.guild.name}`;
-  const embed = await createLeaderboardTable(interactionOrMessage, {
+  return createGenericLeaderboardTable(
+    interactionOrMessage,
     scoreResult,
     page,
-    title,
     isGlobal,
-  });
-  let table = TABLE_DESCRIPTION;
-  for (let i = 0; i < scoreResult.scores.length; i++) {
-    const score = scoreResult.scores[i];
-    const place = i + scoreResult.offset + 1;
-    table = mapScoreResults(table, place, score);
-  }
+    title,
+    mapScoreResults
+  );
+}
 
-  return embed.setDescription(table);
+/**
+ * Creates an embed for the fish fed leaderboard table.
+ * @param interactionOrMessage The discord command interaction or message.
+ * @param scoreResult Contains a list of scores results.
+ * @param page The page number.
+ * @param isGlobal Whether this is a global leaderboard or not.
+ */
+export async function createFishFedLeaderboardTable(
+  interactionOrMessage: Message | ChatInputCommandInteraction,
+  scoreResult: ScoreResult,
+  page: number,
+  isGlobal: boolean = false
+): Promise<EmbedBuilder> {
+  const title = isGlobal
+    ? "Fish Fed"
+    : `Fish Fed in ${interactionOrMessage.guild.name}`;
+  return createGenericLeaderboardTable(
+    interactionOrMessage,
+    scoreResult,
+    page,
+    isGlobal,
+    title,
+    mapScoreResults
+  );
 }
 
 /**
@@ -119,27 +171,21 @@ export async function createFishCaughtLeaderboardTable(
  */
 export async function createChestsOpenedLeaderboardTable(
   interactionOrMessage: ChatInputCommandInteraction | Message,
-  chestsOpenedScores: ScoreResult,
+  scoreResult: ScoreResult,
   page: number,
   isGlobal: boolean = false
-) {
+): Promise<EmbedBuilder> {
   const title = isGlobal
     ? "Chests Opened"
     : `Chests Opened in ${interactionOrMessage.guild.name}`;
-  const embed = await createLeaderboardTable(interactionOrMessage, {
-    scoreResult: chestsOpenedScores,
+  return createGenericLeaderboardTable(
+    interactionOrMessage,
+    scoreResult,
     page,
-    title,
     isGlobal,
-  });
-  let table = TABLE_DESCRIPTION;
-  for (let i = 0; i < chestsOpenedScores.scores.length; i++) {
-    const score = chestsOpenedScores.scores[i];
-    const place = i + chestsOpenedScores.offset + 1;
-    table = mapScoreResults(table, place, score);
-  }
-
-  return embed.setDescription(table);
+    title,
+    mapScoreResults
+  );
 }
 
 /**
@@ -151,40 +197,41 @@ export async function createChestsOpenedLeaderboardTable(
  */
 export async function createGemsLeaderboardTable(
   interactionOrMessage: ChatInputCommandInteraction | Message,
-  gemsScores: ScoreResult,
+  scoreResult: ScoreResult,
   page: number,
   isGlobal: boolean = false
-) {
+): Promise<EmbedBuilder> {
   const title = isGlobal
     ? "Gems Earned"
     : `Gems Earned in ${interactionOrMessage.guild.name}`;
-  const embed = await createLeaderboardTable(interactionOrMessage, {
-    scoreResult: gemsScores,
+  return createGenericLeaderboardTable(
+    interactionOrMessage,
+    scoreResult,
     page,
-    title,
     isGlobal,
-  });
-  let table = TABLE_DESCRIPTION;
-  for (let i = 0; i < gemsScores.scores.length; i++) {
-    const score = gemsScores.scores[i];
-    const place = i + gemsScores.offset + 1;
-    table = mapScoreResults(table, place, score);
-  }
-
-  return embed.setDescription(table);
+    title,
+    mapScoreResults
+  );
 }
 
-function mapScoreResults(
-  table: string,
-  place: number,
-  score: MappedScores
-): string {
-  table += `${code(`#${place}`)} ${getPlaceEmoji(place)} | @${
+/**
+ * Maps score results to a formatted string.
+ * @param table The current table string.
+ * @param place The place of the user.
+ * @param score The score object.
+ * @returns The updated table string.
+ */
+function mapScoreResults(score: MappedScores, place: number): string {
+  return `${code(`#${place}`)} ${getPlaceEmoji(place)} | @${
     score.user ? score.user.username : "Unknown"
   } • **${score.exp}**\n`;
-  return table;
 }
 
+/**
+ * Gets the emoji for the place.
+ * @param place The place number.
+ * @returns The emoji string.
+ */
 function getPlaceEmoji(place: number): string {
   if (place === 1) {
     return "🥇";
