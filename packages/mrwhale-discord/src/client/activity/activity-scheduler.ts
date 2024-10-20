@@ -4,6 +4,7 @@ import { Activities } from "../../types/activities/activities";
 
 const NEXT_ACTIVITY_RUN_INTERVAL = 1000;
 const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+const MAX_RESCHEDULES = 5; // Limit the number of reschedules to prevent infinite loops
 
 /**
  * The activity scheduler is responsible for scheduling and running events.
@@ -85,6 +86,7 @@ export class ActivityScheduler {
 
     // Loop to check and reschedule until no overlap exists with previous or next activities
     let hasConflict: boolean;
+    let rescheduleCount = 0;
     do {
       hasConflict = false;
 
@@ -94,6 +96,14 @@ export class ActivityScheduler {
 
       if (this.handleNextActivityConflict(activity)) {
         hasConflict = true;
+      }
+    
+      rescheduleCount++;
+      if (rescheduleCount >= MAX_RESCHEDULES) {
+        this.botClient.logger.error(
+          `Failed to schedule activity ${activity.name} in guild ${activity.guildId} after ${MAX_RESCHEDULES} reschedules.`
+        );
+        return false;
       }
     } while (hasConflict);
 
