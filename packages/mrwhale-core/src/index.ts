@@ -50,7 +50,7 @@ export {
 } from "./util/markdown-helpers";
 export { InfoBuilder } from "./util/info-builder";
 export { applyText } from "./util/apply-text";
-export { fishTypes } from "./data/fish-types";
+export { allFishTypes } from "./data/fish-types";
 export { GREETINGS } from "./data/greetings";
 export {
   FISH_SPAWNED_ANNOUNCEMENTS,

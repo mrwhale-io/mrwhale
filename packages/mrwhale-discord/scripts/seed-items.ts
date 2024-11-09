@@ -1,4 +1,4 @@
-import { achievements, baits, fishTypes, fishingRods } from "@mrwhale-io/core";
+import { achievements, baits, allFishTypes, fishingRods } from "@mrwhale-io/core";
 import { Achievement } from "../src/database/models/achievement";
 import { Fish } from "../src/database/models/fish";
 import { FishingRod } from "../src/database/models/fishing-rod";
@@ -10,7 +10,7 @@ async function seedItems() {
     await Fish.sync({ force: true });
 
     // Seed fish
-    Fish.bulkCreate(fishTypes, {
+    Fish.bulkCreate(allFishTypes, {
       updateOnDuplicate: ["name"],
     });
 
