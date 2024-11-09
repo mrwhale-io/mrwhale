@@ -246,7 +246,7 @@ export const summerFishTypes: Fish[] = [
     id: 19,
     name: "Sunfish",
     description:
-      "A colorful and sun-loving fish that basks in the warm summer rays. Its vibrant scales and playful nature make it a joy to catch.",
+      "A colourful and sun-loving fish that basks in the warm summer rays. Its vibrant scales and playful nature make it a joy to catch.",
     icon: "🐟",
     worth: 70,
     expWorth: 65,
@@ -301,7 +301,7 @@ export const fallFishTypes: Fish[] = [
     id: 23,
     name: "Pumpkinseed",
     description:
-      "A festive and colorful fish that appears in the lakes and ponds of fall. Its orange and green markings are a sight to behold.",
+      "A festive and colourful fish that appears in the lakes and ponds of fall. Its orange and green markings are a sight to behold.",
     icon: "🐟",
     worth: 70,
     expWorth: 65,
