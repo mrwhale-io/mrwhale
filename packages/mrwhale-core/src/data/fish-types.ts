@@ -1,6 +1,6 @@
 import { Fish } from "../types/fish";
 
-export const fishTypes: Fish[] = [
+export const baseFishTypes: Fish[] = [
   {
     id: 1,
     name: "Krill",
@@ -144,4 +144,276 @@ export const fishTypes: Fish[] = [
     rarity: "Legendary",
     rarityLevel: 5,
   },
+];
+
+export const springFishTypes: Fish[] = [
+  {
+    id: 12,
+    name: "Spring Trout",
+    description:
+      "A graceful and agile fish that darts through the streams and rivers of spring. Its shimmering scales and swift movements make it a challenging catch.",
+    icon: "🐟",
+    worth: 40,
+    expWorth: 35,
+    hpWorth: 3.5,
+    probability: 50,
+    rarity: "Rare",
+    rarityLevel: 2,
+  },
+  {
+    id: 13,
+    name: "Spring Salmon",
+    description:
+      "A vibrant and energetic fish that swims upstream in the spring. Known for its bright colors and leaping acrobatics.",
+    icon: "🐟",
+    worth: 45,
+    expWorth: 40,
+    hpWorth: 4,
+    probability: 45,
+    rarity: "Rare",
+    rarityLevel: 3,
+  },
+  {
+    id: 14,
+    name: "Spring Bass",
+    description:
+      "A lively and energetic fish that thrives in the cool waters of spring. Known for its acrobatic leaps and fierce fighting spirit.",
+    icon: "🐟",
+    worth: 55,
+    expWorth: 50,
+    hpWorth: 5,
+    probability: 35,
+    rarity: "Rare",
+    rarityLevel: 3,
+  },
+  {
+    id: 15,
+    name: "Spring Catfish",
+    description:
+      "A whiskered and wily fish that lurks in the murky waters of spring. Its sharp senses and cunning nature make it a challenging catch.",
+    icon: "🐟",
+    worth: 60,
+    expWorth: 55,
+    hpWorth: 5.5,
+    probability: 30,
+    rarity: "Epic",
+    rarityLevel: 4,
+  },
+];
+
+export const summerFishTypes: Fish[] = [
+  {
+    id: 16,
+    name: "Summer Salmon",
+    description:
+      "A vibrant and energetic fish that swims upstream in the summer. Known for its bright colors and leaping acrobatics.",
+    icon: "🐟",
+    worth: 40,
+    expWorth: 35,
+    hpWorth: 3.5,
+    probability: 50,
+    rarity: "Rare",
+    rarityLevel: 2,
+  },
+  {
+    id: 17,
+    name: "Summer Bass",
+    description:
+      "A lively and energetic fish that thrives in the warm waters of summer. Known for its acrobatic leaps and fierce fighting spirit.",
+    icon: "🐟",
+    worth: 45,
+    expWorth: 40,
+    hpWorth: 4,
+    probability: 45,
+    rarity: "Rare",
+    rarityLevel: 3,
+  },
+
+  {
+    id: 18,
+    name: "Summer Pike",
+    description:
+      "A sleek and predatory fish that hunts in the shallows during the summer months. Watch out for those sharp teeth!",
+    icon: "🐟",
+    worth: 65,
+    expWorth: 60,
+    hpWorth: 6,
+    probability: 25,
+    rarity: "Epic",
+    rarityLevel: 4,
+  },
+  {
+    id: 19,
+    name: "Sunfish",
+    description:
+      "A colourful and sun-loving fish that basks in the warm summer rays. Its vibrant scales and playful nature make it a joy to catch.",
+    icon: "🐟",
+    worth: 70,
+    expWorth: 65,
+    hpWorth: 6.5,
+    probability: 20,
+    rarity: "Epic",
+    rarityLevel: 4,
+  },
+];
+
+export const fallFishTypes: Fish[] = [
+  {
+    id: 20,
+    name: "Fall Bass",
+    description:
+      "A lively and energetic fish that thrives in the cool waters of fall. Known for its acrobatic leaps and fierce fighting spirit.",
+    icon: "🐟",
+    worth: 40,
+    expWorth: 35,
+    hpWorth: 3.5,
+    probability: 50,
+    rarity: "Rare",
+    rarityLevel: 2,
+  },
+  {
+    id: 21,
+    name: "Autumn Carp",
+    description:
+      "A robust and hardy fish that thrives in the cool waters of autumn. Known for its strength and endurance.",
+    icon: "🐟",
+    worth: 45,
+    expWorth: 40,
+    hpWorth: 4,
+    probability: 45,
+    rarity: "Rare",
+    rarityLevel: 3,
+  },
+  {
+    id: 22,
+    name: "Fall Trout",
+    description:
+      "A graceful and agile fish that darts through the streams and rivers of autumn. Its shimmering scales and swift movements make it a challenging catch.",
+    icon: "🐟",
+    worth: 65,
+    expWorth: 60,
+    hpWorth: 6,
+    probability: 25,
+    rarity: "Epic",
+    rarityLevel: 4,
+  },
+  {
+    id: 23,
+    name: "Pumpkinseed",
+    description:
+      "A festive and colourful fish that appears in the lakes and ponds of fall. Its orange and green markings are a sight to behold.",
+    icon: "🐟",
+    worth: 70,
+    expWorth: 65,
+    hpWorth: 6.5,
+    probability: 20,
+    rarity: "Epic",
+    rarityLevel: 4,
+  },
+];
+
+export const winterFishTypes: Fish[] = [
+  {
+    id: 24,
+    name: "Winter Trout",
+    description:
+      "A graceful and agile fish that darts through the streams and rivers of winter. Its shimmering scales and swift movements make it a challenging catch.",
+    icon: "🐟",
+    worth: 40,
+    expWorth: 35,
+    hpWorth: 3.5,
+    probability: 50,
+    rarity: "Rare",
+    rarityLevel: 2,
+  },
+  {
+    id: 25,
+    name: "Winter Pike",
+    description:
+      "A cold-water predator that lurks beneath the ice of winter. Its icy scales and sharp teeth make it a formidable catch.",
+    icon: "🐟",
+    worth: 45,
+    expWorth: 40,
+    hpWorth: 4,
+    probability: 45,
+    rarity: "Rare",
+    rarityLevel: 3,
+  },
+  {
+    id: 26,
+    name: "Winter Flounder",
+    description:
+      "A flat and camouflaged fish that blends in with the snowy seabed of winter. Its subtle colors and clever tactics make it a tricky catch.",
+    icon: "🐟",
+    worth: 65,
+    expWorth: 60,
+    hpWorth: 6,
+    probability: 25,
+    rarity: "Epic",
+    rarityLevel: 4,
+  },
+  {
+    id: 27,
+    name: "Ice Fish",
+    description:
+      "A rare and elusive fish that only appears in the coldest depths of winter. Its translucent scales and eerie glow make it a ghostly catch.",
+    icon: "🐟",
+    worth: 70,
+    expWorth: 65,
+    hpWorth: 6.5,
+    probability: 20,
+    rarity: "Epic",
+    rarityLevel: 4,
+  },
+];
+
+export const nocturnalFishTypes: Fish[] = [
+  {
+    id: 28,
+    name: "Nocturnal Trout",
+    description:
+      "A graceful and agile fish that darts through the streams and rivers under the cover of night. Its shimmering scales and stealthy movements make it a mysterious catch.",
+    icon: "🐟",
+    worth: 40,
+    expWorth: 35,
+    hpWorth: 3.5,
+    probability: 50,
+    rarity: "Rare",
+    rarityLevel: 2,
+  },
+  {
+    id: 29,
+    name: "Nocturnal Bass",
+    description:
+      "A shadowy and elusive fish that emerges under the cover of night. Its dark scales and stealthy movements make it a mysterious catch.",
+    icon: "🐟",
+    worth: 55,
+    expWorth: 50,
+    hpWorth: 5,
+    probability: 35,
+    rarity: "Rare",
+    rarityLevel: 3,
+  },
+  {
+    id: 30,
+    name: "Nighttime Catfish",
+    description:
+      "A whiskered and wily fish that prowls the waters after dark. Its sharp senses and cunning nature make it a challenging catch.",
+    icon: "🐟",
+    worth: 60,
+    expWorth: 55,
+    hpWorth: 5.5,
+    probability: 30,
+    rarity: "Epic",
+    rarityLevel: 4,
+  },
+];
+
+export const allFishTypes: Fish[] = [
+  ...baseFishTypes,
+  ...springFishTypes,
+  ...summerFishTypes,
+  ...fallFishTypes,
+  ...winterFishTypes,
+  ...nocturnalFishTypes,
 ];

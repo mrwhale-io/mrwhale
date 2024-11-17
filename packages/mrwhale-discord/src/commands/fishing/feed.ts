@@ -1,12 +1,14 @@
 import {
   APIApplicationCommandOptionChoice,
+  AutocompleteInteraction,
+  CacheType,
   ChatInputCommandInteraction,
   EmbedBuilder,
   InteractionResponse,
   Message,
 } from "discord.js";
 
-import { FishTypeNames, fishTypes } from "@mrwhale-io/core";
+import { FishTypeNames, allFishTypes } from "@mrwhale-io/core";
 import { DiscordCommand } from "../../client/command/discord-command";
 import { InventoryError } from "../../types/errors/inventory-error";
 import { createEmbed } from "../../util/embed/create-embed";
@@ -26,7 +28,7 @@ export default class extends DiscordCommand {
         .setName("fish")
         .setDescription("Choose a fish to feed Mr. Whale.")
         .setRequired(false)
-        .addChoices(...this.getFishTypeOptions())
+        .setAutocomplete(true)
     );
     this.slashCommandData.addIntegerOption((option) =>
       option
@@ -80,8 +82,20 @@ export default class extends DiscordCommand {
     }
   }
 
+  async autocomplete(interaction: AutocompleteInteraction<CacheType>) {
+    const focusedValue = interaction.options.getFocused();
+    if (!focusedValue) {
+      return await interaction.respond([]);
+    }
+    const fishTypes = this.getFishTypeOptions();
+    const filteredFishTypes = fishTypes.filter((choice) =>
+      choice.name.toLowerCase().startsWith(focusedValue.toLowerCase())
+    );
+    await interaction.respond(filteredFishTypes);
+  }
+
   private getFishTypeOptions(): APIApplicationCommandOptionChoice<string>[] {
-    return fishTypes.map((fishType) => ({
+    return allFishTypes.map((fishType) => ({
       name: fishType.name,
       value: fishType.name,
     }));

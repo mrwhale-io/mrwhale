@@ -1,5 +1,13 @@
 import { Fish } from "../types/fish";
-import { fishTypes } from "../data/fish-types";
+import {
+  baseFishTypes,
+  allFishTypes,
+  springFishTypes,
+  summerFishTypes,
+  fallFishTypes,
+  winterFishTypes,
+  nocturnalFishTypes,
+} from "../data/fish-types";
 import { FishTypeNames } from "../types/fish-type-names";
 import { FishingRod } from "../types/fishing-rod";
 import { weightedSample } from "../util/weighted-sample";
@@ -8,6 +16,7 @@ import { FishingRodNames } from "../types/fishing-rod-names";
 import { Bait } from "../types/bait";
 import { baits } from "../data/baits";
 import { FishRarity } from "../types/fish-rarity";
+import { getSeason } from "../util/weather-helpers";
 
 export interface FishSpawnedResult {
   icon: string;
@@ -21,7 +30,7 @@ export interface FishSpawnedResult {
  * @param fishName The name of the fish.
  */
 export function getFishByName(fishName: FishTypeNames): Fish {
-  return fishTypes.find((fishType) => fishType.name === fishName);
+  return allFishTypes.find((fishType) => fishType.name === fishName);
 }
 
 /**
@@ -29,7 +38,7 @@ export function getFishByName(fishName: FishTypeNames): Fish {
  * @param fishId The id of the fish.
  */
 export function getFishById(fishId: number): Fish {
-  return fishTypes.find((fishType) => fishType.id === fishId);
+  return allFishTypes.find((fishType) => fishType.id === fishId);
 }
 
 /**
@@ -76,6 +85,7 @@ export function spawnFish(
   maxRarityLevel: number
 ): Record<string, FishSpawnedResult> {
   const totalfishSpawned: Fish[] = [];
+  const fishTypes = getFishTypes();
   const catchableFish = fishTypes.filter(
     (fishType) => fishType.rarityLevel <= maxRarityLevel
   );
@@ -189,4 +199,37 @@ export function countFishByRarity(
   });
 
   return rarityCounts;
+}
+
+/**
+ * Retrieves the types of fish available based on the current time of day and season.
+ *
+ * This function adjusts the base fish types by adding nocturnal fish types if it is nighttime,
+ * and by adding seasonal fish types based on the current season.
+ *
+ * @returns A promise that resolves to an array of available fish types.
+ */
+function getFishTypes(): Fish[] {
+  const timeOfDay = new Date().getHours();
+  const season = getSeason();
+  const fishTypes: Fish[] = baseFishTypes;
+
+  // Adjust fish types based on time of day
+  if (timeOfDay >= 18 || timeOfDay < 6) {
+    // Nighttime fish
+    fishTypes.push(...nocturnalFishTypes);
+  }
+
+  // Adjust fish types based on season
+  if (season === "Winter") {
+    fishTypes.push(...winterFishTypes);
+  } else if (season === "Spring") {
+    fishTypes.push(...springFishTypes);
+  } else if (season === "Summer") {
+    fishTypes.push(...summerFishTypes);
+  } else {
+    fishTypes.push(...fallFishTypes);
+  }
+
+  return fishTypes;
 }
