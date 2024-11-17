@@ -1,12 +1,20 @@
 import {
   ButtonInteraction,
   ChatInputCommandInteraction,
+  EmbedBuilder,
   Interaction,
   InteractionResponse,
   Message,
 } from "discord.js";
 
-import { Bait, Fish, FishingRod, catchFish } from "@mrwhale-io/core";
+import {
+  Bait,
+  FISH_RARITY_ICONS,
+  Fish,
+  FishingRod,
+  catchFish,
+  countFishByRarity,
+} from "@mrwhale-io/core";
 import { DiscordBotClient } from "../discord-bot-client";
 import { delay } from "../../util/delay-helpers";
 import { getEquippedFishingRod } from "../../database/services/fishing-rods";
@@ -27,6 +35,8 @@ import { getCaughtFishEmbed } from "../../util/embed/fish-caught-embed-helpers";
 import { createCatchButtons } from "../../util/button/catch-buttons-helpers";
 import { sendReply } from "../../util/send-reply";
 import { createCatchResult } from "../../util/create-catch-result";
+import { Activities } from "../../types/activities/activities";
+import { getFishingTip } from "../../util/embed/fish-spawn-embed";
 
 const BASE_NO_CATCH_PROBABILITY = 200;
 
@@ -35,6 +45,10 @@ const BASE_NO_CATCH_PROBABILITY = 200;
  * Handles spawning fish, catching fish, updating user attempts, and awarding achievements.
  */
 export class FishingManager {
+  readonly latestCatches: Map<string, string[]> = new Map();
+  readonly totalFishCaught: Map<string, number> = new Map();
+  readonly topFishers: Map<string, Map<string, number>> = new Map();
+
   private activeFishers: Set<string> = new Set();
 
   constructor(
@@ -87,6 +101,14 @@ export class FishingManager {
         interactionOrMessage,
         catchResult
       );
+
+      // Update the fish spawn embed with the new fish count and activity
+      if (catchResult.fishCaught) {
+        await this.updateFishSpawnEmbed(
+          interactionOrMessage,
+          catchResult.fishCaught
+        );
+      }
     } catch (error) {
       this.handleFishingError(error, messageResponse);
     } finally {
@@ -261,7 +283,172 @@ export class FishingManager {
     // If we have caught all the fish in the guild we send an announcement
     if (!this.fishSpawner.hasGuildFish(guildId)) {
       this.fishSpawner.despawnFishInGuild(guildId);
+
+      const spawnMessage = this.fishSpawner.getGuildFishSpawnMessage(guildId);
+      if (spawnMessage && spawnMessage.deletable) {
+        try {
+          await spawnMessage.delete();
+        } catch (error) {
+          this.bot.logger.error(
+            `Failed to delete fish spawn message: ${error}`
+          );
+        }
+      }
+
+      const scheduler = this.bot.activitySchedulerManager.getScheduler(guildId);
+      const currentActivity = scheduler.getCurrentRunningActivity(guildId);
+
+      // Remove the fish spawn activity if it's currently running
+      if (currentActivity && currentActivity.name === Activities.FishSpawn) {
+        scheduler.removeActivity(currentActivity);
+      }
     }
+  }
+
+  private async updateFishSpawnEmbed(
+    interactionOrMessage:
+      | ChatInputCommandInteraction
+      | ButtonInteraction
+      | Message,
+    fishCaught: Fish
+  ): Promise<void> {
+    const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
+    const fishSpawnEmbedMessage = this.fishSpawner.getGuildFishSpawnMessage(
+      guildId
+    );
+
+    if (!fishSpawnEmbedMessage) {
+      return;
+    }
+
+    const embed = EmbedBuilder.from(fishSpawnEmbedMessage.embeds[0]);
+
+    this.updateLatestCatches(guildId, fishCaught, userId);
+    this.updateTotalFishCaught(guildId);
+    this.updateTopFishers(guildId, userId);
+
+    await this.updateEmbedFields(embed, guildId);
+
+    await fishSpawnEmbedMessage.edit({ embeds: [embed] });
+  }
+
+  private updateLatestCatches(
+    guildId: string,
+    fishCaught: Fish,
+    userId: string
+  ): void {
+    const catchMessage = `${fishCaught.icon} ${fishCaught.name} caught by <@${userId}>`;
+    const catches = this.latestCatches.get(guildId) || [];
+    catches.unshift(catchMessage); // Add the latest catch to the beginning of the list
+    if (catches.length > 3) {
+      catches.pop(); // Remove the oldest catch if there are more than 3
+    }
+    this.latestCatches.set(guildId, catches);
+  }
+
+  private updateTotalFishCaught(guildId: string): void {
+    const totalCaught = (this.totalFishCaught.get(guildId) || 0) + 1;
+
+    this.totalFishCaught.set(guildId, totalCaught);
+  }
+
+  private updateTopFishers(guildId: string, userId: string): void {
+    const guildTopFishers = this.topFishers.get(guildId) || new Map();
+    const userFishCount = (guildTopFishers.get(userId) || 0) + 1;
+
+    guildTopFishers.set(userId, userFishCount);
+    this.topFishers.set(guildId, guildTopFishers);
+  }
+
+  private async updateEmbedFields(
+    embed: EmbedBuilder,
+    guildId: string
+  ): Promise<void> {
+    const catches = this.latestCatches.get(guildId) || [];
+    const totalCaught = this.totalFishCaught.get(guildId) || 0;
+    const guildTopFishers = this.topFishers.get(guildId) || new Map();
+
+    const topFishersArray = Array.from(guildTopFishers.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([userId, count]) => `<@${userId}>: ${count} fish`);
+
+    const activityValue = catches.join("\n");
+    const activityFieldIndex = embed.data.fields.findIndex(
+      (field) => field.name === "Recent Activity"
+    );
+
+    if (activityFieldIndex !== -1) {
+      embed.data.fields[activityFieldIndex].value = activityValue;
+    } else {
+      embed.addFields({
+        name: "Recent Activity",
+        value: activityValue,
+        inline: false,
+      });
+    }
+
+    const totalFishCaughtFieldIndex = embed.data.fields.findIndex(
+      (field) => field.name === "Total Fish Caught"
+    );
+
+    if (totalFishCaughtFieldIndex !== -1) {
+      embed.data.fields[totalFishCaughtFieldIndex].value = `${totalCaught}`;
+    } else {
+      embed.addFields({
+        name: "Total Fish Caught",
+        value: `${totalCaught}`,
+        inline: true,
+      });
+    }
+
+    const topFishersFieldIndex = embed.data.fields.findIndex(
+      (field) => field.name === "Top Fishers"
+    );
+
+    if (topFishersFieldIndex !== -1) {
+      embed.data.fields[topFishersFieldIndex].value = topFishersArray.join(
+        "\n"
+      );
+    } else {
+      embed.addFields({
+        name: "Top Fishers",
+        value: topFishersArray.join("\n"),
+        inline: true,
+      });
+    }
+
+    const tipFieldIndex = embed.data.fields.findIndex(
+      (field) => field.name === "Fishing Tip"
+    );
+
+    if (tipFieldIndex !== -1) {
+      embed.data.fields[tipFieldIndex].value = await getFishingTip(this.bot);
+    }
+
+    // Update fish counts by rarity
+    const fishCountsByRarity = countFishByRarity(
+      this.fishSpawner.getGuildFish(guildId)
+    );
+    Object.entries(fishCountsByRarity).forEach(([key, value]) => {
+      const rarityFieldIndex = embed.data.fields.findIndex(
+        (field) => field.name === `${FISH_RARITY_ICONS[key]} ${key} Fish`
+      );
+
+      if (value >= 1) {
+        if (rarityFieldIndex !== -1) {
+          embed.data.fields[rarityFieldIndex].value = `${value}`;
+        } else {
+          embed.addFields({
+            name: `${FISH_RARITY_ICONS[key]} ${key} Fish`,
+            value: `${value}`,
+            inline: true,
+          });
+        }
+      } else if (rarityFieldIndex !== -1) {
+        embed.data.fields.splice(rarityFieldIndex, 1); // Remove the field if no fish left
+      }
+    });
   }
 
   private async handleFishingError(

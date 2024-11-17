@@ -1,3 +1,5 @@
+import { Message } from "discord.js";
+
 import {
   FishingRod,
   FishSpawnedResult,
@@ -23,6 +25,7 @@ const FISH_PER_ACTIVE_USER = 5;
 interface FishSpawnDetails {
   lastSpawn?: number;
   fish: Record<string, FishSpawnedResult>;
+  spawnMessage?: Message;
 }
 
 /**
@@ -53,6 +56,14 @@ export class FishSpawner {
   }
 
   /**
+   * Returns the fish spawn notification message for the given guild.
+   * @param guildId The identifier of the guild.
+   */
+  getGuildFishSpawnMessage(guildId: string): Message {
+    return this.guildFishSpawn[guildId]?.spawnMessage;
+  }
+
+  /**
    * Returns whether the guild has any  fish.
    * @param guildId The identifier of the guild.
    */
@@ -73,6 +84,11 @@ export class FishSpawner {
     const guildId = activity.guildId;
 
     try {
+      // Clear down the catches, total fish caught, and top fishers from the previous spawn event
+      this.bot.fishingManager.latestCatches.delete(guildId);
+      this.bot.fishingManager.totalFishCaught.delete(guildId);
+      this.bot.fishingManager.topFishers.delete(guildId);
+
       const fish = await this.generateFish(guildId);
 
       this.generateFishSpawnNotification(activity, fish);
@@ -211,11 +227,13 @@ export class FishSpawner {
     const spawnEmbed = await fishSpawnEmbed(guildId, fish, this.bot);
     const deleteAfterInMillseconds = activity.endTime - activity.startTime;
 
-    this.bot.notificationManager.sendNotification(
+    const notificationMessage = await this.bot.notificationManager.sendNotification(
       announcementChannel,
       spawnEmbed,
       deleteAfterInMillseconds
     );
+
+    this.guildFishSpawn[guildId].spawnMessage = notificationMessage;
   }
 
   private async areFishingAnnouncementsEnabled(
