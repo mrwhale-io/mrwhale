@@ -212,23 +212,23 @@ export function countFishByRarity(
 function getFishTypes(): Fish[] {
   const timeOfDay = new Date().getHours();
   const season = getSeason();
-  const fishTypes: Fish[] = baseFishTypes;
+  let fishTypes: Fish[] = [...baseFishTypes];
 
   // Adjust fish types based on time of day
   if (timeOfDay >= 18 || timeOfDay < 6) {
     // Nighttime fish
-    fishTypes.push(...nocturnalFishTypes);
+    fishTypes = [...fishTypes, ...nocturnalFishTypes];
   }
 
   // Adjust fish types based on season
   if (season === "Winter") {
-    fishTypes.push(...winterFishTypes);
+    fishTypes = [...fishTypes, ...winterFishTypes];
   } else if (season === "Spring") {
-    fishTypes.push(...springFishTypes);
+    fishTypes = [...fishTypes, ...springFishTypes];
   } else if (season === "Summer") {
-    fishTypes.push(...summerFishTypes);
+    fishTypes = [...fishTypes, ...summerFishTypes];
   } else {
-    fishTypes.push(...fallFishTypes);
+    fishTypes = [...fishTypes, ...fallFishTypes];
   }
 
   return fishTypes;
