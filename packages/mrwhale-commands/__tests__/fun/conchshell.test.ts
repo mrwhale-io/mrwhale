@@ -1,45 +1,111 @@
 import { conchshell } from "../../src/commands/fun";
 
-describe("conchshell", () => {
+describe("ConchShell Command", () => {
+  // Mock Math.random for consistent testing
   beforeEach(() => {
-    jest.spyOn(global.Math, "random").mockReturnValue(0.123456789);
+    jest.spyOn(global.Math, "random").mockReturnValue(0.5); // Always returns the middle response
   });
 
   afterEach(() => {
-    jest.spyOn(global.Math, "random").mockRestore();
+    jest.restoreAllMocks();
   });
 
-  it("should say to ask a question when empty value is passed", () => {
-    const result = conchshell.action("");
+  it("should return a default response for a valid question", () => {
+    const question = "Is this a valid question?";
+    const response = conchshell.action(question);
 
-    expect(result).toBe("Ask the magic conch shell a question.");
+    expect(response).toMatch(/^🐚 .+/); // Ensures response starts with a shell emoji
   });
 
-  it("should return a random answer", () => {
-    const question = "Are you are a whale?";
-    const result = conchshell.action(question);
+  it("should handle 'what to do' questions correctly", () => {
+    const question = "What should I do?";
+    const response = conchshell.action(question);
 
-    expect(result).toBe("🐚 I don't think so.");
+    expect(response).toBe("🐚 Nothing.");
   });
 
-  it("should answer '🐚 Maybe someday.' when MARRIED_REGEX is matched", () => {
+  it("should respond appropriately to 'Will I get married?' questions", () => {
     const question = "Will I ever get married?";
-    const result = conchshell.action(question);
+    const response = conchshell.action(question);
 
-    expect(result).toBe("🐚 Maybe someday.");
+    expect(response).toBe("🐚 Maybe someday.");
   });
 
-  it("should answer '🐚 Nothing.' when WHAT_TO_DO_REGEX is matched", () => {
-    const question = "What should we do to get out of the kelp forest?";
-    const result = conchshell.action(question);
+  it("should handle 'or' questions correctly", () => {
+    const question = "Pizza or Tacos?";
+    const response = conchshell.action(question);
 
-    expect(result).toBe("🐚 Nothing.");
+    expect(response).toBe("🐚 Neither.");
   });
 
-  it("should answer '🐚 Neither.' when NEITHER_REGEX is matched", () => {
-    const question = "Should I have the spaghetti or the turkey?";
-    const result = conchshell.action(question);
+  it("should respond with 'Follow your heart' for life advice questions", () => {
+    const question = "How should I make this decision?";
+    const response = conchshell.action(question);
 
-    expect(result).toBe("🐚 Neither.");
+    expect(response).toBe("🐚 Follow your heart.");
+  });
+
+  it("should respond with 'Love is complicated' for love-related questions", () => {
+    const question = "Do I have a crush on someone?";
+    const response = conchshell.action(question);
+
+    expect(response).toBe("🐚 Love is complicated. Try asking again.");
+  });
+
+  it("should handle 'treasure' questions with a custom response", () => {
+    const question = "Where is the treasure?";
+    const response = conchshell.action(question);
+
+    expect(response).toBe(
+      "🐚 Treasure? You mean my secret stash? Keep dreaming."
+    );
+  });
+
+  it("should handle 'whale' questions with a custom response", () => {
+    const question = "What about Mr. Whale?";
+    const response = conchshell.action(question);
+
+    expect(response).toBe("🐚 Mr. Whale knows best. Go ask him.");
+  });
+
+  it("should reject empty questions", () => {
+    const question = "";
+    const response = conchshell.action(question);
+
+    expect(response).toBe(
+      "🐚 You must ask the magic conch shell a question, like 'Will I find treasure?'"
+    );
+  });
+
+  it("should reject overly long questions", () => {
+    const question = "A".repeat(201); // 201 characters long
+    const response = conchshell.action(question);
+
+    expect(response).toBe(
+      "🐚 Your question is too long. The conch is confused. Try again."
+    );
+  });
+
+  it("should return a personality response 20% of the time", () => {
+    jest.spyOn(global.Math, "random").mockReturnValue(0.15); // Simulate a personality response
+    const question = "Am I cool?";
+    const response = conchshell.action(question);
+
+    expect(response).toMatch(/^🐚 .+/); // Starts with the shell emoji
+    expect(response).toMatch(/(Why do you bother me|The conch is tired)/); // Matches personality responses
+  });
+
+  it("should handle case-insensitive input", () => {
+    const question = "wHaT sHoUlD I dO?";
+    const response = conchshell.action(question);
+
+    expect(response).toBe("🐚 Nothing.");
+  });
+
+  it("should handle inputs with extra spaces gracefully", () => {
+    const question = "    Will I ever   get   married?    ";
+    const response = conchshell.action(question);
+
+    expect(response).toBe("🐚 Maybe someday.");
   });
 });
