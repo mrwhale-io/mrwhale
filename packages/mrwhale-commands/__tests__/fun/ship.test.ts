@@ -1,30 +1,30 @@
 import { ship } from "../../src/commands/fun";
 
-describe("ship", () => {
-  it("should ship two given users", () => {
-    const firstUser = "Mr. Whale";
-    const secondUser = "Mrs. Whale";
+describe("Ship Command", () => {
+  describe("action function", () => {
+    it("should return a valid ShipResult object for two users", () => {
+      const result = ship.action("Alice", "Bob");
 
-    const result = ship.action(firstUser, secondUser);
+      expect(result).toHaveProperty("description");
+      expect(result).toHaveProperty("shipName");
+      expect(result).toHaveProperty("percent");
+      expect(result).toHaveProperty("prediction");
+      expect(result).toHaveProperty("breakdown");
+      expect(result).toHaveProperty("randomFact");
+      expect(result).toHaveProperty("emojiScale");
+    });
 
-    expect(result).toBe("💘 There's a 80% match between Mr. Whale and Mrs. Whale 💘");
-  });
+    it("should throw an error if the first user is missing", () => {
+      expect(() => ship.action("", "Bob")).toThrow("First user is missing.");
+    });
 
-  it("should return message saying first user is missing", () => {
-    const firstUser = "";
-    const secondUser = "Mrs. Whale";
+    it("should throw an error if the second user is missing", () => {
+      expect(() => ship.action("Alice", "")).toThrow("Second user is missing.");
+    });
 
-    const result = ship.action(firstUser, secondUser);
-
-    expect(result).toBe("First user is missing.");
-  });
-
-  it("should return message saying second user is missing", () => {
-    const firstUser = "Mr. Whale";
-    const secondUser = "";
-
-    const result = ship.action(firstUser, secondUser);
-
-    expect(result).toBe("Second user is missing.");
+    it("should be case-insensitive and trim inputs", () => {
+      const result = ship.action("  Alice  ", "BOB ");
+      expect(result.shipName).toBe("AliceB");
+    });
   });
 });
