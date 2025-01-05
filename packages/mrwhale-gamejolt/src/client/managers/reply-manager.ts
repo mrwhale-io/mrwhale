@@ -209,7 +209,11 @@ export class ReplyManager {
       }
 
       for (const response of RESPONSES) {
-        if (notification.action_model.leadStr.match(response.regex)) {
+        if (
+          notification.action_model.leadStr.match(response.regex) &&
+          (!response.mentionOnly ||
+            notification.action_model.leadStr.match(WHALE_USER_REGEX))
+        ) {
           content.insertText(
             response.responses[
               Math.floor(Math.random() * response.responses.length)
