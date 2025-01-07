@@ -1,7 +1,8 @@
 import { InfoBuilder } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
+import { format, formatDistanceToNowStrict, addYears } from "date-fns";
+
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
-import { format, formatDistanceToNowStrict } from "date-fns";
 
 export default class extends GameJoltCommand {
   constructor() {
@@ -15,29 +16,51 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message): Promise<Message> {
-    if (message.mentions.length === 0) {
-      return message.reply("You must mention a user.");
+    const user = message.mentions[0] || message.user; // Default to message author if no mention
+
+    if (!user || user.id === undefined) {
+      return message.reply("Could not find this user.");
     }
 
-    const user = message.mentions[0];
+    // Format the join date
+    const joinDate = user.created_on || null;
+    const formattedDate = joinDate
+      ? format(joinDate, "MMM dd, yyyy hh:mm:ss a")
+      : "Unknown";
 
-    if (user && user.id !== undefined) {
-      const formattedDate = format(user.created_on, "MMM dd, yyyy hh:mm:ss a");
-      const info = new InfoBuilder()
-        .addField("Username", user.username)
-        .addField("Display Name", user.display_name)
-        .addField("Website", user.web_site)
-        .addField("Moderator", user.permission_level > 0 ? "Yes" : "No")
-        .addField("Follower Count", `${user.follower_count}`)
-        .addField("Following Count", `${user.following_count}`)
-        .addField(
-          "Joined",
-          `${formattedDate} (${formatDistanceToNowStrict(user.created_on)})`
-        );
+    // Time since they joined
+    const joinedAgo = joinDate
+      ? formatDistanceToNowStrict(joinDate)
+      : "Unknown";
 
-      return message.reply(`${info}`);
+    // Calculate the next account birthday
+    let countdown = "Unknown";
+    if (joinDate) {
+      const now = new Date();
+      const thisYearBirthday = new Date(
+        now.getFullYear(),
+        joinDate.getMonth(),
+        joinDate.getDate()
+      );
+      const nextBirthday =
+        thisYearBirthday > now
+          ? thisYearBirthday
+          : addYears(thisYearBirthday, 1);
+
+      countdown = formatDistanceToNowStrict(nextBirthday, { addSuffix: true });
     }
 
-    return message.reply("Could not find this user.");
+    // Build the user information
+    const info = new InfoBuilder()
+      .addField("🆔 Username", user.username || "N/A")
+      .addField("📛 Display Name", user.display_name || "N/A")
+      .addField("🌐 Website", user.web_site || "No website provided")
+      .addField("🔰 Moderator", user.permission_level > 0 ? "Yes ✅" : "No ❌")
+      .addField("📅 Joined", `${formattedDate} (${joinedAgo} ago)`)
+      .addField("🎂 Next Spawn Day", countdown)
+      .addField("👥 Followers", `${user.follower_count || 0}`)
+      .addField("🔗 Following", `${user.following_count || 0}`);
+
+    return message.reply(`${info}`);
   }
 }
