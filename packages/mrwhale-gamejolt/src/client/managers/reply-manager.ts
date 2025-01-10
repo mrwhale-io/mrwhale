@@ -73,7 +73,7 @@ const RESPONSES = [
   },
   {
     regex: /\b(joke|pun|whale\s*joke)\b/gi,
-    mentionOnly: false,
+    mentionOnly: true,
     responses: [
       "Why don't whales ever get into fights? They don't want to make waves! 🌊",
       "What do whales like to put on their toast? Jellyfish!",
