@@ -16,10 +16,10 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message): Promise<Message> {
-    const user = message.mentions[0] || message.user; // Default to message author if no mention
+    const user = message.mentions[0];
 
     if (!user || user.id === undefined) {
-      return message.reply("Could not find this user.");
+      return message.reply("Please mention a user.");
     }
 
     // Format the join date
