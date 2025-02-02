@@ -19,7 +19,7 @@ function listIsTight(tokens, index) {
 export const contentMarkdownParser = (
   schema: ContentEditorSchema
 ): MarkdownParser<ContentEditorSchema> =>
-  new MarkdownParser(schema, markdownit("commonmark", { html: false }), {
+  new MarkdownParser(schema, markdownit("commonmark", { html: false }) as any, {
     blockquote: { block: "blockquote" },
     paragraph: { block: "paragraph" },
     list_item: { block: "listItem" },

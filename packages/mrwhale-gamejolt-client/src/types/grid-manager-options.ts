@@ -11,4 +11,9 @@ export interface GridManagerOptions {
    * The session identifier to auth with.
    */
   frontend: string;
+
+  /**
+   * The token that let's Game Jolt know that the client is Mr. Whale.
+   */
+  mrwhaleToken: string;
 }

@@ -62,8 +62,13 @@ export class Client extends events.EventEmitter {
     this.grid = new GridManager(this, {
       frontend: options.frontend,
       baseUrl: options.baseGridUrl,
+      mrwhaleToken: options.mrwhaleToken,
     });
-    this.api = new APIManager(this, options.frontend, options.baseApiUrl);
+    this.api = new APIManager(this, {
+      frontend: options.frontend,
+      base: options.baseApiUrl,
+      mrwhaleToken: options.mrwhaleToken,
+    });
     this.getBlockedUsers();
     this.rateLimitRequests = options.rateLimitRequests || 1;
     this.rateLimitDuration = options.rateLimitDuration || 1;

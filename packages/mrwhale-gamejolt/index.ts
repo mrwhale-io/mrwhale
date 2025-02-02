@@ -8,6 +8,7 @@ const client = new GameJoltBotClient(
   {
     userId: config.userId,
     frontend: config.frontend,
+    mrwhaleToken: config.mrwhaleToken,
     baseApiUrl: config.baseApiUrl,
     baseChatUrl: config.baseChatUrl,
     baseGridUrl: config.baseGridUrl,

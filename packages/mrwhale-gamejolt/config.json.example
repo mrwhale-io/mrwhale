@@ -10,5 +10,6 @@
   "youtube": "",
   "openWeather": "",
   "privateKey": "",
-  "gameId": 1
+  "gameId": 1,
+  "mrwhaleToken": ""
 }

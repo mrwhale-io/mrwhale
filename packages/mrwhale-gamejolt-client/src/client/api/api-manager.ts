@@ -12,6 +12,12 @@ import { GameOverview } from "../../structures/game-overview";
 import { User } from "../../structures/user";
 import { Block } from "../../structures/block";
 
+interface APIClientOptions {
+  base: string;
+  frontend: string;
+  mrwhaleToken: string;
+}
+
 interface ApiData<T> {
   payload: T;
 }
@@ -49,12 +55,11 @@ export class APIManager {
   /**
    * Creates an instance of APIManager.
    * @param client The game jolt client.
-   * @param frontend The session identifier.
-   * @param base The base api url.
+   * @param options The API client options to use.
    */
-  constructor(client: Client, frontend: string, base: string) {
+  constructor(client: Client, options: APIClientOptions) {
     this.client = client;
-    this.base = base || "https://gamejolt.com/site-api";
+    this.base = options.base || "https://gamejolt.com/site-api";
     this.axios = Axios.create({
       headers: {
         "Content-Type": "application/json",
@@ -64,7 +69,8 @@ export class APIManager {
         Origin: "https://gamejolt.com",
       },
     });
-    this.axios.defaults.headers.Cookie = `frontend=${frontend}`;
+    this.axios.defaults.headers.common["mrwhale-token"] = options.mrwhaleToken;
+    this.axios.defaults.headers.Cookie = `frontend=${options.frontend}`;
   }
 
   /**

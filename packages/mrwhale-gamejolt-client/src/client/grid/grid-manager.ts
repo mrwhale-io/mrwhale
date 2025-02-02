@@ -1,4 +1,4 @@
-import Axios from "axios";
+import Axios, { AxiosResponse } from "axios";
 import * as events from "events";
 import { Socket, Channel } from "phoenix-channels";
 import { pollRequest } from "../../util/poll-request";
@@ -36,6 +36,7 @@ export class GridManager extends events.EventEmitter {
   readonly chat: ChatManager;
 
   private frontend: string;
+  private mrwhaleToken: string;
 
   /**
    * @param client The Game Jolt client.
@@ -46,6 +47,7 @@ export class GridManager extends events.EventEmitter {
     this.client = client;
     this.gridUrl = options.baseUrl || "https://grid.gamejolt.com/grid";
     this.frontend = options.frontend;
+    this.mrwhaleToken = options.mrwhaleToken;
     this.chat = new ChatManager(this.client, this);
     this.connect();
   }
@@ -179,14 +181,21 @@ export class GridManager extends events.EventEmitter {
     }
   }
 
-  private async getAuth() {
+  private async getAuth(): Promise<[AxiosResponse<any>, AxiosResponse<any>]> {
+    const headers = { "mrwhale-token": this.mrwhaleToken };
     return await pollRequest("Auth to server", () => {
       return Promise.all([
-        Axios.get(`${this.gridUrl}/host`, { timeout: AUTH_TIMEOUT }),
+        Axios.get(`${this.gridUrl}/host`, {
+          timeout: AUTH_TIMEOUT,
+          headers,
+        }),
         Axios.post(
           `${this.gridUrl}/token`,
           { auth_token: this.frontend, user_id: this.client.userId },
-          { timeout: AUTH_TIMEOUT }
+          {
+            timeout: AUTH_TIMEOUT,
+            headers,
+          }
         ),
       ]);
     });
