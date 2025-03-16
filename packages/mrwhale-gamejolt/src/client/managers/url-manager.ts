@@ -45,8 +45,8 @@ export class UrlManager {
       const matches: RegExpExecArray = gameregex.exec(message.toString());
       if (matches) {
         const gameId = parseInt(matches[matches.length - 1], 10);
-        const gameResult = await this.bot.client.api.getGame(gameId);
-        const overviewResult = await this.bot.client.api.getGameOverview(
+        const gameResult = await this.bot.client.api.games.getGame(gameId);
+        const overviewResult = await this.bot.client.api.games.getGameOverview(
           gameId
         );
         const gameResponse = formatGameInfo(

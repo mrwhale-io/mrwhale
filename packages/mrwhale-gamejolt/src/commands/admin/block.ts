@@ -21,7 +21,7 @@ export default class extends GameJoltCommand {
     const user = message.mentions[0];
 
     try {
-      await this.botClient.client.api.blockUser(user);
+      await this.botClient.client.api.blocks.blockUser(user.username);
 
       return message.reply("Successfully blocked user.");
     } catch (error) {

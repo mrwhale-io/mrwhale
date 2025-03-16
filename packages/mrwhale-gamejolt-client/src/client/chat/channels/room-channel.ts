@@ -1,4 +1,4 @@
-import { Channel, Socket } from "phoenix-channels";
+import { Channel, Push, Socket } from "phoenix-channels";
 
 import { ChatManager } from "../chat-manager";
 import { User } from "../../../structures/user";
@@ -7,6 +7,7 @@ import { Events } from "../../../constants";
 import { MemberLeavePayload } from "../../../types/member-leave-payload";
 import { MemberAddPayload } from "../../../types/member-add-payload";
 import { OwnerSyncPayload } from "../../../types/owner-sync-payload";
+import { Room } from "../../../structures/room";
 
 const ROOM_TOPIC_PREFIX = "room:";
 
@@ -35,7 +36,7 @@ export class RoomChannel extends Channel {
   /**
    * The room id associated with this channel.
    */
-  roomId: number;
+  readonly roomId: number;
 
   /**
    * The chat manager instance associated with this room channel.
@@ -48,6 +49,18 @@ export class RoomChannel extends Channel {
    * This is the same socket connection used by the chat manager.
    */
   readonly socket: Socket;
+
+  /**
+   * Gets the room associated with this channel.
+   */
+  get room(): Room | undefined {
+    return this._room;
+  }
+
+  /**
+   * The current room associated with this channel.
+   */
+  private _room?: Room;
 
   /**
    * @param roomId The Id of the room.
@@ -72,6 +85,29 @@ export class RoomChannel extends Channel {
     this.on(Events.MEMBER_LEAVE, this.onMemberLeave.bind(this));
     this.on(Events.OWNER_SYNC, this.onOwnerSync.bind(this));
     this.on(Events.MEMBER_ADD, this.onMemberAdd.bind(this));
+  }
+
+  /**
+   * Joins the room channel.
+   *
+   * This method attempts to join the room channel.
+   * Upon successful joining, it processes the response to set up the current room and its members.
+   * Finally, it emits a "room_ready" event with the response data.
+   */
+  joinRoom(): Push {
+    return this.join().receive("ok", (response: { room: Partial<Room> }) => {
+      const room = new Room(response.room);
+      this._room = room;
+      this.chat.roomChannels[this.roomId] = this;
+      this.chat.activeRooms[this.roomId] = room;
+      this.push(Events.MEMBER_WATCH, {}).receive(
+        "ok",
+        (response: { members: User[] }) => {
+          this.room.members = response.members;
+        }
+      );
+      this.chat.client.emit(Events.ROOM_READY, response);
+    });
   }
 
   private onMsg(data: Partial<Message>): void {

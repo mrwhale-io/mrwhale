@@ -54,16 +54,7 @@ export class Message {
    */
   get textContent(): string {
     const doc = ContentDocument.fromJson(this.content);
-    let result = "";
-    for (const outerContent of doc.content) {
-      for (const innerContent of outerContent.content) {
-        if (innerContent.text) {
-          result += innerContent.text;
-        }
-      }
-    }
-
-    return result;
+    return this.extractTextContent(doc);
   }
 
   /**
@@ -71,15 +62,7 @@ export class Message {
    */
   get mentions(): User[] {
     const doc = ContentDocument.fromJson(this.content);
-    const mentions: User[] = [];
-
-    for (const hydrationEntry of doc.hydration) {
-      if (hydrationEntry.type === "username") {
-        mentions.push(new User(hydrationEntry.data));
-      }
-    }
-
-    return mentions;
+    return this.extractMentions(doc);
   }
 
   /**
@@ -164,5 +147,37 @@ export class Message {
    */
   toString(): string {
     return this.textContent;
+  }
+
+  /**
+   * Extracts text content from a ContentDocument.
+   * @param doc The ContentDocument to extract text from.
+   * @returns The extracted text content.
+   */
+  private extractTextContent(doc: ContentDocument): string {
+    let result = "";
+    for (const outerContent of doc.content) {
+      for (const innerContent of outerContent.content) {
+        if (innerContent.text) {
+          result += innerContent.text;
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Extracts mentioned users from a ContentDocument.
+   * @param doc The ContentDocument to extract mentions from.
+   * @returns An array of mentioned users.
+   */
+  private extractMentions(doc: ContentDocument): User[] {
+    const mentions: User[] = [];
+    for (const hydrationEntry of doc.hydration) {
+      if (hydrationEntry.type === "username") {
+        mentions.push(new User(hydrationEntry.data));
+      }
+    }
+    return mentions;
   }
 }

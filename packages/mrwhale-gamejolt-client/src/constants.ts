@@ -1,22 +1,24 @@
 import { ContentContext } from "./content/content-context";
 
-export const Events = {
-  MESSAGE: "message",
-  MESSAGE_UPDATE: "message_update",
-  NOTIFICATION: "notification",
-  USER_UPDATED: "user_updated",
-  FRIEND_UPDATED: "friend_updated",
-  FRIEND_ADD: "friend_add",
-  FRIEND_REMOVE: "friend_remove",
-  YOU_UPDATED: "you_updated",
-  MEMBER_ADD: "member_add",
-  MEMBER_LEAVE: "member_leave",
-  OWNER_SYNC: "owner_sync",
-  GROUP_ADD: "group_add",
-  GROUP_LEAVE: "group_leave",
-  INVITE_ACCEPT: "invite_accept",
-  MEMBER_WATCH: "member_watch",
-};
+export enum Events {
+  MESSAGE = "message",
+  MESSAGE_UPDATE = "message_update",
+  NOTIFICATION = "notification",
+  USER_UPDATED = "user_updated",
+  FRIEND_UPDATED = "friend_updated",
+  FRIEND_ADD = "friend_add",
+  FRIEND_REMOVE = "friend_remove",
+  YOU_UPDATED = "you_updated",
+  MEMBER_ADD = "member_add",
+  MEMBER_LEAVE = "member_leave",
+  OWNER_SYNC = "owner_sync",
+  GROUP_ADD = "group_add",
+  GROUP_LEAVE = "group_leave",
+  INVITE_ACCEPT = "invite_accept",
+  MEMBER_WATCH = "member_watch",
+  CHAT_READY = "chat_ready",
+  ROOM_READY = "room_ready",
+}
 
 export const Endpoints = {
   block: `/web/dash/blocks/add`,

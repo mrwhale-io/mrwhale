@@ -26,18 +26,37 @@ export class MediaManager extends APIRequestManager {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("type", type);
-    formData.append("parent_id", parentId);
+    formData.append("parent_id", parentId.toString());
 
     const result = await this.axios.post(url, formData, {
+      maxContentLength: Infinity,
       headers: {
         "Content-Type": `multipart/form-data; boundary=${formData.getBoundary()}`,
       },
     });
 
-    if (result.data.payload?.success && result.data.payload.mediaItem) {
-      return new MediaItem(result.data.payload.mediaItem);
+    const payload = result.data.payload;
+
+    if (payload.success && payload.mediaItem) {
+      return new MediaItem(payload.mediaItem);
+    } else if (!payload.success && payload.errors.file) {
+      const mediaItemsResult = await this.axios.post(Endpoints.media_items, {
+        type,
+        parent_id: parentId,
+      });
+      const sizePayload = mediaItemsResult.data.payload;
+      const maxWidth = sizePayload.maxWidth;
+      const maxHeight = sizePayload.maxHeight;
+      const maxFilesize = sizePayload.maxFilesize;
+
+      throw new Error(
+        `File size must be less than ${maxFilesize} bytes and dimensions less than ${maxWidth}×${maxHeight} pixels.`
+      );
     }
-    throw new Error("File upload failed.");
+
+    throw new Error(
+      `General failure while uploading file. Status: ${result.status} ${result.statusText}`
+    );
   }
 
   /**

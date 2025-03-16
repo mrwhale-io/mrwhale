@@ -31,7 +31,8 @@ export class FriendManager extends APIRequestManager {
    */
   async sendFriendRequest(id: number): Promise<boolean> {
     const data = await this.post<ApiData<FriendRequestAcceptPayload>>(
-      Endpoints.friend_request(id)
+      Endpoints.friend_request(id),
+      { _removed: false, target_user_id: id }
     );
     return data.payload?.success || false;
   }

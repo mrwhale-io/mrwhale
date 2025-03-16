@@ -6,7 +6,6 @@ import {
   User,
   FiresidePost,
 } from "@mrwhale-io/gamejolt-client";
-import { AxiosResponse } from "axios";
 
 import { GameJoltBotClient } from "../gamejolt-bot-client";
 
@@ -216,7 +215,7 @@ export class ReplyManager {
   @on("user_notification")
   protected async onUserNotification(
     notification: Notification
-  ): Promise<AxiosResponse<unknown>> {
+  ): Promise<boolean> {
     if (
       notification.type === "post-add" &&
       notification.from_model instanceof User &&
@@ -228,7 +227,7 @@ export class ReplyManager {
         content.insertText(
           notification.action_model.leadStr.match(WHALE_REGEX)[0]
         );
-        return this.bot.client.api.comment(
+        return this.bot.client.api.comments.addComment(
           notification.action_resource_id,
           notification.action_resource,
           content.contentJson()
@@ -246,7 +245,7 @@ export class ReplyManager {
               Math.floor(Math.random() * response.responses.length)
             ]
           );
-          return this.bot.client.api.comment(
+          return this.bot.client.api.comments.addComment(
             notification.action_resource_id,
             notification.action_resource,
             content.contentJson()

@@ -9,7 +9,7 @@ import { GridManager } from "./grid/grid-manager";
 import { Notification } from "../structures/notification";
 import { Block } from "../structures/block";
 
-const FRIEND_REQUEST_INTERVAL = 60;
+const FRIEND_REQUEST_INTERVAL = 60 * 1000;
 
 /**
  * The main client for interacting with the chat and site api.
@@ -31,11 +31,6 @@ export class Client extends events.EventEmitter {
   readonly userId: number;
 
   /**
-   * Contains all blocked users.
-   */
-  blockedUsers: Block[];
-
-  /**
    * The max number of requests that can be made
    * before rate limiting.
    */
@@ -54,6 +49,13 @@ export class Client extends events.EventEmitter {
   }
 
   /**
+   * Contains all users that are blocked by the client user.
+   */
+  get blockedUsers(): Block[] {
+    return this.api.blocks.blockedUsers;
+  }
+
+  /**
    * @param options The client options.
    */
   constructor(options: ClientOptions) {
@@ -69,7 +71,6 @@ export class Client extends events.EventEmitter {
       base: options.baseApiUrl,
       mrwhaleToken: options.mrwhaleToken,
     });
-    this.getBlockedUsers();
     this.rateLimitRequests = options.rateLimitRequests || 1;
     this.rateLimitDuration = options.rateLimitDuration || 1;
     this.initTimers();
@@ -112,18 +113,12 @@ export class Client extends events.EventEmitter {
     return super.on(event, listener);
   }
 
-  private async getBlockedUsers(): Promise<void> {
-    this.blockedUsers = await this.api.blocks.getBlockedUsers();
-  }
-
   /**
    * Initialise timers to send fetch requests.
    * This keeps the notification/friend requests and counts
-   * up to date. This Should only be used internally.
+   * up to date.
    */
   private initTimers(): void {
-    setInterval(() => {
-      this.fetchFriendRequests();
-    }, FRIEND_REQUEST_INTERVAL * 1000);
+    setInterval(() => this.fetchFriendRequests(), FRIEND_REQUEST_INTERVAL);
   }
 }
