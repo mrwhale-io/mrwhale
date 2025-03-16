@@ -17,23 +17,80 @@ import { Content } from "../../content/content";
 import { Message } from "../../structures/message";
 import { GridManager } from "../grid/grid-manager";
 
+
 /**
- * Manages the websocket connection to the chat.
+ * Manages chat functionalities for the Game Jolt client.
+ * 
+ * The `ChatManager` class extends `events.EventEmitter` and provides methods to handle chat operations such as joining and leaving rooms, sending and editing messages, uploading files, and managing user channels.
+ * 
+ * @remarks
+ * This class is responsible for maintaining the state of the chat client, including the current user, friends list, active rooms, and room channels. It also handles rate limiting for sending messages and provides methods to reset and destroy the chat manager instance.
  */
 export class ChatManager extends events.EventEmitter {
+  /**
+   * The current client user.
+   */
   currentUser?: User;
+
+  /**
+   * The list of friends for the current user.
+   */
   friendsList: UserCollection;
+
+  /**
+   * The user channel for the current user.
+   * This channel is used for user specific events.
+   */
   userChannel?: UserChannel;
+
+  /**
+   * The list of group chats the user is in.
+   */
   groups: Room[] = [];
+
+  /**
+   * The list of group chat ids the user is in.
+   */
   groupIds: number[] = [];
+
+  /**
+   * The list of room channels the user is in.
+   * The key is the room id and the value is the room channel.
+   */
   roomChannels: { [roomId: number]: RoomChannel } = {};
+
+  /**
+   * The list of active rooms the user is in.
+   * The key is the room id and the value is the room.
+   */
   activeRooms: { [roomId: number]: Room } = {};
+
+  /**
+   * The time the chat client was started.
+   */
   startTime: number;
 
+  /**
+   * The URL of the chat server.
+   * This is a read-only property.
+   */
   readonly chatUrl: string;
+
+  /**
+   * The Game Jolt client.
+   * This is a read-only property.
+   */
   readonly client: Client;
+
+  /**
+   * The Grid Manager instance.
+   * This is a read-only property.
+   */
   readonly grid: GridManager;
 
+  /**
+   * Gets the connection status of the chat manager.
+   */
   get connected(): boolean {
     return this.grid.connected;
   }
@@ -90,10 +147,13 @@ export class ChatManager extends events.EventEmitter {
     }
   }
 
+
   /**
-   * Sends a chat message to the specified room.
-   * @param message The chat message content.
-   * @param roomId The identifier of the room to send message.
+   * Sends a message to a specified chat room.
+   *
+   * @param message The message to send. Can be a string or a Content object.
+   * @param roomId The Id of the chat room to send the message to.
+   * @returns A Push object if the message is successfully sent, otherwise undefined.
    */
   sendMessage(message: string | Content, roomId: number): Push {
     if (!this.rateLimiters[roomId]) {
@@ -122,9 +182,11 @@ export class ChatManager extends events.EventEmitter {
   }
 
   /**
-   * Edits an existing message in chat.
-   * @param editedContent The edited content.
-   * @param message The message to edit.
+   * Edits an existing chat message with new content.
+   *
+   * @param editedContent The new content for the message. Can be a string or a Content object.
+   * @param message The message object that needs to be edited.
+   * @returns A Push object representing the result of the message update operation.
    */
   editMessage(editedContent: string | Content, message: Message): Push {
     let content: Content;
@@ -144,18 +206,21 @@ export class ChatManager extends events.EventEmitter {
     }
   }
 
+
   /**
-   * Uploads a file to the Game Jolt media server.
-   * @param file The file to upload.
-   * @param resourceId The id of the resource.
-   * @param context The content context.
+   * Uploads a file to a specified chat room.
+   *
+   * @param file The file to be uploaded, represented as a Readable stream.
+   * @param roomId The Id of the chat room where the file will be uploaded.
+   * @returns A promise that resolves to a MediaItem representing the uploaded file.
+   * @throws Will throw an error if the temporary chat resource could not be created.
    */
   async uploadFile(file: Readable, roomId: number): Promise<MediaItem> {
-    const temp = await this.client.api.chatTempResource(roomId);
+    const temp = await this.client.api.media.chatTempResource(roomId);
 
-    if (temp && temp.data && temp.data.payload) {
-      const parentId = parseInt(temp.data.payload.id, 10);
-      const response = await this.client.api.mediaUpload(
+    if (temp && temp.payload) {
+      const parentId = parseInt(temp.payload.id, 10);
+      const response = await this.client.api.media.uploadMedia(
         file,
         parentId,
         "chat-message"
@@ -189,6 +254,15 @@ export class ChatManager extends events.EventEmitter {
     this.startTime = Date.now();
   }
 
+  /**
+   * Destroys the chat manager instance by performing the following actions:
+   * - If not connected, the method returns immediately.
+   * - Resets the chat manager state.
+   * - Leaves the user channel if it exists and sets it to undefined.
+   * - Iterates through all room channels and leaves each one.
+   * - Clears the room channels object.
+   * - If a socket connection exists, logs a message, disconnects the socket, and sets it to undefined.
+   */
   destroy(): void {
     if (!this.connected) {
       return;
@@ -213,6 +287,13 @@ export class ChatManager extends events.EventEmitter {
     }
   }
 
+  /**
+   * Joins the user to their personal chat channel.
+   *
+   * This method creates a new `UserChannel` instance for the current user and attempts to join it.
+   * Upon successful joining, it processes the response to set up the current user, friends list,
+   * groups, and group IDs. Finally, it emits a "chat_ready" event with the response data.
+   */
   joinUserChannel(): void {
     const channel = new UserChannel(this.client.userId, this);
 

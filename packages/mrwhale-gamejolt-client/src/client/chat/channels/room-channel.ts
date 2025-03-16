@@ -2,32 +2,58 @@ import { Channel, Socket } from "phoenix-channels";
 
 import { ChatManager } from "../chat-manager";
 import { User } from "../../../structures/user";
-import { Room } from "../../../structures/room";
 import { Message } from "../../../structures/message";
 import { Events } from "../../../constants";
+import { MemberLeavePayload } from "../../../types/member-leave-payload";
+import { MemberAddPayload } from "../../../types/member-add-payload";
+import { OwnerSyncPayload } from "../../../types/owner-sync-payload";
 
-interface MemberAddPayload {
-  members: User[];
-}
+const ROOM_TOPIC_PREFIX = "room:";
 
-interface MemberLeavePayload {
-  user_id: number;
-}
-
-interface OwnerSyncPayload {
-  owner_id: number;
-}
-
-interface MemberWatchload {
-  members: User[];
-}
-
+/**
+ * Represents a room chat channel.
+ * This class extends the base `Channel` class and handles various room-related events.
+ *
+ * The `RoomChannel` class is responsible for managing the communication within a specific chat room.
+ * It listens to various events such as messages, user updates, member additions, member leaves, and owner synchronization.
+ *
+ * Example usage:
+ * ```typescript
+ * const chatManager = new ChatManager(socket);
+ * const roomChannel = new RoomChannel(123, chatManager);
+ *
+ * roomChannel.join()
+ *   .receive("ok", response => { console.log("Joined successfully", response); })
+ *   .receive("error", response => { console.error("Failed to join", response); });
+ *
+ * roomChannel.on("message", (message) => {
+ *   console.log("New message received:", message);
+ * });
+ * ```
+ */
 export class RoomChannel extends Channel {
-  room!: Room;
+  /**
+   * The room id associated with this channel.
+   */
   roomId: number;
+
+  /**
+   * The chat manager instance associated with this room channel.
+   * This provides methods and properties to manage chat functionalities.
+   */
   readonly chat: ChatManager;
+
+  /**
+   * The socket connection used by the room channel.
+   * This is the same socket connection used by the chat manager.
+   */
   readonly socket: Socket;
 
+  /**
+   * @param roomId The Id of the room.
+   * @param chat The chat manager instance.
+   * @param params Optional parameters for the channel.
+   */
   constructor(
     roomId: number,
     chat: ChatManager,
@@ -35,7 +61,7 @@ export class RoomChannel extends Channel {
   ) {
     const socket = chat.grid.socket;
 
-    super("room:" + roomId, params, socket);
+    super(ROOM_TOPIC_PREFIX + roomId, params, socket);
     this.chat = chat;
     this.roomId = roomId;
     this.socket = socket;
@@ -48,14 +74,23 @@ export class RoomChannel extends Channel {
     this.on(Events.MEMBER_ADD, this.onMemberAdd.bind(this));
   }
 
-  private onMsg(data: Partial<Message>) {
+  private onMsg(data: Partial<Message>): void {
     const { client } = this.chat;
+
+    if (!data || !data.id || !data.content || !data.user_id) {
+      return;
+    }
 
     client.emit(Events.MESSAGE, new Message(client, data));
   }
 
-  private onUserUpdated(data: Partial<User>) {
+  private onUserUpdated(data: Partial<User>): void {
     const { client } = this.chat;
+
+    if (!data || !data.id || !data.username) {
+      return;
+    }
+
     const updatedUser = new User(data);
 
     client.emit(Events.USER_UPDATED, {
@@ -64,36 +99,48 @@ export class RoomChannel extends Channel {
     });
   }
 
-  private onMemberLeave(data: MemberLeavePayload) {
+  private onMemberLeave(data: MemberLeavePayload): void {
     const { client } = this.chat;
+
+    if (!data || !data.user_id) {
+      return;
+    }
+
     const { user_id } = data;
 
     const activeRoom = this.chat.activeRooms[this.roomId];
-    if (activeRoom) {
-      const roomMembers = activeRoom.members;
-      if (roomMembers) {
-        const index = roomMembers.findIndex((member) => member.id === user_id);
-        if (index !== -1) {
-          const member = roomMembers.splice(index, 1)[0];
+    if (!activeRoom) {
+      return;
+    }
 
-          client.emit(Events.MEMBER_LEAVE, {
-            room_id: this.roomId,
-            member,
-          });
-        }
-      }
+    const roomMembers = activeRoom.members;
+    if (!roomMembers) {
+      return;
+    }
+
+    const index = roomMembers.findIndex((member) => member.id === user_id);
+    if (index !== -1) {
+      const member = roomMembers.splice(index, 1)[0];
+
+      client.emit(Events.MEMBER_LEAVE, {
+        room_id: this.roomId,
+        member,
+      });
     }
   }
 
-  private onMemberAdd(data: MemberAddPayload) {
+  private onMemberAdd(data: MemberAddPayload): void {
     const { client } = this.chat;
+
+    if (!data || !Array.isArray(data.members)) {
+      return;
+    }
+
     const newMembers = data.members || [];
 
     const activeRoom = this.chat.activeRooms[this.roomId];
     if (activeRoom && activeRoom.members) {
-      if (activeRoom.members) {
-        activeRoom.members.push(...newMembers);
-      }
+      activeRoom.members.push(...newMembers);
     }
 
     client.emit(Events.MEMBER_ADD, {
@@ -102,8 +149,13 @@ export class RoomChannel extends Channel {
     });
   }
 
-  private onOwnerSync(data: OwnerSyncPayload) {
+  private onOwnerSync(data: OwnerSyncPayload): void {
     const { client } = this.chat;
+
+    if (!data || !data.owner_id) {
+      return;
+    }
+
     const { owner_id } = data;
 
     const activeRoom = this.chat.activeRooms[this.roomId];

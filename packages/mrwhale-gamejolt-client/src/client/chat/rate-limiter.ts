@@ -1,6 +1,20 @@
+/**
+ * A class to handle rate limiting for requests.
+ */
 export class RateLimiter {
+  /**
+   * The number of requests allowed.
+   */
   requestCount: number;
+
+  /**
+   * The timestamp for the rate limit window in seconds.
+   */
   timestamp: number;
+
+  /**
+   * The current time in seconds.
+   */
   seconds: number;
 
   constructor(requestsNum: number, timestamp: number) {
@@ -9,6 +23,10 @@ export class RateLimiter {
     this.seconds = 0;
   }
 
+  /**
+   * Throttles the requests based on the rate limit.
+   * @returns A boolean indicating whether the request should be throttled.
+   */
   throttle(): boolean {
     let sn = this.seconds;
     const now = ~~(Date.now() / 1000);

@@ -39,12 +39,12 @@ export class Client extends events.EventEmitter {
    * The max number of requests that can be made
    * before rate limiting.
    */
-  rateLimitRequests: number;
+  readonly rateLimitRequests: number;
 
   /**
    * The max duration of rate limiting.
    */
-  rateLimitDuration: number;
+  readonly rateLimitDuration: number;
 
   /**
    * Get the chat client.
@@ -79,7 +79,7 @@ export class Client extends events.EventEmitter {
    * Send a request to the site api to fetch the client user's friend requests.
    */
   async fetchFriendRequests(): Promise<void> {
-    const requests = await this.api.getFriendRequests();
+    const requests = await this.api.friends.getFriendRequests();
     if (requests) {
       this.emit("friend_requests", requests);
     }
@@ -112,8 +112,8 @@ export class Client extends events.EventEmitter {
     return super.on(event, listener);
   }
 
-  private async getBlockedUsers() {
-    this.blockedUsers = await this.api.getBlockedUsers();
+  private async getBlockedUsers(): Promise<void> {
+    this.blockedUsers = await this.api.blocks.getBlockedUsers();
   }
 
   /**
@@ -121,7 +121,7 @@ export class Client extends events.EventEmitter {
    * This keeps the notification/friend requests and counts
    * up to date. This Should only be used internally.
    */
-  private initTimers() {
+  private initTimers(): void {
     setInterval(() => {
       this.fetchFriendRequests();
     }, FRIEND_REQUEST_INTERVAL * 1000);

@@ -5,17 +5,53 @@ import { Content } from "../content/content";
 
 export type MessageType = "content" | "sticker" | "invite";
 
+/**
+ * Represents a message in the chat.
+ */
 export class Message {
+  /**
+   * The unique identifier of the message.
+   */
   id!: number;
+
+  /**
+   * The unique identifier of the user who sent the message.
+   */
   user_id!: number;
+
+  /**
+   * The user who sent the message.
+   */
   user!: User;
+
+  /**
+   * The unique identifier of the room where the message was sent.
+   */
   room_id!: number;
+
+  /**
+   * The content of the message.
+   */
   content!: string;
+
+  /**
+   * The date and time when the message was logged.
+   */
   logged_on!: Date;
+
+  /**
+   * The type of the message.
+   */
   type: MessageType;
 
+  /**
+   * Indicates if the message has been replied to already.
+   */
   private replied = false;
 
+  /**
+   * Gets the text content of the message.
+   */
   get textContent(): string {
     const doc = ContentDocument.fromJson(this.content);
     let result = "";
@@ -30,6 +66,9 @@ export class Message {
     return result;
   }
 
+  /**
+   * Gets the users mentioned in the message.
+   */
   get mentions(): User[] {
     const doc = ContentDocument.fromJson(this.content);
     const mentions: User[] = [];
@@ -43,10 +82,16 @@ export class Message {
     return mentions;
   }
 
+  /**
+   * Checks if the current user is mentioned in the message.
+   */
   get isMentioned(): boolean {
     return this.mentions.some((mention) => mention.id === this.client.userId);
   }
 
+  /**
+   * Checks if the message sender is the owner of the room.
+   */
   get isRoomOwner(): boolean {
     return (
       this.client.chat.activeRooms[this.room_id] &&
@@ -54,6 +99,9 @@ export class Message {
     );
   }
 
+  /**
+   * Gets the first mentioned user or the author of the message.
+   */
   get firstMentionOrAuthor(): User {
     let user = this.mentions[0];
     if (!user) {
@@ -82,11 +130,11 @@ export class Message {
 
   /**
    * Reply directly to this message.
-   *
    * @param message The content of the message.
    */
   reply(message: string | Content): Promise<Message> {
-    if (this.user.id === this.client.chat.currentUser.id) {
+    // Prevent replying to self.
+    if (this.user.id === this.client.chat.currentUser.id || this.replied) {
       return;
     }
 
@@ -99,9 +147,8 @@ export class Message {
   }
 
   /**
-   * Edit the message content.
-   *
-   * @param message The content of the message
+   * Edit the content of this message.
+   * @param message The edited content of the message.
    */
   edit(message: string | Content): void {
     if (this.user.id !== this.client.chat.currentUser.id) {
@@ -111,6 +158,10 @@ export class Message {
     this.client.chat.editMessage(message, this);
   }
 
+  /**
+   * Converts the message to a string representation.
+   * @returns The text content of the message.
+   */
   toString(): string {
     return this.textContent;
   }
