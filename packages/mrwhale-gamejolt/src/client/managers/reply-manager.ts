@@ -174,7 +174,7 @@ export class ReplyManager {
     }
 
     if (message.textContent.match(WHALE_REGEX)) {
-      return message.reply(message.toString().match(WHALE_REGEX)[0]);
+      return message.reply(message.toString().match(WHALE_REGEX)[0], false);
     } else if (message.textContent.match(SHUT_UP_REGEX)) {
       const content = new Content();
       content.insertText(

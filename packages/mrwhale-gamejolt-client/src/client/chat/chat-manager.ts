@@ -16,6 +16,7 @@ import { MediaItem } from "../../structures/media-item";
 import { Content } from "../../content/content";
 import { Message } from "../../structures/message";
 import { GridManager } from "../grid/grid-manager";
+import { toUniqueWhaleSpeak } from "../../util/to-unique-whale-speak";
 
 /**
  * Manages the websocket connection to the chat.
@@ -29,6 +30,11 @@ export class ChatManager extends events.EventEmitter {
   roomChannels: { [roomId: number]: RoomChannel } = {};
   activeRooms: { [roomId: number]: Room } = {};
   startTime: number;
+
+  /**
+   * A map containing whale translations.
+   */
+  readonly whaleTranslationMap: Map<string, string | Content> = new Map();
 
   readonly chatUrl: string;
   readonly client: Client;
@@ -95,7 +101,11 @@ export class ChatManager extends events.EventEmitter {
    * @param message The chat message content.
    * @param roomId The identifier of the room to send message.
    */
-  sendMessage(message: string | Content, roomId: number): Push {
+  sendMessage(
+    message: string | Content,
+    roomId: number,
+    whaleSpeak: boolean = false
+  ): Push {
     if (!this.rateLimiters[roomId]) {
       this.rateLimiters[roomId] = new RateLimiter(
         this.client.rateLimitRequests,
@@ -106,6 +116,24 @@ export class ChatManager extends events.EventEmitter {
     if (!this.rateLimiters[roomId].throttle()) {
       let content: Content;
       if (typeof message === "string") {
+        // Translate the message to whale speak
+        if (whaleSpeak) {
+          let whaleResponse: string;
+          do {
+            whaleResponse = toUniqueWhaleSpeak();
+          } while (this.whaleTranslationMap.has(whaleResponse)); // Ensure uniqueness
+
+          this.whaleTranslationMap.set(whaleResponse, message);
+
+          message = whaleResponse;
+
+          // Remove the whale translation after 10 minutes
+          setTimeout(
+            () => this.whaleTranslationMap.delete(whaleResponse),
+            10 * 60 * 1000
+          );
+        }
+
         content = new Content("chat-message", message);
       } else {
         content = message;
