@@ -2,6 +2,7 @@ import { User } from "./user";
 import { Client } from "../client/client";
 import { ContentDocument } from "../content/content-document";
 import { Content } from "../content/content";
+import { isAprilFools } from "../util/is-april-fools";
 
 export type MessageType = "content" | "sticker" | "invite";
 
@@ -85,14 +86,17 @@ export class Message {
    *
    * @param message The content of the message.
    */
-  reply(message: string | Content): Promise<Message> {
+  reply(
+    message: string | Content,
+    whaleSpeak: boolean = isAprilFools()
+  ): Promise<Message> {
     if (this.user.id === this.client.chat.currentUser.id) {
       return;
     }
 
     return new Promise<Message>((resolve, reject) => {
       this.client.grid.chat
-        .sendMessage(message, this.room_id)
+        .sendMessage(message, this.room_id, whaleSpeak)
         .receive("error", reject)
         .receive("ok", (data) => resolve(new Message(this.client, data)));
     });
