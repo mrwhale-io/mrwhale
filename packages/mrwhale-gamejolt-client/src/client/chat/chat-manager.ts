@@ -17,6 +17,7 @@ import { Content } from "../../content/content";
 import { Message } from "../../structures/message";
 import { GridManager } from "../grid/grid-manager";
 import { toUniqueWhaleSpeak } from "../../util/to-unique-whale-speak";
+import { isAprilFools } from "../../util/is-april-fools";
 
 /**
  * Manages the websocket connection to the chat.
@@ -35,6 +36,11 @@ export class ChatManager extends events.EventEmitter {
    * A map containing whale translations.
    */
   readonly whaleTranslationMap: Map<string, string | Content> = new Map();
+
+  /**
+   * A list of active timeout IDs for whale translations.
+   */
+  private activeTimeouts: Set<NodeJS.Timeout> = new Set();
 
   readonly chatUrl: string;
   readonly client: Client;
@@ -104,7 +110,7 @@ export class ChatManager extends events.EventEmitter {
   sendMessage(
     message: string | Content,
     roomId: number,
-    whaleSpeak: boolean = false
+    whaleSpeak: boolean = isAprilFools()
   ): Push {
     if (!this.rateLimiters[roomId]) {
       this.rateLimiters[roomId] = new RateLimiter(
@@ -119,22 +125,41 @@ export class ChatManager extends events.EventEmitter {
         // Translate the message to whale speak
         if (whaleSpeak) {
           let whaleResponse: string;
-          do {
-            whaleResponse = toUniqueWhaleSpeak();
-          } while (this.whaleTranslationMap.has(whaleResponse)); // Ensure uniqueness
 
-          this.whaleTranslationMap.set(whaleResponse, message);
+          // Check if the message is already in the whaleTranslationMap
+          for (const [key, value] of this.whaleTranslationMap.entries()) {
+            if (value === message) {
+              whaleResponse = key; // Reuse the existing translation
+              break;
+            }
+          }
 
+          if (!whaleResponse) {
+            do {
+              whaleResponse = toUniqueWhaleSpeak();
+            } while (this.whaleTranslationMap.has(whaleResponse)); // Ensure uniqueness
+
+            this.whaleTranslationMap.set(whaleResponse, message);
+
+            // Remove the whale translation after 10 minutes
+            const timeoutId = setTimeout(() => {
+              this.whaleTranslationMap.delete(whaleResponse);
+              this.activeTimeouts.delete(timeoutId);
+            }, 10 * 60 * 1000);
+
+            this.activeTimeouts.add(timeoutId);
+          }
           message = whaleResponse;
-
-          // Remove the whale translation after 10 minutes
-          setTimeout(
-            () => this.whaleTranslationMap.delete(whaleResponse),
-            10 * 60 * 1000
-          );
         }
 
-        content = new Content("chat-message", message);
+        const markdownRegex = /(\*\*|__|~~|`|```|#|\[.*?\]\(.*?\))/; // Common Markdown patterns
+        const containsMarkdown = markdownRegex.test(message);
+
+        if (containsMarkdown) {
+          content = new Content("chat-message", message);
+        } else {
+          content = new Content().insertText(message);
+        }
       } else {
         content = message;
       }
@@ -215,6 +240,13 @@ export class ChatManager extends events.EventEmitter {
     this.groupIds = [];
     this.groups = [];
     this.startTime = Date.now();
+
+    // Clear all active timeouts
+    this.activeTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+    this.activeTimeouts.clear();
+
+    // Clear the whale translation map
+    this.whaleTranslationMap.clear();
   }
 
   destroy(): void {

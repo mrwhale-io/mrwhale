@@ -5,5 +5,5 @@
  */
 export function isAprilFools(): boolean {
   const now = new Date();
-  return now.getDate() === 1 && now.getMonth() === 3 - 1;
+  return now.getDate() === 1 && now.getMonth() === 3;
 }
