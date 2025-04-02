@@ -127,10 +127,11 @@ export class LevelManager {
     const newLevel = getLevelFromExp(score.exp);
 
     if (newLevel > level) {
-      this.bot.chat.sendMessage(
-        `Congrats @${message.user.username}, you just advanced to level ${newLevel}!`,
-        message.room_id
+      const content = new Content().insertText(
+        `Congrats @${message.user.username}, you just advanced to level ${newLevel}!`
       );
+
+      this.bot.chat.sendMessage(content, message.room_id);
     }
   }
 }

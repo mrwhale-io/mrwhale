@@ -13,4 +13,3 @@ export { GameOverview } from "./structures/game-overview";
 export { UserCollection } from "./structures/user-collection";
 export { Client } from "./client/client";
 export { Content } from "./content/content";
-export { toUniqueWhaleSpeak } from "./util/to-unique-whale-speak";

@@ -5,7 +5,6 @@ import {
   Content,
   User,
   FiresidePost,
-  toUniqueWhaleSpeak,
 } from "@mrwhale-io/gamejolt-client";
 import { AxiosResponse } from "axios";
 
@@ -156,11 +155,6 @@ const COMEBACKS = [
 ];
 
 export class ReplyManager {
-  /**
-   * A list of active timeout IDs for whale translations.
-   */
-  private activeTimeouts: Set<NodeJS.Timeout> = new Set();
-
   constructor(private bot: GameJoltBotClient) {
     registerListeners(this.bot.client, this);
   }
@@ -180,13 +174,16 @@ export class ReplyManager {
     }
 
     if (message.textContent.match(WHALE_REGEX)) {
-      return message.reply(message.toString().match(WHALE_REGEX)[0], false);
+      return message.reply(message.toString().match(WHALE_REGEX)[0]);
     } else if (message.textContent.match(SHUT_UP_REGEX)) {
-      return message.reply(
+      const content = new Content();
+      content.insertText(
         `@${message.user.username} ${
           COMEBACKS[Math.floor(Math.random() * COMEBACKS.length)]
         }`
       );
+
+      return message.reply(content);
     }
 
     const pm = this.bot.friendsList.getByRoom(message.room_id);
@@ -202,13 +199,16 @@ export class ReplyManager {
           message.isMentioned ||
           message.textContent.match(WHALE_USER_REGEX))
       ) {
-        return message.reply(
+        const content = new Content();
+        content.insertText(
           `@${message.user.username} ${
             response.responses[
               Math.floor(Math.random() * response.responses.length)
             ]
           }`
         );
+
+        return message.reply(content);
       }
     }
   }
@@ -241,27 +241,11 @@ export class ReplyManager {
           (!response.mentionOnly ||
             notification.action_model.leadStr.match(WHALE_USER_REGEX))
         ) {
-          const actualMessage =
+          content.insertText(
             response.responses[
               Math.floor(Math.random() * response.responses.length)
-            ];
-          let whaleResponse: string;
-          do {
-            whaleResponse = toUniqueWhaleSpeak();
-          } while (this.bot.chat.whaleTranslationMap.has(whaleResponse)); // Ensure uniqueness
-
-          content.insertText(whaleResponse);
-
-          this.bot.chat.whaleTranslationMap.set(whaleResponse, actualMessage);
-
-          // Remove the whale translation after 10 minutes
-          const timeoutId = setTimeout(() => {
-            this.bot.chat.whaleTranslationMap.delete(whaleResponse);
-            this.activeTimeouts.delete(timeoutId);
-          }, 10 * 60 * 1000);
-
-          this.activeTimeouts.add(timeoutId);
-
+            ]
+          );
           return this.bot.client.api.comment(
             notification.action_resource_id,
             notification.action_resource,

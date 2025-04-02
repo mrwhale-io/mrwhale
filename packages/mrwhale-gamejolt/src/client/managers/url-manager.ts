@@ -54,7 +54,7 @@ export class UrlManager {
           new GameOverview(overviewResult)
         );
         if (gameResponse) {
-          this.bot.chat.sendMessage(gameResponse, message.room_id, false);
+          this.bot.chat.sendMessage(gameResponse, message.room_id);
         }
       }
     }
