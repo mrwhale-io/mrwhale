@@ -10,6 +10,6 @@ export { Comment } from "./structures/comment";
 export { Notification } from "./structures/notification";
 export { FiresidePost } from "./structures/fireside-post";
 export { GameOverview } from "./structures/game-overview";
-export { UserCollection } from "./structures/user-collection";
+export { UserCollection } from "./collections/user-collection";
 export { Client } from "./client/client";
 export { Content } from "./content/content";

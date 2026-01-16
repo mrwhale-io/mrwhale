@@ -1,3 +1,5 @@
+import { Logger } from "./logger";
+
 /**
  * Contains properties to be passed to a Client on construction.
  */
@@ -42,4 +44,9 @@ export interface ClientOptions {
    * The token that let's Game Jolt know that the client is Mr. Whale.
    */
   mrwhaleToken: string;
+
+  /**
+   * The logger instance.
+   */
+  logger?: Logger;
 }

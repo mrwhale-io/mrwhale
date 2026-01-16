@@ -7,42 +7,43 @@ export type MessageType = "content" | "sticker" | "invite";
 
 /**
  * Represents a message in the chat.
+ * This class also provides methods to interact with the message, such as replying and editing.
  */
 export class Message {
   /**
    * The unique identifier of the message.
    */
-  id!: number;
+  readonly id!: number;
 
   /**
    * The unique identifier of the user who sent the message.
    */
-  user_id!: number;
+  readonly user_id!: number;
 
   /**
    * The user who sent the message.
    */
-  user!: User;
+  readonly user!: User;
 
   /**
    * The unique identifier of the room where the message was sent.
    */
-  room_id!: number;
+  readonly room_id!: number;
 
   /**
    * The content of the message.
    */
-  content!: string;
+  readonly content!: string;
 
   /**
    * The date and time when the message was logged.
    */
-  logged_on!: Date;
+  readonly logged_on!: Date;
 
   /**
    * The type of the message.
    */
-  type: MessageType;
+  readonly type: MessageType;
 
   /**
    * Indicates if the message has been replied to already.
@@ -76,10 +77,8 @@ export class Message {
    * Checks if the message sender is the owner of the room.
    */
   get isRoomOwner(): boolean {
-    return (
-      this.client.chat.activeRooms[this.room_id] &&
-      this.user.id === this.client.chat.activeRooms[this.room_id].owner_id
-    );
+    const room = this.client.chat.activeRooms.get(this.room_id);
+    return room && this.user.id === room.owner_id;
   }
 
   /**
@@ -125,7 +124,9 @@ export class Message {
       this.client.grid.chat
         .sendMessage(message, this.room_id)
         .receive("error", reject)
-        .receive("ok", (data) => resolve(new Message(this.client, data)));
+        .receive("ok", (data: Partial<Message>) =>
+          resolve(new Message(this.client, data))
+        );
     });
   }
 

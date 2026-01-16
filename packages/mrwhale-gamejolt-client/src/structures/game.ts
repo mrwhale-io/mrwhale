@@ -7,52 +7,52 @@ export class Game {
   /**
    * The unique identifier for the game.
    */
-  id: number;
+  readonly id: number;
 
   /**
    * The title of the game.
    */
-  title: string;
+  readonly title: string;
 
   /**
    * The developer of the game.
    */
-  developer: User;
+  readonly developer: User;
 
   /**
    * The timestamp when the game was published.
    */
-  published_on: number;
+  readonly published_on: number;
 
   /**
    * The timestamp when the game was posted.
    */
-  posted_on: number;
+  readonly posted_on: number;
 
   /**
    * The number of followers the game has.
    */
-  follower_count: number;
+  readonly follower_count: number;
 
   /**
    * The TIGRS rating of the game.
    */
-  tigrs: number;
+  readonly tigrs: number;
 
   /**
    * The tool used to create the game.
    */
-  creation_tool: string;
+  readonly creation_tool: string;
 
   /**
    * The human-readable name of the creation tool.
    */
-  creation_tool_human: string;
+  readonly creation_tool_human: string;
 
   /**
    * The category of the game.
    */
-  category: string;
+  readonly category: string;
 
   /**
    * @param data Partial data to initialize the game.

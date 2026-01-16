@@ -66,7 +66,16 @@ export class GridManager extends events.EventEmitter {
    */
   readonly chat: ChatManager;
 
+  /**
+   * The frontend identifier used for authentication.
+   * This is a read-only property.
+   */
   private frontend: string;
+
+  /**
+   * The token used to tell Game Jolt that the client is Mr. Whale.
+   * This is a read-only property.
+   */
   private mrwhaleToken: string;
 
   /**
@@ -187,12 +196,12 @@ export class GridManager extends events.EventEmitter {
       this.restart(0);
     });
 
-    this.chat.joinUserChannel();
+    await this.chat.joinUserChannel();
   }
 
   /**
    * Disconnects the client from the server.
-   * 
+   *
    * @returns A promise that resolves when the disconnection process is complete.
    */
   async disconnect(): Promise<void> {

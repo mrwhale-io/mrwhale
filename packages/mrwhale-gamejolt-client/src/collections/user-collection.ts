@@ -1,19 +1,26 @@
-import { Room } from "./room";
-import { User } from "./user";
+import { Room } from "../structures/room";
+import { User } from "../structures/user";
 
 /**
  * Represents a collection of users.
  */
 export class UserCollection {
   /**
+   * The number of users in the collection.
+   */
+  get count(): number {
+    return this.collection.length;
+  }
+
+  /**
    * The collection of users.
    */
-  collection: User[] = [];
+  private collection: User[] = [];
 
   /**
    * @param users - An optional array of user data to initialize the collection.
    */
-  constructor(users: any[] = []) {
+  constructor(users: Partial<User>[] = []) {
     if (users && users.length) {
       for (const user of users) {
         this.collection.push(new User(user));

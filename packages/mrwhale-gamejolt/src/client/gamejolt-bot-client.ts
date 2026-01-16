@@ -143,21 +143,25 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     this.logger.info(
       `Client ready! Connected as @${this.chat.currentUser.username}`
     );
+    this.joinRoom(123456789);
   }
 
   @on("notification")
-  protected onNotification(message: Message): void {
-    // Join the room channel if haven't joined already.
-    if (message && !this.chat.roomChannels[message.room_id]) {
-      this.joinRoom(message.room_id).receive("ok", () => {
+  protected async onNotification(message: Message): Promise<void> {
+    try {
+      // Join the room channel if not already joined.
+      if (message && !this.chat.roomChannels[message.room_id]) {
+        await this.joinRoom(message.room_id);
         this.client.emit("message", message);
-      });
-    }
+      }
 
-    // Accept chat invite.
-    if (message && message.type === "invite") {
-      const invite = JSON.parse(message.content);
-      this.chat.acceptInvite(invite.content[0].attrs.id);
+      // Accept chat invite.
+      if (message && message.type === "invite") {
+        const invite = JSON.parse(message.content);
+        this.chat.acceptInvite(invite.content[0].attrs.id);
+      }
+    } catch (error) {
+      this.logger.error(`Error handling notification: ${error.message}`, error);
     }
   }
 
@@ -294,9 +298,12 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     this.intervals.delete(interval);
   }
 
-  private joinRoom(roomId: number) {
-    return this.chat.joinRoom(roomId).receive("ok", () => {
-      this.roomStorageLoader.loadRoomSettings(roomId);
-    });
+  private async joinRoom(roomId: number) {
+    try {
+      await this.chat.joinRoom(roomId);
+
+    } catch (e) {
+      this.logger.error(`Error joining room ${roomId}: ${e.message}`);
+    }
   }
 }

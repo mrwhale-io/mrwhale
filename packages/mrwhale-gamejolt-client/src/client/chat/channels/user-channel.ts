@@ -7,27 +7,53 @@ import { Message } from "../../../structures/message";
 import { Room } from "../../../structures/room";
 import { FriendRemovePayload } from "../../../types/friend-remove-payload";
 import { GroupAddPayload } from "../../../types/group-add-payload";
-import { UserCollection } from "src/structures/user-collection";
+import { UserCollection } from "../../../collections/user-collection";
 import { UserChannelResponse } from "../../../types/user-channel-response";
+import { pollRequest } from "../../../util/poll-request";
+import { Client } from "../../../client/client";
 
-const USER_TOPIC_PREFIX = "user:";
+const USER_CHANNEL_TOPIC_PREFIX = "user:";
 
 /**
- * Represents a user specific channel.
- * This class extends the base `Channel` class and handles various user-related events.
+ * Represents a user-specific chat channel in the system.
+ *
+ * The `UserChannel` class extends the base `Channel` class and provides
+ * functionality for managing user-specific chat interactions, such as
+ * handling friends, group chats, and notifications. It also integrates
+ * with the chat manager and socket connection to facilitate real-time
+ * communication.
+ *
+ * ### Features:
+ * - Maintains the current user's information.
+ * - Manages the user's friends list and group chats.
+ * - Handles various chat-related events, such as friend updates, group
+ *   additions, and notifications.
+ * - Provides methods to join the user channel and process server responses.
+ *
+ * ### Events:
+ * - `FRIEND_UPDATED`: Triggered when a friend's information is updated.
+ * - `FRIEND_ADD`: Triggered when a new friend is added.
+ * - `FRIEND_REMOVE`: Triggered when a friend is removed.
+ * - `NOTIFICATION`: Triggered when a new notification is received.
+ * - `YOU_UPDATED`: Triggered when the current user's information is updated.
+ * - `GROUP_ADD`: Triggered when a new group chat is added.
+ * - `GROUP_LEAVE`: Triggered when the user leaves a group chat.
+ *
+ * ### Usage:
+ * This class is instantiated with a user ID, a chat manager instance, and
+ * optional parameters. It automatically subscribes to relevant events and
+ * manages the user's chat-related data.
  */
 export class UserChannel extends Channel {
   /**
-   * The chat manager instance associated with this user channel.
-   * This provides methods and properties to manage chat functionalities.
+   * The identifier of the user.
    */
-  readonly chat: ChatManager;
+  readonly userId: number;
 
   /**
-   * The socket connection used by the user channel.
-   * This is the same socket connection used by the chat manager.
+   * The client associated with this channel.
    */
-  readonly socket: Socket;
+  readonly client: Client;
 
   /**
    * Gets the current user.
@@ -78,6 +104,18 @@ export class UserChannel extends Channel {
   private _groupIds: number[] = [];
 
   /**
+   * The chat manager instance associated with this user channel.
+   * This provides methods and properties to manage chat functionalities.
+   */
+  private _chat: ChatManager;
+
+  /**
+   * The socket connection used by the user channel.
+   * This is the same socket connection used by the chat manager.
+   */
+  private _socket: Socket;
+
+  /**
    * @param userId The Id of the user.
    * @param chat The chat manager instance.
    * @param params Optional parameters for the channel.
@@ -87,10 +125,16 @@ export class UserChannel extends Channel {
     chat: ChatManager,
     params?: Record<string, unknown>
   ) {
-    super(USER_TOPIC_PREFIX + userId, params, chat.grid.socket as Socket);
-    this.chat = chat;
-    this.socket = chat.grid.socket as Socket;
-    this.socket.channels.push(this);
+    super(
+      USER_CHANNEL_TOPIC_PREFIX + userId,
+      params,
+      chat.grid.socket as Socket
+    );
+    this.userId = userId;
+    this.client = chat.client;
+    this._chat = chat;
+    this._socket = chat.grid.socket as Socket;
+    this._socket.channels.push(this);
 
     this.on(Events.FRIEND_UPDATED, this.onFriendUpdated.bind(this));
     this.on(Events.FRIEND_ADD, this.onFriendAdd.bind(this));
@@ -108,36 +152,63 @@ export class UserChannel extends Channel {
    * Upon successful joining, it processes the response to set up the current user, friends list,
    * groups, and group IDs. Finally, it emits a "chat_ready" event with the response data.
    */
-  joinUserChannel(): void {
-    this.join().receive("ok", (response: UserChannelResponse) => {
-      const currentUser = new User(response.user);
-      const friendsList = new UserCollection(response.friends || []);
-      this._currentUser = currentUser;
-      this._friendsList = friendsList;
-      this._groups = response.groups;
-      this._groupIds =
-        response.groups_ids || this._groups.map((group) => group.id);
-      this.chat.client.emit(Events.CHAT_READY, response);
-    });
+  async joinUserChannel(): Promise<void> {
+    try {
+      const response = await pollRequest<UserChannelResponse>(
+        "Join user channel",
+        () =>
+          new Promise((resolve, reject) => {
+            this.join()
+              .receive("ok", (response: UserChannelResponse) =>
+                resolve(response)
+              )
+              .receive("error", reject);
+          })
+      );
+      this.processJoinResponse(response);
+      this.client.emit(Events.CHAT_READY, response);
+      this.client.logger.info(
+        `Successfully joined user channel for user Id: ${this.userId}.`
+      );
+    } catch (error) {
+      this.client.logger.error(
+        `Failed to join user channel for user Id: ${this.userId}. Error: ${
+          error.message || error
+        }`
+      );
+    }
+  }
+
+  /**
+   * Processes the response from the server after successfully joining the user channel.
+   *
+   * @param response The response data from the server.
+   */
+  private processJoinResponse(response: UserChannelResponse): void {
+    const currentUser = new User(response.user);
+    const friendsList = new UserCollection(response.friends || []);
+    this._currentUser = currentUser;
+    this._friendsList = friendsList;
+    this._groups = response.groups;
+    this._groupIds =
+      response.groups_ids || this._groups.map((group) => group.id);
   }
 
   private onFriendAdd(data: Partial<User>): void {
-    const { client } = this.chat;
-
     if (!data || !data.id || !data.username) {
+      this.logInvalidEventPayloadWarning(Events.FRIEND_ADD, data);
       return;
     }
 
     const newFriend = new User(data);
     this.friendsList.add(newFriend);
 
-    client.emit(Events.FRIEND_ADD, newFriend);
+    this.client.emit(Events.FRIEND_ADD, newFriend);
   }
 
   private onFriendRemove(data: FriendRemovePayload): void {
-    const { client } = this.chat;
-
     if (!data || !data.user_id) {
+      this.logInvalidEventPayloadWarning(Events.FRIEND_REMOVE, data);
       return;
     }
 
@@ -146,43 +217,36 @@ export class UserChannel extends Channel {
 
     if (friend) {
       if (friend.room_id) {
-        this.chat.leaveRoom(friend.room_id);
+        this._chat.leaveRoom(friend.room_id);
       }
     }
     this.friendsList.remove(user_id);
 
-    client.emit(Events.FRIEND_REMOVE, user_id);
+    this.client.emit(Events.FRIEND_REMOVE, user_id);
   }
 
   private onFriendUpdated(data: Partial<User>): void {
-    const { client } = this.chat;
     const userId = data.id;
 
     if (data && data.id && data.username) {
       this.friendsList.update(new User(data));
     }
 
-    if (userId) {
-      this.friendsList.update(new User(data));
-    }
-
-    client.emit(Events.FRIEND_UPDATED, userId);
+    this.client.emit(Events.FRIEND_UPDATED, userId);
   }
 
   private onNotification(data: Partial<Message>): void {
-    const { client } = this.chat;
-
     if (!data || !data.id || !data.content || !data.user_id) {
+      this.logInvalidEventPayloadWarning(Events.NOTIFICATION, data);
       return;
     }
 
-    client.emit(Events.NOTIFICATION, new Message(client, data));
+    this.client.emit(Events.NOTIFICATION, new Message(this.client, data));
   }
 
   private onYouUpdated(data: Partial<User>): void {
-    const { client } = this.chat;
-
     if (!data || !data.id || !data.username) {
+      this.logInvalidEventPayloadWarning(Events.YOU_UPDATED, data);
       return;
     }
 
@@ -190,13 +254,12 @@ export class UserChannel extends Channel {
 
     this._currentUser = newUser;
 
-    client.emit(Events.YOU_UPDATED, newUser);
+    this.client.emit(Events.YOU_UPDATED, newUser);
   }
 
   private onGroupAdd(data: GroupAddPayload): void {
-    const { client } = this.chat;
-
     if (!data || !data.room) {
+      this.logInvalidEventPayloadWarning(Events.GROUP_ADD, data);
       return;
     }
 
@@ -204,13 +267,12 @@ export class UserChannel extends Channel {
 
     this.groupIds.push(room.id);
 
-    client.emit(Events.GROUP_ADD, new Room(room));
+    this.client.emit(Events.GROUP_ADD, new Room(this.client, room));
   }
 
   private onGroupLeave(data: { room_id: number }): void {
-    const { client } = this.chat;
-
     if (!data || !data.room_id) {
+      this.logInvalidEventPayloadWarning(Events.GROUP_LEAVE, data);
       return;
     }
 
@@ -219,10 +281,22 @@ export class UserChannel extends Channel {
     const index = this.groupIds.findIndex((id) => id === room_id);
 
     if (index !== -1) {
-      this.chat.leaveRoom(room_id);
+      this._chat.leaveRoom(room_id);
       this.groupIds.splice(index, 1);
     }
 
-    client.emit(Events.GROUP_LEAVE, room_id);
+    this.client.emit(Events.GROUP_LEAVE, room_id);
+  }
+
+  private logInvalidEventPayloadWarning<T>(event: string, payload: T): void {
+    const formattedPayload = JSON.stringify(payload, null, 2);
+    const truncatedPayload =
+      formattedPayload.length > 500
+        ? `${formattedPayload.substring(0, 500)}... (truncated)`
+        : formattedPayload;
+
+    this.client.logger.warn(
+      `Invalid event payload received for event: ${event}. Payload: ${truncatedPayload}`
+    );
   }
 }

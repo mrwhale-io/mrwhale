@@ -8,122 +8,122 @@ export class FiresidePost {
   /**
    * The unique identifier of the post.
    */
-  id!: number;
+  readonly id!: number;
 
   /**
    * The type of the post.
    */
-  type!: "text" | "media" | "video" | "sketchfab" | "comment-video";
+  readonly type!: "text" | "media" | "video" | "sketchfab" | "comment-video";
 
   /**
    * The hash of the post.
    */
-  hash!: string;
+  readonly hash!: string;
 
   /**
    * The status of the post.
    */
-  status!: string;
+  readonly status!: string;
 
   /**
    * The timestamp when the post was added.
    */
-  added_on!: number;
+  readonly added_on!: number;
 
   /**
    * The timestamp when the post was last updated.
    */
-  updated_on!: number;
+  readonly updated_on!: number;
 
   /**
    * The timestamp when the post was published.
    */
-  published_on!: number;
+  readonly published_on!: number;
 
   /**
    * The timezone for the scheduled post.
    */
-  scheduled_for_timezone!: string | null;
+  readonly scheduled_for_timezone!: string | null;
 
   /**
    * The timestamp for when the post is scheduled.
    */
-  scheduled_for!: number | null;
+  readonly scheduled_for!: number | null;
 
   /**
    * The number of likes the post has received.
    */
-  like_count!: number;
+  readonly like_count!: number;
 
   /**
    * The number of comments on the post.
    */
-  comment_count!: number;
+  readonly comment_count!: number;
 
   /**
    * The user who created the post.
    */
-  user!: User;
+  readonly user!: User;
 
   /**
    * The game associated with the post, if any.
    */
-  game?: Game;
+  readonly game?: Game;
 
   /**
    * Indicates if the post is made by the game owner.
    */
-  as_game_owner!: boolean;
+  readonly as_game_owner!: boolean;
 
   /**
    * Indicates if the post should be published to the user's profile.
    */
-  post_to_user_profile!: boolean;
+  readonly post_to_user_profile!: boolean;
 
   /**
    * The slug of the post.
    */
-  slug!: string;
+  readonly slug!: string;
 
   /**
    * The subline of the post.
    */
-  subline!: string;
+  readonly subline!: string;
 
   /**
    * The URL of the post.
    */
-  url!: string;
+  readonly url!: string;
 
   /**
    * The number of views the post has received.
    */
-  view_count?: number;
+  readonly view_count?: number;
 
   /**
    * Indicates if the post is pinned.
    */
-  is_pinned!: boolean;
+  readonly is_pinned!: boolean;
 
   /**
    * Indicates if the post has an article.
    */
-  has_article!: boolean;
+  readonly has_article!: boolean;
 
   /**
    * The lead content of the post.
    */
-  lead_content!: string;
+  readonly lead_content!: string;
 
   /**
    * The lead string of the post.
    */
-  leadStr!: string;
+  readonly leadStr!: string;
 
   /**
    * The article content of the post.
    */
-  article_content!: string;
+  readonly article_content!: string;
 
   /**
    * Creates an instance of FiresidePost.

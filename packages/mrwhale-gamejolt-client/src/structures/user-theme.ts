@@ -5,41 +5,41 @@ export class UserTheme {
   /**
    * The unique identifier for the theme.
    */
-  id!: number;
+  readonly id!: number;
 
   /**
    * The color used for highlights.
    * @default "ccff00"
    */
-  highlight!: string;
+  readonly highlight!: string;
 
   /**
    * The color used for backlights.
    * @default "2f7f6f"
    */
-  backlight!: string;
+  readonly backlight!: string;
 
   /**
    * The color used for notices.
    * @default "ff3fac"
    */
-  notice!: string;
+  readonly notice!: string;
 
   /**
    * The color used for tints.
    * @default "4800ff"
    */
-  tint?: string;
+  readonly tint?: string;
 
   /**
    * The identifier for the theme preset.
    */
-  theme_preset_id?: number;
+  readonly theme_preset_id?: number;
 
   /**
    * Custom theme settings in a string format.
    */
-  custom?: string;
+  readonly custom?: string;
 
   /**
    * @param data Partial data to initialize the UserTheme instance.

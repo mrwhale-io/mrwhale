@@ -8,11 +8,33 @@ import { User } from "../structures/user";
 import { GridManager } from "./grid/grid-manager";
 import { Notification } from "../structures/notification";
 import { Block } from "../structures/block";
+import { Events } from "../constants";
+import { Logger } from "../types/logger";
+import { defaultLogger } from "../util/default-logger";
 
 const FRIEND_REQUEST_INTERVAL = 60 * 1000;
 
 /**
- * The main client for interacting with the chat and site api.
+ * Represents the main client for interacting with the Game Jolt API and grid system.
+ * The `Client` class provides access to various managers, such as `APIManager` and `GridManager`,
+ * and facilitates communication with the Game Jolt platform through events and API requests.
+ *
+ * @example
+ * ```typescript
+ * const client = new Client({
+ *  userId: 12345,
+ *  frontend: config.frontend,
+ *  mrwhaleToken: config.mrwhaleToken,
+ * });
+ * 
+ * client.chat.joinRoom(12345);
+ * 
+ * client.on("message", (message: Message) => {
+ *  if (message.textContent === "ping") {
+ *    message.reply("pong");
+ *  }
+ * });
+ * ```
  */
 export class Client extends events.EventEmitter {
   /**
@@ -42,7 +64,7 @@ export class Client extends events.EventEmitter {
   readonly rateLimitDuration: number;
 
   /**
-   * Get the chat client.
+   * Gets the ChatManager instance associated with the current grid.
    */
   get chat(): ChatManager {
     return this.grid.chat;
@@ -56,11 +78,17 @@ export class Client extends events.EventEmitter {
   }
 
   /**
+   * The logger instance.
+   */
+  readonly logger: Logger;
+
+  /**
    * @param options The client options.
    */
   constructor(options: ClientOptions) {
     super();
     this.userId = options.userId;
+    this.logger = options.logger || defaultLogger;
     this.grid = new GridManager(this, {
       frontend: options.frontend,
       baseUrl: options.baseGridUrl,
@@ -74,16 +102,6 @@ export class Client extends events.EventEmitter {
     this.rateLimitRequests = options.rateLimitRequests || 1;
     this.rateLimitDuration = options.rateLimitDuration || 1;
     this.initTimers();
-  }
-
-  /**
-   * Send a request to the site api to fetch the client user's friend requests.
-   */
-  async fetchFriendRequests(): Promise<void> {
-    const requests = await this.api.friends.getFriendRequests();
-    if (requests) {
-      this.emit("friend_requests", requests);
-    }
   }
 
   on(event: "message", listener: (data: Message) => void): this;
@@ -111,6 +129,17 @@ export class Client extends events.EventEmitter {
   on(event: "user_notification", listener: (data: Notification) => void): this;
   on(event: string, listener: (...args: never[]) => void): this {
     return super.on(event, listener);
+  }
+
+  /**
+   * Send a request to the site api to fetch the client user's friend requests.
+   * Emits a `friend_requests` event with the friend requests.
+   */
+  private async fetchFriendRequests(): Promise<void> {
+    const requests = await this.api.friends.getFriendRequests();
+    if (requests) {
+      this.emit(Events.FRIEND_REQUESTS, requests);
+    }
   }
 
   /**

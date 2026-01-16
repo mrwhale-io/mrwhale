@@ -7,62 +7,62 @@ export class Comment {
   /**
    * The unique identifier of the comment.
    */
-  id!: number;
+  readonly id!: number;
 
   /**
    * The identifier of the parent comment, if any.
    */
-  parent_id!: number;
+  readonly parent_id!: number;
 
   /**
    * The type of resource the comment is associated with.
    */
-  resource!: "Game" | "Fireside_Post" | "User";
+  readonly resource!: "Game" | "Fireside_Post" | "User";
 
   /**
    * The identifier of the resource the comment is associated with.
    */
-  resource_id!: number;
+  readonly resource_id!: number;
 
   /**
    * The user who posted the comment.
    */
-  user!: User;
+  readonly user!: User;
 
   /**
    * The number of votes the comment has received.
    */
-  votes!: number;
+  readonly votes!: number;
 
   /**
    * The status of the comment.
    */
-  status!: number;
+  readonly status!: number;
 
   /**
    * The timestamp when the comment was posted.
    */
-  posted_on!: number;
+  readonly posted_on!: number;
 
   /**
    * The timestamp when the comment was last modified, if any.
    */
-  modified_on?: number;
+  readonly modified_on?: number;
 
   /**
    * The language of the comment.
    */
-  lang!: string;
+  readonly lang!: string;
 
   /**
    * Indicates whether the comment is pinned.
    */
-  is_pinned!: boolean;
+  readonly is_pinned!: boolean;
 
   /**
    * The content of the comment.
    */
-  comment_content!: string;
+  readonly comment_content!: string;
 
   /**
    * @param data Partial data to initialize the comment.

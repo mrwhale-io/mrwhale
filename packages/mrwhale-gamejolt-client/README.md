@@ -4,12 +4,18 @@ Client that allows you to connect and interact with the [Game Jolt](https://game
 
 ## Table of Contents
 
+- [Introduction](#introduction)
 - [Install](#install)
 - [Usage](#usage)
 - [Features](#features)
 - [Configuration](#configuration)
 - [Examples](#examples)
 - [License](#license)
+
+
+## Introduction
+
+The `@mrwhale-io/gamejolt-client` is a powerful client library that allows you to connect and interact with the Game Jolt chat server and site API. It provides a wide range of features to manage chat functionalities, friends, groups, and more.
 
 ## Install
 
@@ -92,7 +98,7 @@ const groupIds = client.chat.groupIds;
 You can fetch friend requests using the following method
 
 ```ts
-const friendRequests = await client.fetchFriendRequests();
+const friendRequests = await client.api.friends.getFriendRequests();
 ```
 
 Or you can listen on the `friend_requests` event which fires every minute

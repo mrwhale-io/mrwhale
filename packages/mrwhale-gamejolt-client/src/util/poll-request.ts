@@ -1,5 +1,10 @@
+import { delay } from "./delay";
+
 /**
  * Polls a request until it succeeds.
+ * The request will be retried with an increasing delay if it fails.
+ * The delay is randomized to prevent multiple clients from retrying at the same time.
+ * The delay will be capped at 30 seconds.
  *
  * @template T The type of the result returned by the request.
  * @param context A string representing the context of the request, used for logging purposes.
@@ -14,7 +19,7 @@ export async function pollRequest<T>(
 ): Promise<T> {
   let result = null;
   let finished = false;
-  let delay = 0;
+  let delayCount = 0;
 
   while (!finished) {
     try {
@@ -22,14 +27,13 @@ export async function pollRequest<T>(
       result = await promise;
       finished = true;
     } catch (e) {
-      const sleepMs = Math.min(30000, Math.random() * delay * 1000 + 1000);
+      const sleepMs = Math.min(30000, Math.random() * delayCount * 1000 + 1000);
       console.error(`Failed request [${context}]. Reattempt in ${sleepMs} ms.`);
-      await new Promise((resolve) => {
-        setTimeout(resolve, sleepMs);
-      });
+
+      await delay(sleepMs);
     }
 
-    delay++;
+    delayCount++;
   }
 
   return result;

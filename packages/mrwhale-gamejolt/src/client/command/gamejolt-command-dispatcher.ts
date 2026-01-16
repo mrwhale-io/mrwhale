@@ -24,6 +24,7 @@ export class GameJoltCommandDispatcher {
   }
 
   private async handleMessage(message: Message) {
+    console.log(message);
     if (message.user.id === this.bot.client.userId || !this._ready) {
       return;
     }

@@ -5,17 +5,17 @@ export class GameOverview {
   /**
    * The number of times the game has been viewed.
    */
-  profileCount: number;
+  readonly profileCount: number;
 
   /**
    * The number of times the game has been downloaded.
    */
-  downloadCount: number;
+  readonly downloadCount: number;
 
   /**
    * The number of times the game has been played.
    */
-  playCount: number;
+  readonly playCount: number;
 
   /**
    * @param data Partial data to initialize the GameOverview instance.

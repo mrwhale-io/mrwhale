@@ -4,7 +4,7 @@ import { Push } from "phoenix-channels";
 
 import { Client } from "../client";
 import { User } from "../../structures/user";
-import { UserCollection } from "../../structures/user-collection";
+import { UserCollection } from "../../collections/user-collection";
 import { RateLimiter } from "./rate-limiter";
 
 import { ContentDocument } from "../../content/content-document";
@@ -16,6 +16,8 @@ import { MediaItem } from "../../structures/media-item";
 import { Content } from "../../content/content";
 import { Message } from "../../structures/message";
 import { GridManager } from "../grid/grid-manager";
+import { RoomCollection } from "../../collections/room-collection";
+import { KeyedCollection } from "src/util/keyed-collection";
 
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
@@ -71,7 +73,7 @@ export class ChatManager extends events.EventEmitter {
    * Gets the room channels the user is in.
    * The key is the room id and the value is the room channel.
    */
-  get roomChannels(): { [roomId: number]: RoomChannel } {
+  get roomChannels(): KeyedCollection<number, RoomChannel> {
     return this._roomChannels;
   }
 
@@ -79,7 +81,7 @@ export class ChatManager extends events.EventEmitter {
    * Gets the active rooms the user is in.
    * The key is the room id and the value is the room.
    */
-  get activeRooms(): { [roomId: number]: Room } {
+  get activeRooms(): RoomCollection {
     return this._activeRooms;
   }
 
@@ -121,13 +123,16 @@ export class ChatManager extends events.EventEmitter {
    * The internal list of room channels the user is in.
    * The key is the room id and the value is the room channel.
    */
-  private _roomChannels: { [roomId: number]: RoomChannel } = {};
+  private _roomChannels: KeyedCollection<
+    number,
+    RoomChannel
+  > = new KeyedCollection();
 
   /**
    * The internal list of active rooms the user is in.
    * The key is the room id and the value is the room.
    */
-  private _activeRooms: { [roomId: number]: Room } = {};
+  private _activeRooms: RoomCollection = new RoomCollection();
 
   /**
    * The internal time the chat client was started.
@@ -169,13 +174,14 @@ export class ChatManager extends events.EventEmitter {
    * Finally, it emits a "room_ready" event with the response data.
    * @param roomId The identifier of the room to join.
    */
-  joinRoom(roomId: number): Push {
-    if (this._activeRooms[roomId] && this._roomChannels[roomId]) {
+  async joinRoom(roomId: number): Promise<void> {
+    if (this._activeRooms.get(roomId) && this._roomChannels.get(roomId)) {
+      this.client.logger.warn(`Already in room ${roomId}. Cannot join again.`);
       return;
     }
 
     const channel = new RoomChannel(roomId, this);
-    channel.joinRoom();
+    await channel.joinRoomChannel();
   }
 
   /**
@@ -183,15 +189,15 @@ export class ChatManager extends events.EventEmitter {
    * @param roomId The identifier of the room to leave.
    */
   leaveRoom(roomId: number): void {
-    const channel = this._roomChannels[roomId];
+    const channel = this._roomChannels.get(roomId);
     if (channel) {
       this.grid.leaveChannel(channel);
-      delete this._roomChannels[roomId];
+      this._roomChannels.remove(roomId);
     }
 
-    const activeRoom = this._activeRooms[roomId];
+    const activeRoom = this._activeRooms.get(roomId);
     if (activeRoom) {
-      delete this._activeRooms[roomId];
+      this._activeRooms.remove(roomId);
     }
   }
 
@@ -202,34 +208,79 @@ export class ChatManager extends events.EventEmitter {
    * Upon successful joining, it processes the response to set up the current user, friends list,
    * groups, and group IDs. Finally, it emits a "chat_ready" event with the response data.
    */
-  joinUserChannel(): void {
+  async joinUserChannel(): Promise<void> {
     const channel = new UserChannel(this.client.userId, this);
-    channel.joinUserChannel();
+
     this._userChannel = channel;
+
+    await channel.joinUserChannel();
   }
 
   /**
    * Sends a message to a specified chat room.
    *
    * @param message The message to send. Can be a string or a Content object.
+   *                - If a string is provided, it will be wrapped in a Content object with type "chat-message".
+   *                - If a Content object is provided, it must have a valid structure and content.
    * @param roomId The Id of the chat room to send the message to.
-   * @returns A Push object if the message is successfully sent, otherwise undefined.
    */
-  sendMessage(message: string | Content, roomId: number): Push | undefined {
-    const roomChannel = this.getRoomChannel(roomId);
-    if (!roomChannel) {
-      console.error(`Room channel ${roomId} not found.`);
-      return;
-    }
+  async sendMessage(message: string | Content, roomId: number): Promise<void> {
+    const roomChannel = this.validateRoomChannel(roomId);
+    this.checkRateLimit(roomId);
 
-    const rateLimiter = this.getRateLimiter(roomId);
-    if (!rateLimiter.throttle()) {
-      const content = this.createContent(message);
-      const contentJson = this.getContentJson(content);
-      if (contentJson) {
-        return roomChannel.push(Events.MESSAGE, { content: contentJson });
-      }
+    const contentJson = this.prepareContentJson(message);
+    await this.pushMessageToRoom(roomChannel, contentJson, roomId);
+  }
+
+  private validateRoomChannel(roomId: number): RoomChannel {
+    const roomChannel = this._roomChannels.get(roomId);
+    if (!roomChannel) {
+      throw new Error(`Room channel ${roomId} not found. Cannot send message.`);
     }
+    return roomChannel;
+  }
+
+  private checkRateLimit(roomId: number): void {
+    const rateLimiter = this.getRateLimiter(roomId);
+    if (rateLimiter && rateLimiter.throttle()) {
+      this.client.logger.warn(
+        `Rate limit exceeded for room ${roomId}. Cannot send message.`
+      );
+      throw new Error(
+        `Rate limit exceeded for room ${roomId}. Please try again later.`
+      );
+    }
+  }
+
+  private prepareContentJson(message: string | Content): string {
+    const content = this.createContent(message);
+    const contentJson = this.getContentJson(content);
+    if (!contentJson) {
+      this.client.logger.warn(`Invalid content format. Cannot send message.`);
+      throw new Error(`Invalid content format. Cannot send message.`);
+    }
+    return contentJson;
+  }
+
+  private pushMessageToRoom(
+    roomChannel: RoomChannel,
+    contentJson: string,
+    roomId: number
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      roomChannel
+        .push(Events.MESSAGE, { content: contentJson })
+        .receive("ok", () => resolve())
+        .receive("error", (error) =>
+          reject(
+            new Error(
+              `Failed to send message to room ${roomId} with content ${JSON.stringify(
+                contentJson
+              )}: ${error}`
+            )
+          )
+        );
+    });
   }
 
   /**
@@ -245,7 +296,9 @@ export class ChatManager extends events.EventEmitter {
   ): Push | undefined {
     const roomChannel = this.getRoomChannel(message.room_id);
     if (!roomChannel) {
-      console.error(`Room channel ${message.room_id} not found.`);
+      this.client.logger.warn(
+        `Room channel ${message.room_id} not found. Cannot edit message.`
+      );
       return;
     }
 
@@ -320,7 +373,7 @@ export class ChatManager extends events.EventEmitter {
    * Reset the chat client.
    */
   reset(): void {
-    this._activeRooms = {};
+    this._activeRooms = new RoomCollection();
     this._startTime = Date.now();
   }
 
@@ -335,30 +388,35 @@ export class ChatManager extends events.EventEmitter {
    */
   destroy(): void {
     if (!this.connected) {
+      this.client.logger.warn("Chat manager is not connected. Cannot destroy.");
       return;
     }
 
     this.reset();
 
     if (this._userChannel) {
+      this.client.logger.info(
+        `Leaving user channel for user Id: ${this._userChannel.userId}.`
+      );
       this.grid.leaveChannel(this._userChannel);
       this._userChannel = undefined;
     }
 
-    Object.keys(this._roomChannels).forEach((roomId) => {
-      this.grid.leaveChannel(this._roomChannels[roomId]);
-    });
-    this._roomChannels = {};
+    for (const roomId of this._roomChannels.keys()) {
+      const roomChannel = this._roomChannels.get(roomId);
+      if (roomChannel) {
+        this.client.logger.info(`Leaving room channel for room Id: ${roomId}.`);
+        this.grid.leaveChannel(roomChannel);
+      }
+    }
+
+    this._roomChannels = new KeyedCollection();
 
     if (this.grid.socket) {
-      console.log("Disconnecting socket");
+      this.client.logger.info("Disconnecting from chat socket...");
       this.grid.socket.disconnect();
       this.grid.socket = undefined;
     }
-  }
-
-  private getRoomChannel(roomId: number): RoomChannel | undefined {
-    return this._roomChannels[roomId];
   }
 
   /**
