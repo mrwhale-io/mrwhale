@@ -5,28 +5,35 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "eslint . --ext .ts",
-    "prettier": "prettier --write *.{js,ts,json}",
-    "publish": "lerna publish",
-    "build": "lerna run build",
-    "test": "lerna run test --parallel",
-    "start": "lerna run start --parallel"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
+    "type-check": "turbo run type-check",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,js,json,md}\"",
+    "start": "turbo run start"
   },
   "dependencies": {
     "glob": "^7.1.6"
   },
   "devDependencies": {
-    "@types/node": "^20.5.7",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "eslint": "^7.15.0",
-    "eslint-config-prettier": "^7.0.0",
-    "lerna": "^7.1.4",
-    "prettier": "^2.2.1",
-    "reflect-metadata": "^0.1.13",
-    "typescript": "^5.2.2"
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.0.0",
+    "reflect-metadata": "^0.2.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.6.0"
   },
   "engines": {
-    "node": ">=16.10.0"
-  }
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@10.0.0"
 }

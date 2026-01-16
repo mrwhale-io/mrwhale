@@ -31,7 +31,7 @@
     "@mrwhale-io/core": "^1.6.0",
     "axios": "^0.21.1",
     "canvacord": "^5.4.10",
-    "canvas": "^2.11.2",
+    "canvas": "^3.2.1",
     "connect-session-sequelize": "^7.1.7",
     "copyfiles": "^2.4.1",
     "date-fns": "^3.6.0",

@@ -38,11 +38,11 @@ export class KeyedStorageProvider {
    * @param [defaultValue] The default value to return if no value is found.
    */
   get(key: string, defaultValue?: unknown): Promise<any> {
-    return this._cache
+    return Promise.resolve(this._cache
       ? typeof this._cache[key] !== "undefined"
         ? this._cache[key]
         : defaultValue
-      : defaultValue;
+      : defaultValue);
   }
 
   /**
