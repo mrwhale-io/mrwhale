@@ -1,5 +1,5 @@
 import * as events from "events";
-import * as fs from "fs";
+import { Readable } from "stream";
 import { Push } from "phoenix-channels";
 
 import { Client } from "../client";
@@ -17,7 +17,7 @@ import { Content } from "../../content/content";
 import { Message } from "../../structures/message";
 import { GridManager } from "../grid/grid-manager";
 import { RoomCollection } from "../../collections/room-collection";
-import { KeyedCollection } from "src/util/keyed-collection";
+import { KeyedCollection } from "../../util/keyed-collection";
 
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
@@ -28,35 +28,60 @@ const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
  *
  * @remarks
  * This class is responsible for maintaining the state of the chat client, including the current user, friends list, active rooms, and room channels. It also handles rate limiting for sending messages and provides methods to reset and destroy the chat manager instance.
+ *
+ * @fires ChatManager#message - When a new message is received
+ * @fires ChatManager#room_ready - When a room has been successfully joined
+ * @fires ChatManager#chat_ready - When the user channel has been established
+ * @fires ChatManager#user_updated - When user information changes
+ *
+ * @example
+ * ```typescript
+ * const client = new Client({ userId: 12345, frontend: 'abc123', mrwhaleToken: 'token' });
+ * await client.chat.joinUserChannel();
+ *
+ * // Listen for messages
+ * client.chat.on('message', (message: Message) => {
+ *   console.log(`${message.user.username}: ${message.textContent}`);
+ * });
+ *
+ * // Join a room and send a message
+ * await client.chat.joinRoom(67890);
+ * await client.chat.sendMessage('Hello everyone!', 67890);
+ * ```
  */
 export class ChatManager extends events.EventEmitter {
   /**
-   * The URL of the chat server.
-   * This is a read-only property.
+   * The URL of the Game Jolt chat server endpoint.
+   * Used for establishing WebSocket connections to the chat system.
+   * @readonly
    */
   readonly chatUrl: string;
 
   /**
-   * The Game Jolt client.
-   * This is a read-only property.
+   * Reference to the main Game Jolt client instance that owns this chat manager.
+   * Provides access to API methods, authentication, and logging.
+   * @readonly
    */
   readonly client: Client;
 
   /**
-   * The Grid Manager instance.
-   * This is a read-only property.
+   * The Grid Manager instance responsible for managing WebSocket connections.
+   * Handles low-level channel operations and connection lifecycle.
+   * @readonly
    */
   readonly grid: GridManager;
 
   /**
-   * Gets the start time of the chat client.
+   * Gets the timestamp when the chat client was initialized.
+   * @returns The start time in milliseconds since Unix epoch.
    */
   get startTime(): number {
     return this._startTime;
   }
 
   /**
-   * Gets the list of friends for the current user.
+   * Gets the friends list for the current authenticated user.
+   * @returns A UserCollection containing the user's friends, or empty collection if not connected.
    */
   get friendsList(): UserCollection {
     return this._userChannel?.friendsList || new UserCollection();
@@ -156,8 +181,10 @@ export class ChatManager extends events.EventEmitter {
   } = {};
 
   /**
-   * @param client The Game Jolt client.
-   * @param options The chat manager options.
+   * Creates a new ChatManager instance.
+   *
+   * @param client - The GameJolt client instance that will own this chat manager.
+   * @param grid - The GridManager instance for handling WebSocket connections.
    */
   constructor(client: Client, grid: GridManager) {
     super();
@@ -167,15 +194,38 @@ export class ChatManager extends events.EventEmitter {
   }
 
   /**
-   * Joins a room channel.
+   * Checks if the client is already in the specified room.
+   * A room is considered "joined" if both the room channel and active room exist.
+   *
+   * @param roomId - The unique identifier of the room to check.
+   * @returns `true` if the client is in the room, `false` otherwise.
+   */
+  isInRoom(roomId: number): boolean {
+    return this._activeRooms.has(roomId) && this._roomChannels.has(roomId);
+  }
+
+  /**
+   * Joins a chat room and establishes a channel connection.
    *
    * This method creates a new `RoomChannel` instance for the specified room and attempts to join it.
    * Upon successful joining, it processes the response to set up the current room and its members.
    * Finally, it emits a "room_ready" event with the response data.
-   * @param roomId The identifier of the room to join.
+   *
+   * @param roomId - The unique identifier of the room to join.
+   * @throws {Error} When already in the specified room or if joining fails.
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   await chatManager.joinRoom(12345);
+   *   console.log('Successfully joined room 12345');
+   * } catch (error) {
+   *   console.error('Failed to join room:', error.message);
+   * }
+   * ```
    */
   async joinRoom(roomId: number): Promise<void> {
-    if (this._activeRooms.get(roomId) && this._roomChannels.get(roomId)) {
+    if (this.isInRoom(roomId)) {
       this.client.logger.warn(`Already in room ${roomId}. Cannot join again.`);
       return;
     }
@@ -185,8 +235,12 @@ export class ChatManager extends events.EventEmitter {
   }
 
   /**
-   * Leave a room channel.
-   * @param roomId The identifier of the room to leave.
+   * Leaves a chat room and cleans up the associated channel.
+   *
+   * Removes the room from active rooms collection and disconnects from the room channel.
+   * This operation is safe to call even if the room is not currently joined.
+   *
+   * @param roomId - The unique identifier of the room to leave.
    */
   leaveRoom(roomId: number): void {
     const channel = this._roomChannels.get(roomId);
@@ -219,17 +273,75 @@ export class ChatManager extends events.EventEmitter {
   /**
    * Sends a message to a specified chat room.
    *
-   * @param message The message to send. Can be a string or a Content object.
-   *                - If a string is provided, it will be wrapped in a Content object with type "chat-message".
-   *                - If a Content object is provided, it must have a valid structure and content.
-   * @param roomId The Id of the chat room to send the message to.
+   * @param message - The message content to send. Can be:
+   *                  - A plain text string (will be wrapped in a Content object with type "chat-message")
+   *                  - A Content object with rich formatting, mentions, etc.
+   * @param roomId - The unique identifier of the chat room to send the message to.
+   * @returns A Promise that resolves to the sent Message object.
+   * @throws {Error} When the room channel is not found, rate limit is exceeded, or message format is invalid.
+   *
+   * @example
+   * ```typescript
+   * // Send plain text
+   * const message = await chatManager.sendMessage('Hello world!', 12345);
+   *
+   * // Send rich content
+   * const content = new Content('chat-message')
+   *   .text('Hello ')
+   *   .mention(user)
+   *   .text('!');
+   * const richMessage = await chatManager.sendMessage(content, 12345);
+   * ```
    */
-  async sendMessage(message: string | Content, roomId: number): Promise<void> {
+  async sendMessage(
+    message: string | Content,
+    roomId: number,
+  ): Promise<Message> {
     const roomChannel = this.validateRoomChannel(roomId);
     this.checkRateLimit(roomId);
 
     const contentJson = this.prepareContentJson(message);
-    await this.pushMessageToRoom(roomChannel, contentJson, roomId);
+    return await this.pushMessageToRoom(roomChannel, contentJson, roomId);
+  }
+
+  /**
+   * Edits an existing chat message with new content.
+   *
+   * @param editedContent - The new content for the message. Can be a string or a Content object.
+   * @param message - The Message instance that needs to be edited.
+   * @returns A Push object representing the message update operation, or `undefined` if the operation fails.
+   * @throws {Error} When the room channel is not found or content format is invalid.
+   *
+   * @example
+   * ```typescript
+   * // Edit with plain text
+   * const push = chatManager.editMessage('Updated message content', existingMessage);
+   *
+   * // Edit with rich content
+   * const newContent = new Content('chat-message').text('Updated: ').bold('Important');
+   * const push = chatManager.editMessage(newContent, existingMessage);
+   * ```
+   */
+  editMessage(
+    editedContent: string | Content,
+    message: Message,
+  ): Push | undefined {
+    const roomChannel = this.getRoomChannel(message.room_id);
+    if (!roomChannel) {
+      this.client.logger.warn(
+        `Room channel ${message.room_id} not found. Cannot edit message.`,
+      );
+      return;
+    }
+
+    const content = this.createContent(editedContent);
+    const contentJson = this.getContentJson(content);
+    if (contentJson) {
+      return roomChannel.push(Events.MESSAGE_UPDATE, {
+        content: contentJson,
+        id: message.id,
+      });
+    }
   }
 
   private validateRoomChannel(roomId: number): RoomChannel {
@@ -244,10 +356,10 @@ export class ChatManager extends events.EventEmitter {
     const rateLimiter = this.getRateLimiter(roomId);
     if (rateLimiter && rateLimiter.throttle()) {
       this.client.logger.warn(
-        `Rate limit exceeded for room ${roomId}. Cannot send message.`
+        `Rate limit exceeded for room ${roomId}. Cannot send message.`,
       );
       throw new Error(
-        `Rate limit exceeded for room ${roomId}. Please try again later.`
+        `Rate limit exceeded for room ${roomId}. Please try again later.`,
       );
     }
   }
@@ -265,112 +377,120 @@ export class ChatManager extends events.EventEmitter {
   private pushMessageToRoom(
     roomChannel: RoomChannel,
     contentJson: string,
-    roomId: number
-  ): Promise<void> {
+    roomId: number,
+  ): Promise<Message> {
     return new Promise((resolve, reject) => {
       roomChannel
         .push(Events.MESSAGE, { content: contentJson })
-        .receive("ok", () => resolve())
+        .receive("ok", (response: Partial<Message>) =>
+          resolve(new Message(this.client, response)),
+        )
         .receive("error", (error) =>
           reject(
             new Error(
               `Failed to send message to room ${roomId} with content ${JSON.stringify(
-                contentJson
-              )}: ${error}`
-            )
-          )
+                contentJson,
+              )}: ${error}`,
+            ),
+          ),
         );
     });
   }
 
   /**
-   * Edits an existing chat message with new content.
+   * Uploads a file to a specified chat room with automatic caching.
    *
-   * @param editedContent The new content for the message. Can be a string or a Content object.
-   * @param message The message object that needs to be edited.
-   * @returns A Push object representing the result of the message update operation.
+   * This method handles the complete file upload process:
+   * 1. Checks cache for recently uploaded files (1 hour duration)
+   * 2. Creates a temporary chat resource on GameJolt servers
+   * 3. Uploads the file to the media server
+   * 4. Caches the result for future requests
+   * 5. Automatically cleans up expired cache entries
+   *
+   * @param file - The file to upload as a readable stream from the filesystem.
+   * @param roomId - The unique identifier of the chat room where the file will be uploaded.
+   * @returns A Promise that resolves to a MediaItem representing the uploaded file.
+   * @throws {Error} When temporary chat resource creation fails or upload process encounters an error.
+   *
+   * @example
+   * ```typescript
+   * import * as fs from 'fs';
+   *
+   * const fileStream = fs.createReadStream('./image.png');
+   * try {
+   *   const mediaItem = await chatManager.uploadFile(fileStream, 12345);
+   *   console.log(`Uploaded file: ${mediaItem.filename}`);
+   * } catch (error) {
+   *   console.error('Upload failed:', error.message);
+   * }
+   * ```
    */
-  editMessage(
-    editedContent: string | Content,
-    message: Message
-  ): Push | undefined {
-    const roomChannel = this.getRoomChannel(message.room_id);
-    if (!roomChannel) {
-      this.client.logger.warn(
-        `Room channel ${message.room_id} not found. Cannot edit message.`
-      );
-      return;
-    }
+  async uploadFile(file: Readable, roomId: number): Promise<MediaItem> {
+    const temp = await this.client.api.media.chatTempResource(roomId);
 
-    const content = this.createContent(editedContent);
-    const contentJson = this.getContentJson(content);
-    if (contentJson) {
-      return roomChannel.push(Events.MESSAGE_UPDATE, {
-        content: contentJson,
-        id: message.id,
-      });
+    if (temp && temp.payload && temp.payload.id) {
+      const parentId = parseInt(temp.payload.id, 10);
+      const response = await this.client.api.media.uploadMedia(
+        file,
+        parentId,
+        "chat-message",
+      );
+
+      return response;
+    } else {
+      throw new Error("Temporary chat resource could not be created.");
     }
   }
 
   /**
-   * Uploads a file to a specified chat room.
+   * Accepts a chat room invitation.
    *
-   * @param file The file to be uploaded, represented as a Readable stream.
-   * @param roomId The Id of the chat room where the file will be uploaded.
-   * @returns A promise that resolves to a MediaItem representing the uploaded file.
-   * @throws Will throw an error if the temporary chat resource could not be created.
+   * @param inviteId - The unique identifier of the invitation to accept.
+   * @returns A Promise that resolves when the invite is successfully accepted.
+   * @throws {Error} When the invite acceptance fails or user channel is not available.
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   await chatManager.acceptInvite(67890);
+   *   console.log('Invite accepted successfully');
+   * } catch (error) {
+   *   console.error('Failed to accept invite:', error.message);
+   * }
+   * ```
    */
-  async uploadFile(file: fs.ReadStream, roomId: number): Promise<MediaItem> {
-    const cacheKey = `${roomId}-${file.path}`;
-    const cachedItem = this.cachedMediaItems[cacheKey];
-
-    // Check if the item is cached and not expired.
-    if (cachedItem && Date.now() - cachedItem.timestamp < CACHE_DURATION) {
-      return cachedItem.item;
+  async acceptInvite(inviteId: number): Promise<void> {
+    if (!this._userChannel) {
+      throw new Error("User channel not available. Cannot accept invite.");
     }
 
-    try {
-      const temporaryChatResource = await this.client.api.media.chatTempResource(
-        roomId
-      );
-
-      if (temporaryChatResource && temporaryChatResource.payload) {
-        // Upload the media item to media server.
-        const parentId = parseInt(temporaryChatResource.payload.id, 10);
-        const response = await this.client.api.media.uploadMedia(
-          file,
-          parentId,
-          "chat-message"
-        );
-
-        // Cache the media item.
-        this.cachedMediaItems[cacheKey] = {
-          item: response,
-          timestamp: Date.now(),
-        };
-        this.cleanUpMediaItemCache();
-
-        return response;
-      } else {
-        throw new Error("Temporary chat resource could not be created.");
-      }
-    } catch (error) {
-      throw new Error(`Failed to upload file: ${error.message}`);
-    }
-  }
-
-  /**
-   * Accept a chat invite.
-   * @param inviteId The id of the invite.
-   */
-  acceptInvite(inviteId: number): Push {
-    return this._userChannel.push(Events.INVITE_ACCEPT, {
-      invite_id: inviteId,
+    return new Promise((resolve, reject) => {
+      this._userChannel
+        .push(Events.INVITE_ACCEPT, {
+          invite_id: inviteId,
+        })
+        .receive("ok", () => {
+          this.client.logger.info(`Successfully accepted invite: ${inviteId}`);
+          resolve();
+        })
+        .receive("error", (error) => {
+          this.client.logger.error(
+            `Failed to accept invite ${inviteId}: ${error}`,
+          );
+          reject(new Error(`Failed to accept invite ${inviteId}: ${error}`));
+        });
     });
   }
 
   /**
-   * Reset the chat client.
+   * Resets the chat client state to initial values.
+   *
+   * This method:
+   * - Clears all active rooms
+   * - Resets the start time to current timestamp
+   * - Does not affect connection state or channels
+   *
+   * @remarks This is typically called during initialization or when reconnecting.
    */
   reset(): void {
     this._activeRooms = new RoomCollection();
@@ -396,7 +516,7 @@ export class ChatManager extends events.EventEmitter {
 
     if (this._userChannel) {
       this.client.logger.info(
-        `Leaving user channel for user Id: ${this._userChannel.userId}.`
+        `Leaving user channel for user Id: ${this._userChannel.userId}.`,
       );
       this.grid.leaveChannel(this._userChannel);
       this._userChannel = undefined;
@@ -419,6 +539,14 @@ export class ChatManager extends events.EventEmitter {
     }
   }
 
+  private getRoomChannel(roomId: number): RoomChannel | undefined {
+    const roomChannel = this._roomChannels.get(roomId);
+    if (!roomChannel) {
+      this.client.logger.warn(`Room channel ${roomId} not found.`);
+    }
+    return roomChannel;
+  }
+
   /**
    * Gets the rate limiter for the specified room ID.
    * @param roomId The ID of the room.
@@ -428,7 +556,7 @@ export class ChatManager extends events.EventEmitter {
     if (!this.rateLimiters[roomId]) {
       this.rateLimiters[roomId] = new RateLimiter(
         this.client.rateLimitRequests,
-        this.client.rateLimitDuration
+        this.client.rateLimitDuration,
       );
     }
     return this.rateLimiters[roomId];

@@ -22,7 +22,15 @@ const client = new GameJoltBotClient(
     privateKey: config.privateKey,
     gameId: config.gameId,
     provider: SqliteStorageProvider(path.join(process.cwd(), config.database)),
-  }
+  },
 );
 
 process.on("unhandledRejection", (err) => client.logger.error(err));
+
+process.on("SIGINT", () => {
+  client.logger.info("Shutting down gracefully...");
+  client.destroy().then(() => {
+    client.logger.info("Shutdown complete. Exiting process.");
+    process.exit(0);
+  });
+});

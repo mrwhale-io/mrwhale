@@ -15,7 +15,7 @@ export class GameManager extends APIRequestManager {
    */
   async getGame(gameId: number): Promise<Game> {
     const data = await this.get<ApiData<{ game: Partial<Game> }>>(
-      Endpoints.game(gameId)
+      Endpoints.games.info(gameId),
     );
 
     if (!data.payload?.game) {
@@ -32,7 +32,7 @@ export class GameManager extends APIRequestManager {
    */
   async getGameOverview(gameId: number): Promise<GameOverview> {
     const data = await this.get<ApiData<GameOverview>>(
-      Endpoints.game_overview(gameId)
+      Endpoints.games.overview(gameId),
     );
     return new GameOverview(data.payload);
   }

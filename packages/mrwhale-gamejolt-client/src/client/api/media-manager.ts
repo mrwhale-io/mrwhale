@@ -20,9 +20,9 @@ export class MediaManager extends APIRequestManager {
   async uploadMedia(
     file: Readable,
     parentId: number,
-    type: string
+    type: string,
   ): Promise<MediaItem> {
-    const url = Endpoints.media_upload;
+    const url = Endpoints.media.upload;
     const formData = new FormData();
     formData.append("file", file);
     formData.append("type", type);
@@ -40,7 +40,7 @@ export class MediaManager extends APIRequestManager {
     if (payload.success && payload.mediaItem) {
       return new MediaItem(payload.mediaItem);
     } else if (!payload.success && payload.errors.file) {
-      const mediaItemsResult = await this.axios.post(Endpoints.media_items, {
+      const mediaItemsResult = await this.axios.post(Endpoints.media.items, {
         type,
         parent_id: parentId,
       });
@@ -50,12 +50,12 @@ export class MediaManager extends APIRequestManager {
       const maxFilesize = sizePayload.maxFilesize;
 
       throw new Error(
-        `File size must be less than ${maxFilesize} bytes and dimensions less than ${maxWidth}×${maxHeight} pixels.`
+        `File size must be less than ${maxFilesize} bytes and dimensions less than ${maxWidth}×${maxHeight} pixels.`,
       );
     }
 
     throw new Error(
-      `General failure while uploading file. Status: ${result.status} ${result.statusText}`
+      `General failure while uploading file. Status: ${result.status} ${result.statusText}`,
     );
   }
 
@@ -65,10 +65,10 @@ export class MediaManager extends APIRequestManager {
    */
   async chatTempResource(roomId: number): Promise<ApiData<{ id: string }>> {
     return await this.post<ApiData<{ id: string }>>(
-      Endpoints.temp_resource("chat-message"),
+      Endpoints.content.tempResource("chat-message"),
       {
         roomId,
-      }
+      },
     );
   }
 }

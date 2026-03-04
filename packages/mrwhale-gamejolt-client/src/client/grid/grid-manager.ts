@@ -1,13 +1,13 @@
 import Axios, { AxiosResponse } from "axios";
 import * as events from "events";
 import { Socket, Channel } from "phoenix-channels";
-import { pollRequest } from "../../util/poll-request";
 
 import { Client } from "../client";
 import { GridManagerOptions } from "../../types/grid-manager-options";
 import { Notification } from "../../structures/notification";
-import { GJ_PLATFORM_VERSION } from "../../constants";
+import { Events, GJ_PLATFORM_VERSION, GRID_API_BASE_URL } from "../../constants";
 import { ChatManager } from "../chat/chat-manager";
+import { pollRequest } from "../../util/poll-request";
 
 const AUTH_TIMEOUT = 3000;
 
@@ -85,7 +85,7 @@ export class GridManager extends events.EventEmitter {
   constructor(client: Client, options: GridManagerOptions) {
     super();
     this.client = client;
-    this.gridUrl = options.baseUrl || "https://grid.gamejolt.com/grid";
+    this.gridUrl = options.baseUrl || GRID_API_BASE_URL;
     this.frontend = options.frontend;
     this.mrwhaleToken = options.mrwhaleToken;
     this.chat = new ChatManager(this.client, this);
@@ -160,7 +160,7 @@ export class GridManager extends events.EventEmitter {
               64 * 1024 * 1024 * 1024;
           }
           resolve();
-        })
+        }),
     );
 
     // Join the user notification channel
@@ -183,12 +183,12 @@ export class GridManager extends events.EventEmitter {
 
               resolve();
             });
-        })
+        }),
     );
 
     // Set up event listeners for new notifications and channel errors.
     channel.on("new-notification", (payload: NewNotificationPayload) =>
-      this.handleNotification(payload)
+      this.handleNotification(payload),
     );
 
     channel.onError((reason) => {
@@ -263,7 +263,7 @@ export class GridManager extends events.EventEmitter {
           {
             timeout: AUTH_TIMEOUT,
             headers,
-          }
+          },
         ),
       ]);
     });
@@ -273,6 +273,6 @@ export class GridManager extends events.EventEmitter {
     const data = payload.notification_data.event_item;
     const notification = new Notification(data);
 
-    this.client.emit("user_notification", notification);
+    this.client.emit(Events.USER_NOTIFICATION, notification);
   }
 }

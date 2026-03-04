@@ -15,11 +15,11 @@ export class FriendManager extends APIRequestManager {
    */
   async getFriendRequests(): Promise<FriendRequest[]> {
     const data = await this.get<ApiData<FriendRequestPayload>>(
-      Endpoints.requests
+      Endpoints.friends.requests,
     );
     return (
       data.payload?.requests?.map(
-        (request) => new FriendRequest(this.client, request)
+        (request) => new FriendRequest(this.client, request),
       ) || []
     );
   }
@@ -31,8 +31,8 @@ export class FriendManager extends APIRequestManager {
    */
   async sendFriendRequest(id: number): Promise<boolean> {
     const data = await this.post<ApiData<FriendRequestAcceptPayload>>(
-      Endpoints.friend_request(id),
-      { _removed: false, target_user_id: id }
+      Endpoints.friends.request(id),
+      { _removed: false, target_user_id: id },
     );
     return data.payload?.success || false;
   }
@@ -44,7 +44,7 @@ export class FriendManager extends APIRequestManager {
    */
   async acceptFriendRequest(id: number): Promise<boolean> {
     const data = await this.post<ApiData<FriendRequestAcceptPayload>>(
-      Endpoints.friend_accept(id)
+      Endpoints.friends.accept(id),
     );
     return data.payload?.success || false;
   }

@@ -83,7 +83,7 @@ export class RoomChannel extends Channel {
   constructor(
     roomId: number,
     chat: ChatManager,
-    params?: Record<string, unknown>
+    params?: Record<string, unknown>,
   ) {
     const socket = chat.grid.socket;
 
@@ -125,13 +125,13 @@ export class RoomChannel extends Channel {
       await this.watchMembers();
       this._chat.client.emit(Events.ROOM_READY, response);
       this._chat.client.logger.info(
-        `Successfully joined room channel for room Id: ${this.roomId}`
+        `Successfully joined room channel for room Id: ${this.roomId}`,
       );
     } catch (error) {
       this._chat.client.logger.error(
         `Failed to join room channel for room Id: ${this.roomId}. Error: ${
           error.message || error
-        }`
+        }`,
       );
     }
   }
@@ -158,7 +158,7 @@ export class RoomChannel extends Channel {
   private processJoinResponse(response: { room: Partial<Room> }): void {
     const room = new Room(this.client, response.room);
     this._room = room;
-    this._chat.roomChannels[this.roomId] = this;
+    this._chat.roomChannels.add(this.roomId, this);
     this._chat.activeRooms.add(this.roomId, room);
   }
 
@@ -217,7 +217,7 @@ export class RoomChannel extends Channel {
     const activeRoom = this._chat.activeRooms.get(this.roomId);
     if (!activeRoom) {
       this.client.logger.warn(
-        `Active room not found for room Id: ${this.roomId}`
+        `Active room not found for room Id: ${this.roomId}`,
       );
       return;
     }
@@ -226,7 +226,7 @@ export class RoomChannel extends Channel {
 
     if (!removedMember) {
       this.client.logger.warn(
-        `Room member with Id: ${user_id} not found in room Id: ${this.roomId}`
+        `Room member with Id: ${user_id} not found in room Id: ${this.roomId}`,
       );
       return;
     }
@@ -283,7 +283,7 @@ export class RoomChannel extends Channel {
         : formattedPayload;
 
     this.client.logger.warn(
-      `Invalid event payload received for event: ${event}. Payload: ${truncatedPayload}`
+      `Invalid event payload received for event: ${event}. Payload: ${truncatedPayload}`,
     );
   }
 }

@@ -31,7 +31,9 @@ export class BlockManager extends APIRequestManager {
    * @returns A list of blocked users.
    */
   async getBlockedUsers(): Promise<Block[]> {
-    const data = await this.get<ApiData<BlockedUsersPayload>>(Endpoints.blocks);
+    const data = await this.get<ApiData<BlockedUsersPayload>>(
+      Endpoints.user.blocks,
+    );
 
     this._blockedUsers =
       data.payload?.blocks?.map((block) => new Block(block)) || [];
@@ -45,7 +47,7 @@ export class BlockManager extends APIRequestManager {
    * @returns A boolean indicating whether the user was successfully blocked.
    */
   async blockUser(username: string): Promise<boolean> {
-    const data = await this.post<ApiData<BlockPayload>>(Endpoints.block, {
+    const data = await this.post<ApiData<BlockPayload>>(Endpoints.user.block, {
       username,
     });
 
@@ -67,13 +69,13 @@ export class BlockManager extends APIRequestManager {
    */
   async unblockUser(blockId: number): Promise<boolean> {
     const data = await this.post<ApiData<UnBlockPayload>>(
-      Endpoints.unblock(blockId)
+      Endpoints.user.unblock(blockId),
     );
 
     if (data.payload) {
       if (data.payload.success) {
         this._blockedUsers = this._blockedUsers.filter(
-          (block) => block.id !== blockId
+          (block) => block.id !== blockId,
         );
       }
 

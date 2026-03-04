@@ -16,6 +16,7 @@ export interface APIClientOptions {
   /**
    * The mrwhale token.
    * This is used to verify that this user is Mr. Whale.
+   * This is to allow the client to access endpoints that are restricted by cloudflare to only allow requests from the Game Jolt website.
    */
   mrwhaleToken: string;
 }

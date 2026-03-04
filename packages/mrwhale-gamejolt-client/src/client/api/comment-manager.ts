@@ -16,17 +16,17 @@ export class CommentManager extends APIRequestManager {
   async addComment(
     resourceId: number,
     resource: string,
-    content: string
+    content: string,
   ): Promise<boolean> {
     const data = await this.post<ApiData<{ success: boolean }>>(
-      Endpoints.comments_save,
+      Endpoints.comments.save,
       {
         _removed: false,
         isFollowPending: false,
         comment_content: content,
         resource,
         resource_id: resourceId,
-      }
+      },
     );
 
     return data.payload?.success || false;

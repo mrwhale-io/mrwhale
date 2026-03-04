@@ -157,15 +157,26 @@ export class Room {
    * @param data Partial data to initialize the room.
    */
   constructor(public client: Client, data: Partial<Room> = {}) {
-    Object.assign(this, data);
+    // Extract properties that need special handling
+    const { members, owner_id, ...assignableData } = data;
+    
+    // Assign all other properties normally
+    Object.assign(this, assignableData);
+
+    // Handle special properties manually
+    if (owner_id) {
+      this._owner_id = owner_id;
+    }
 
     // If the room is a private message room, assign the friend user to the room.
     // Otherwise, assign the group members to the room.
     if (this.isPmRoom) {
       this.user = this.client.chat.friendsList.getByRoom(this.id);
     } else {
-      this._owner_id = this.owner_id;
-      this.replaceMembers([...data.members]);
+      // Handle members separately to avoid Object.assign conflict
+      if (members && Array.isArray(members)) {
+        this.replaceMembers([...members]);
+      }
     }
   }
 

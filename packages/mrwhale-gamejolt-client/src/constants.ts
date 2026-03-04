@@ -100,25 +100,90 @@ export enum Events {
    * This is not the same as `FRIEND_ADD`, which is triggered when a new friend is added.
    */
   FRIEND_REQUESTS = "friend_requests",
+
+  /**
+   * This event is triggered when a user receives a new notification.
+   * This is not the same as `NOTIFICATION`, which is triggered for chat notifications.
+   */
+  USER_NOTIFICATION = "user_notification",
 }
 
+/**
+ * Organized API endpoints for the Game Jolt site API.
+ * Endpoints are grouped by functional domain for better organization and maintainability.
+ */
 export const Endpoints = {
-  block: `/web/dash/blocks/add`,
-  blocks: `/web/dash/blocks`,
-  unblock: (id: number): string => `/web/dash/blocks/remove/${id}`,
-  requests: `/web/dash/friends/requests/requests`,
-  friend_accept: (id: number): string =>
-    `/web/dash/friends/requests/accept/${id}`,
-  friend_request: (id: number): string =>
-    `/web/dash/friends/requests/add/${id}`,
-  game: (id: number): string => `/web/discover/games/${id}`,
-  game_overview: (id: number): string => `/web/discover/games/overview/${id}`,
-  comments_save: `/comments/save`,
-  media_upload: `/web/dash/media-items/add-one`,
-  media_items: `/web/dash/media-items`,
-  temp_resource: (content: ContentContext): string =>
-    `/web/content/temp-resource-id/${content}`,
-  fireside: (id: string): string => `/web/fireside/fetch/${id}`,
+  /** User blocking and moderation endpoints */
+  user: {
+    /** Adds a user to the block list. */
+    block: `/web/dash/blocks/add`,
+    /** Retrieves the list of blocked users. */
+    blocks: `/web/dash/blocks`,
+    /** Removes a user from the block list. */
+    unblock: (id: number): string => `/web/dash/blocks/remove/${id}`,
+  },
+
+  /** Friend management and social features */
+  friends: {
+    /** Retrieves the list of friends. */
+    list: `/web/dash/friends`,
+    /** Removes a friend. */
+    remove: (id: number): string => `/web/dash/friends/remove/${id}`,
+    /** Retrieves the list of friend requests. */
+    requests: `/web/dash/friends/requests/requests`,
+    /** Accepts a friend request. */
+    accept: (id: number): string => `/web/dash/friends/requests/accept/${id}`,
+    /** Sends a friend request. */
+    request: (id: number): string => `/web/dash/friends/requests/add/${id}`,
+  },
+
+  /** Game discovery and information */
+  games: {
+    /** Retrieves detailed game information. */
+    info: (id: number): string => `/web/discover/games/${id}`,
+    /** Retrieves game overview information. */
+    overview: (id: number): string => `/web/discover/games/overview/${id}`,
+  },
+
+  /** Comment system */
+  comments: {
+    /** Saves a comment. */
+    save: `/comments/save`,
+  },
+
+  /** Media upload and management */
+  media: {
+    /** Uploads a media item. */
+    upload: `/web/dash/media-items/add-one`,
+    /** Retrieves media items. */
+    items: `/web/dash/media-items`,
+  },
+
+  /** Content and resource management */
+  content: {
+    /** Retrieves a temporary resource. */
+    tempResource: (content: ContentContext): string =>
+      `/web/content/temp-resource-id/${content}`,
+  },
+
+  /** Community features */
+  community: {
+    /** Retrieves fireside information. */
+    fireside: (id: string): string => `/web/fireside/fetch/${id}`,
+  },
 };
 
+/** The version of the Game Jolt platform the client is compatible with */
 export const GJ_PLATFORM_VERSION = "1.33.1";
+
+/** The base Game Jolt domain URL */
+export const GAMEJOLT_DOMAIN = "gamejolt.com";
+
+/** The base URL for the Game Jolt website */
+export const GAMEJOLT_WEBSITE_URL = `https://${GAMEJOLT_DOMAIN}`;
+
+/** The base URL for Game Jolt's site API endpoints */
+export const SITE_API_BASE_URL = `https://${GAMEJOLT_DOMAIN}/site-api`;
+
+/** The base URL for Game Jolt's Grid API endpoints  */
+export const GRID_API_BASE_URL = `https://grid.${GAMEJOLT_DOMAIN}/grid`;

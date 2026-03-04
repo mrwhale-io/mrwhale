@@ -2,8 +2,11 @@ import Axios, { AxiosInstance } from "axios";
 
 import { APIClientOptions } from "../../types/api-client-options";
 import { Client } from "../client";
-
-const DEFAULT_BASE_URL = "https://gamejolt.com/site-api";
+import {
+  GAMEJOLT_DOMAIN,
+  GAMEJOLT_WEBSITE_URL,
+  SITE_API_BASE_URL,
+} from "../../constants";
 
 /**
  * Manages API requests to the site API.
@@ -17,13 +20,13 @@ export class APIRequestManager {
 
   constructor(protected client: Client, options: APIClientOptions) {
     this.axios = Axios.create({
-      baseURL: options.base || DEFAULT_BASE_URL,
+      baseURL: options.base || SITE_API_BASE_URL,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json, text/plain",
         Connection: "keep-alive",
-        Host: "gamejolt.com",
-        Origin: "https://gamejolt.com",
+        Host: GAMEJOLT_DOMAIN,
+        Origin: GAMEJOLT_WEBSITE_URL,
         "mrwhale-token": options.mrwhaleToken,
         Cookie: `frontend=${options.frontend}`,
       },
