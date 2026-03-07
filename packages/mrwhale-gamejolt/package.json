@@ -21,7 +21,7 @@
     "@cwasm/webp": "^0.1.5",
     "@mrwhale-io/commands": "^2.0.4",
     "@mrwhale-io/core": "^1.6.0",
-    "@mrwhale-io/gamejolt-client": "^1.3.4",
+    "@mrwhale-io/gamejolt-client": "^2.0.0",
     "ascii-table": "^0.0.9",
     "axios": "^0.21.1",
     "canvacord": "^5.4.10",
