@@ -3,26 +3,84 @@ import { User } from "./user";
 import { FiresidePost } from "./fireside-post";
 import { Comment } from "./comment";
 
+/**
+ * Represents a notification in the system.
+ */
 export class Notification {
-  id!: number;
-  user_id!: number;
-  type!: string;
-  added_on!: number;
-  viewed_on!: number | null;
-  from_resource!: string;
-  from_resource_id!: number;
-  from_model?: User;
-  action_resource!: string;
-  action_resource_id!: number;
-  action_model!: FiresidePost | Comment;
-  to_resource!: string | null;
-  to_resource_id!: number | null;
-  to_model?: Game | User | FiresidePost;
+  /**
+   * The unique identifier of the notification.
+   */
+  readonly id!: number;
 
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+  /**
+   * The unique identifier of the user who received the notification.
+   */
+  readonly user_id!: number;
+
+  /**
+   * The type of the notification.
+   */
+  readonly type!: string;
+
+  /**
+   * The timestamp when the notification was added.
+   */
+  readonly added_on!: number;
+
+  /**
+   * The timestamp when the notification was viewed, or null if it hasn't been viewed.
+   */
+  readonly viewed_on!: number | null;
+
+  /**
+   * The resource from which the notification originated.
+   */
+  readonly from_resource!: string;
+
+  /**
+   * The unique identifier of the resource from which the notification originated.
+   */
+  readonly from_resource_id!: number;
+
+  /**
+   * The model of the user from which the notification originated, if applicable.
+   */
+  readonly from_model?: User;
+
+  /**
+   * The resource that the notification is related to.
+   */
+  readonly action_resource!: string;
+
+  /**
+   * The unique identifier of the resource that the notification is related to.
+   */
+  readonly action_resource_id!: number;
+
+  /**
+   * The model of the resource that the notification is related to.
+   */
+  readonly action_model!: FiresidePost | Comment;
+
+  /**
+   * The resource to which the notification is directed.
+   */
+  readonly to_resource!: string | null;
+
+  /**
+   * The unique identifier of the resource to which the notification is directed.
+   */
+  readonly to_resource_id!: number | null;
+
+  /**
+   * The model of the resource to which the notification is directed, if applicable.
+   */
+  readonly to_model?: Game | User | FiresidePost;
+
+  /**
+   * @param data The data to initialize the notification with.
+   */
   constructor(data: any) {
-    Object.assign(this, data);
-
     if (data.from_resource === "User" && data.from_resource_id) {
       this.from_model = new User(data.from_resource_model);
     }

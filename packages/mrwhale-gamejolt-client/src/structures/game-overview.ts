@@ -1,8 +1,25 @@
+/**
+ * Represents an overview of a game with various statistics.
+ */
 export class GameOverview {
-  profileCount: number;
-  downloadCount: number;
-  playCount: number;
+  /**
+   * The number of times the game has been viewed.
+   */
+  readonly profileCount: number;
 
+  /**
+   * The number of times the game has been downloaded.
+   */
+  readonly downloadCount: number;
+
+  /**
+   * The number of times the game has been played.
+   */
+  readonly playCount: number;
+
+  /**
+   * @param data Partial data to initialize the GameOverview instance.
+   */
   constructor(data: Partial<GameOverview>) {
     Object.assign(this, data);
   }

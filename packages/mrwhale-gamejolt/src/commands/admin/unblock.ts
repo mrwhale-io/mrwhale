@@ -29,7 +29,7 @@ export default class extends GameJoltCommand {
         return message.reply("No block on this user found.");
       }
 
-      await this.botClient.client.api.unblockUser(block.id);
+      await this.botClient.client.api.blocks.unblockUser(block.id);
 
       return message.reply("Successfully unblocked user.");
     } catch (error) {

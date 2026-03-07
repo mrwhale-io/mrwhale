@@ -16,7 +16,9 @@ export default class extends GameJoltCommand {
   async action(message: Message): Promise<Message> {
     try {
       if (!this.botClient.friendsList.has(message.user.id)) {
-        await this.botClient.client.api.friendRequest(message.user.id);
+        await this.botClient.client.api.friends.sendFriendRequest(
+          message.user.id
+        );
         return message.reply("Friend request successfully sent.");
       } else {
         return message.reply("We're already friends.");

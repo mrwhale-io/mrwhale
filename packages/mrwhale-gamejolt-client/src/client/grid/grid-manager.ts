@@ -1,13 +1,13 @@
 import Axios, { AxiosResponse } from "axios";
 import * as events from "events";
 import { Socket, Channel } from "phoenix-channels";
-import { pollRequest } from "../../util/poll-request";
 
 import { Client } from "../client";
 import { GridManagerOptions } from "../../types/grid-manager-options";
 import { Notification } from "../../structures/notification";
-import { GJ_PLATFORM_VERSION } from "../../constants";
+import { Events, GJ_PLATFORM_VERSION, GRID_API_BASE_URL } from "../../constants";
 import { ChatManager } from "../chat/chat-manager";
+import { pollRequest } from "../../util/poll-request";
 
 const AUTH_TIMEOUT = 3000;
 
@@ -24,18 +24,58 @@ interface NewNotificationPayload {
 let connectionResolvers: (() => void)[] = [];
 
 /**
- * Manages the grid connection.
+ * The `GridManager` class is responsible for managing the connection to the GameJolt grid service.
+ * It handles socket connections, channel subscriptions, and notification handling.
  */
 export class GridManager extends events.EventEmitter {
+  /**
+   * Whether the grid is connected.
+   */
   connected = false;
+
+  /**
+   * The socket connection.
+   */
   socket: Socket | null;
+
+  /**
+   * The channels the user is connected to.
+   */
   channels: Channel[] = [];
+
+  /**
+   * The notification channel.
+   */
   notificationChannel: Channel;
+
+  /**
+   * The URL of the grid service.
+   * This is a read-only property.
+   */
   readonly gridUrl: string;
+
+  /**
+   * The client instance used to interact with the GameJolt API.
+   * This is a read-only property.
+   */
   readonly client: Client;
+
+  /**
+   * A readonly instance of the ChatManager.
+   * This manages chat-related functionalities within the client.
+   */
   readonly chat: ChatManager;
 
+  /**
+   * The frontend identifier used for authentication.
+   * This is a read-only property.
+   */
   private frontend: string;
+
+  /**
+   * The token used to tell Game Jolt that the client is Mr. Whale.
+   * This is a read-only property.
+   */
   private mrwhaleToken: string;
 
   /**
@@ -45,7 +85,7 @@ export class GridManager extends events.EventEmitter {
   constructor(client: Client, options: GridManagerOptions) {
     super();
     this.client = client;
-    this.gridUrl = options.baseUrl || "https://grid.gamejolt.com/grid";
+    this.gridUrl = options.baseUrl || GRID_API_BASE_URL;
     this.frontend = options.frontend;
     this.mrwhaleToken = options.mrwhaleToken;
     this.chat = new ChatManager(this.client, this);
@@ -53,13 +93,26 @@ export class GridManager extends events.EventEmitter {
   }
 
   /**
-   * Connects to grid.
+   * Establishes a connection to the grid socket and joins the user notification channel.
+   *
+   * This method performs the following steps:
+   * 1. Retrieves authentication details (host and token).
+   * 2. Initializes a new socket connection with the retrieved host and token.
+   * 3. Disables the automatic reconnection mechanism of the Phoenix socket.
+   * 4. Sets up event listeners for socket open, error, and close events.
+   * 5. Connects to the socket and configures the maximum received frame size.
+   * 6. Joins the user notification channel and sets up event listeners for new notifications and channel errors.
+   * 7. Joins the user chat channel.
+   *
+   * @returns A promise that resolves when the connection and channel joining process is complete.
    */
   async connect(): Promise<void> {
+    // Retrieve authentication details (host and token).
     const [hostResult, tokenResult] = await this.getAuth();
     const host = `${hostResult.data}/grid/socket`;
     const token = tokenResult.data.token;
 
+    // Initialize a new socket connection with the retrieved host and token.
     this.socket = new Socket(host, {
       heartbeatIntervalMs: 30000,
       params: {
@@ -81,6 +134,7 @@ export class GridManager extends events.EventEmitter {
       socketAny.reconnectTimer = { scheduleTimeout: () => {}, reset: () => {} };
     }
 
+    // Set up event listeners for socket open, error, and close events.
     this.socket.onOpen(() => {
       this.connected = true;
     });
@@ -95,6 +149,7 @@ export class GridManager extends events.EventEmitter {
       this.restart();
     });
 
+    // Connect to the socket and configure the maximum received frame size.
     await pollRequest(
       "Connect to socket",
       () =>
@@ -105,9 +160,10 @@ export class GridManager extends events.EventEmitter {
               64 * 1024 * 1024 * 1024;
           }
           resolve();
-        })
+        }),
     );
 
+    // Join the user notification channel
     const channel = this.socket.channel("notifications:" + this.client.userId);
     this.notificationChannel = channel;
 
@@ -127,11 +183,12 @@ export class GridManager extends events.EventEmitter {
 
               resolve();
             });
-        })
+        }),
     );
 
+    // Set up event listeners for new notifications and channel errors.
     channel.on("new-notification", (payload: NewNotificationPayload) =>
-      this.handleNotification(payload)
+      this.handleNotification(payload),
     );
 
     channel.onError((reason) => {
@@ -139,9 +196,14 @@ export class GridManager extends events.EventEmitter {
       this.restart(0);
     });
 
-    this.chat.joinUserChannel();
+    await this.chat.joinUserChannel();
   }
 
+  /**
+   * Disconnects the client from the server.
+   *
+   * @returns A promise that resolves when the disconnection process is complete.
+   */
   async disconnect(): Promise<void> {
     if (this.connected) {
       this.connected = false;
@@ -158,6 +220,12 @@ export class GridManager extends events.EventEmitter {
     }
   }
 
+  /**
+   * Restarts the connection after a specified delay.
+   *
+   * @param sleepMs The amount of time to wait before attempting to reconnect, in milliseconds. Defaults to 2000 ms.
+   * @returns A promise that resolves when the restart process is complete.
+   */
   async restart(sleepMs = 2_000): Promise<void> {
     // sleep a bit before trying to reconnect
     await new Promise((resolve) => {
@@ -195,7 +263,7 @@ export class GridManager extends events.EventEmitter {
           {
             timeout: AUTH_TIMEOUT,
             headers,
-          }
+          },
         ),
       ]);
     });
@@ -205,6 +273,6 @@ export class GridManager extends events.EventEmitter {
     const data = payload.notification_data.event_item;
     const notification = new Notification(data);
 
-    this.client.emit("user_notification", notification);
+    this.client.emit(Events.USER_NOTIFICATION, notification);
   }
 }
