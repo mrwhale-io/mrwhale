@@ -29,8 +29,6 @@ export default class extends GameJoltCommand {
       this.botClient.chat.userChannel?.push("group_leave", {
         room_id: room.id,
       });
-    } else if (room?.type === RoomType.FiresideGroup) {
-      this.botClient.chat.leaveRoom(room.id);
     }
   }
 }

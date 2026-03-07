@@ -26,7 +26,7 @@ export default class extends GameJoltCommand {
     const response = new InfoBuilder()
       .addField("Version", version)
       .addField("Group chats", `${groupIds.length}`)
-      .addField("Friends", `${this.botClient.friendsList.collection.length}`)
+      .addField("Friends", `${this.botClient.friendsList.count}`)
       .addField("Discord support", `https://discord.com/invite/wjBnkR4AUZ`)
       .addField("Loaded commands", `${this.botClient.commands.size}`)
       .addField("Memory usage", `${memoryUsage.toFixed(FRACTIONAL_DIGITS)} MB`)
