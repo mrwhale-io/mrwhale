@@ -14,6 +14,9 @@ import {
   Client,
   UserCollection,
   Events,
+  MemberAddEventData,
+  MemberLeaveEventData,
+  OwnerSyncEventData,
 } from "@mrwhale-io/gamejolt-client";
 import { GameJolt } from "joltite.js";
 
@@ -36,64 +39,6 @@ const { on, once, registerListeners } = ListenerDecorators;
  * This class extends the base BotClient and provides a complete implementation for
  * interacting with Game Jolt's chat platform. It handles friend management, group
  * chat operations, command processing, and various automated responses.
- *
- * ## Key Features:
- * - **Chat Management**: Automatic room joining, message handling, and user interaction
- * - **Command System**: Full command dispatcher with prefix support and argument parsing
- * - **Friend System**: Automatic friend request handling and private message support
- * - **Group Management**: Welcome messages, member tracking, and moderation features
- * - **AI Integration**: Optional Cleverbot integration for conversational responses
- * - **Game Integration**: Game Jolt API access for game-related commands and data
- * - **Storage System**: Per-room settings and persistent data management
- * - **Moderation Tools**: URL filtering, content policing, and rate limiting
- *
- * ## Architecture:
- * The bot uses an event-driven architecture with multiple specialized managers:
- * - `CommandDispatcher`: Handles command parsing and execution
- * - `FriendRequestManager`: Manages friend requests and relationships
- * - `ReplyManager`: Handles automated replies and responses
- * - `CleverbotManager`: Optional AI-powered conversation handling
- * - `UrlManager`: Manages URL detection and filtering
- * - `LevelManager`: Handles user experience and leveling system
- * - `Policer`: Content moderation and filtering
- * - `RoomStorageLoader`: Persistent storage for room-specific settings
- *
- * ## Event Handling:
- * The bot responds to various GameJolt chat events including:
- * - New messages and notifications
- * - Friend additions and removals
- * - Group membership changes
- * - Owner transfers and role changes
- * - Chat invitations
- *
- * @example
- * ```typescript
- * const clientOptions = {
- *   userId: 123456,
- *   frontend: 'your-frontend-here',
- *   token: 'your-gamejolt-token'
- * };
- *
- * const botOptions = {
- *   name: 'MrWhale',
- *   defaultPrefix: '!',
- *   gameId: 'your-game-id',
- *   privateKey: 'your-private-key',
- *   cleverbotToken: 'optional-cleverbot-token'
- * };
- *
- * const bot = new GameJoltBotClient(clientOptions, botOptions);
- *
- * // Connect and start the bot
- * await bot.client.connect();
- * await bot.chat.joinUserChannel();
- *
- * // Handle shutdown gracefully
- * process.on('SIGINT', async () => {
- *   await bot.destroy();
- *   process.exit(0);
- * });
- * ```
  */
 export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   /**
@@ -252,7 +197,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
    * ```typescript
    * const clientOptions: ClientOptions = {
    *   userId: 123456,
-   *   frontend: 'abc123',
+   *   frontend: 'your-frontend-id',
    *   token: 'your-gamejolt-token'
    * };
    *
@@ -404,7 +349,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   }
 
   @on(Events.MEMBER_ADD)
-  protected onMemberAdd(data: { room_id: number; members: User[] }): void {
+  protected onMemberAdd(data: MemberAddEventData): void {
     try {
       if (
         !data?.room_id ||
@@ -457,7 +402,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   }
 
   @on(Events.MEMBER_LEAVE)
-  protected onMemberLeave(data: { room_id: number; member: User }): void {
+  protected onMemberLeave(data: MemberLeaveEventData): void {
     try {
       if (!data?.room_id || !data?.member) {
         this.logger.warn(`Invalid ${Events.MEMBER_LEAVE} data received:`, data);
@@ -496,7 +441,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   }
 
   @on(Events.OWNER_SYNC)
-  protected onOwnerSync(data: { room_id: number; owner_id: number }): void {
+  protected onOwnerSync(data: OwnerSyncEventData): void {
     try {
       if (!data?.room_id || !data?.owner_id) {
         this.logger.warn(`Invalid ${Events.OWNER_SYNC} data received:`, data);
@@ -711,7 +656,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   /**
    * Validates constructor options for completeness and correctness.
    *
-   * Performs comprehensive validation of both client and bot options to ensure
+   * Performs validation of both client and bot options to ensure
    * all required fields are present and properly formatted. This helps catch
    * configuration errors early in the initialization process.
    *

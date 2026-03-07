@@ -14,20 +14,15 @@ export { UserCollection } from "./collections/user-collection";
 export { Client } from "./client/client";
 export { Content } from "./content/content";
 export { Events } from "./constants";
-
-// Export consolidated event and payload types
 export type {
   UserUpdatedEventData,
   MemberAddEventData,
   MemberLeaveEventData,
   OwnerSyncEventData,
-  ClientEventName
-} from "./client/client";
-export type {
+  ClientEventName,
   MemberAddPayload,
   MemberLeavePayload,
   OwnerSyncPayload,
   FriendRemovePayload,
   GroupAddPayload,
-  UserChannelResponse
 } from "./types/events";

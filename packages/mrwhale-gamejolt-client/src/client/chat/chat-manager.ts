@@ -19,8 +19,6 @@ import { GridManager } from "../grid/grid-manager";
 import { RoomCollection } from "../../collections/room-collection";
 import { KeyedCollection } from "../../util/keyed-collection";
 
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
-
 /**
  * Manages chat functionalities for the Game Jolt client.
  *
@@ -172,15 +170,6 @@ export class ChatManager extends events.EventEmitter {
   private rateLimiters: { [roomId: string]: RateLimiter } = {};
 
   /**
-   * The cached media items.
-   * The key is the media item id and the value is the
-   * media item and the timestamp it was cached.
-   */
-  private cachedMediaItems: {
-    [key: string]: { item: MediaItem; timestamp: number };
-  } = {};
-
-  /**
    * Creates a new ChatManager instance.
    *
    * @param client - The GameJolt client instance that will own this chat manager.
@@ -301,7 +290,7 @@ export class ChatManager extends events.EventEmitter {
     this.checkRateLimit(roomId);
 
     const contentJson = this.prepareContentJson(message);
-    return await this.pushMessageToRoom(roomChannel, contentJson, roomId);
+    return await this.pushMessageToRoom(roomChannel, contentJson);
   }
 
   /**
@@ -344,101 +333,87 @@ export class ChatManager extends events.EventEmitter {
     }
   }
 
-  private validateRoomChannel(roomId: number): RoomChannel {
-    const roomChannel = this._roomChannels.get(roomId);
-    if (!roomChannel) {
-      throw new Error(`Room channel ${roomId} not found. Cannot send message.`);
-    }
-    return roomChannel;
-  }
-
-  private checkRateLimit(roomId: number): void {
-    const rateLimiter = this.getRateLimiter(roomId);
-    if (rateLimiter && rateLimiter.throttle()) {
-      this.client.logger.warn(
-        `Rate limit exceeded for room ${roomId}. Cannot send message.`,
-      );
-      throw new Error(
-        `Rate limit exceeded for room ${roomId}. Please try again later.`,
-      );
-    }
-  }
-
-  private prepareContentJson(message: string | Content): string {
-    const content = this.createContent(message);
-    const contentJson = this.getContentJson(content);
-    if (!contentJson) {
-      this.client.logger.warn(`Invalid content format. Cannot send message.`);
-      throw new Error(`Invalid content format. Cannot send message.`);
-    }
-    return contentJson;
-  }
-
-  private pushMessageToRoom(
-    roomChannel: RoomChannel,
-    contentJson: string,
-    roomId: number,
-  ): Promise<Message> {
-    return new Promise((resolve, reject) => {
-      roomChannel
-        .push(Events.MESSAGE, { content: contentJson })
-        .receive("ok", (response: Partial<Message>) =>
-          resolve(new Message(this.client, response)),
-        )
-        .receive("error", (error) =>
-          reject(
-            new Error(
-              `Failed to send message to room ${roomId} with content ${JSON.stringify(
-                contentJson,
-              )}: ${error}`,
-            ),
-          ),
-        );
-    });
-  }
-
   /**
-   * Uploads a file to a specified chat room with automatic caching.
+   * Uploads a file to a specific chat room.
    *
-   * This method handles the complete file upload process:
-   * 1. Checks cache for recently uploaded files (1 hour duration)
-   * 2. Creates a temporary chat resource on GameJolt servers
-   * 3. Uploads the file to the media server
-   * 4. Caches the result for future requests
-   * 5. Automatically cleans up expired cache entries
+   * This method first creates a temporary chat resource to obtain a parent ID,
+   * then uploads the file using that parent ID. The uploaded file becomes
+   * a media item that can be shared in chat messages.
    *
-   * @param file - The file to upload as a readable stream from the filesystem.
-   * @param roomId - The unique identifier of the chat room where the file will be uploaded.
-   * @returns A Promise that resolves to a MediaItem representing the uploaded file.
-   * @throws {Error} When temporary chat resource creation fails or upload process encounters an error.
+   * @param file - The readable stream containing the file data to upload.
+   * @param roomId - The unique identifier of the chat room to upload the file to.
+   * @returns A Promise that resolves to the uploaded MediaItem.
+   * @throws {Error} When the room doesn't exist, temporary resource creation fails,
+   *                 upload fails, or invalid parameters are provided.
    *
    * @example
    * ```typescript
-   * import * as fs from 'fs';
+   * import { createReadStream } from 'fs';
    *
-   * const fileStream = fs.createReadStream('./image.png');
+   * const fileStream = createReadStream('path/to/image.jpg');
    * try {
    *   const mediaItem = await chatManager.uploadFile(fileStream, 12345);
-   *   console.log(`Uploaded file: ${mediaItem.filename}`);
+   *   console.log(`File uploaded successfully: ${mediaItem.filename}`);
    * } catch (error) {
    *   console.error('Upload failed:', error.message);
    * }
    * ```
    */
   async uploadFile(file: Readable, roomId: number): Promise<MediaItem> {
-    const temp = await this.client.api.media.chatTempResource(roomId);
+    // Verify the room exists and is accessible
+    if (!this.isInRoom(roomId)) {
+      this.client.logger.warn(
+        `Attempting to upload file to room ${roomId} that is not joined.`,
+      );
+      throw new Error(`Cannot upload file: not currently in room ${roomId}.`);
+    }
 
-    if (temp && temp.payload && temp.payload.id) {
-      const parentId = parseInt(temp.payload.id, 10);
+    this.client.logger.debug(`Starting file upload to room ${roomId}`);
+
+    try {
+      // Create temporary chat resource
+      const temp = await this.client.api.media.chatTempResource(roomId);
+
+      if (!temp || !temp.payload || !temp.payload.id) {
+        this.client.logger.error(
+          `Failed to create temporary chat resource for room ${roomId}`,
+        );
+        throw new Error("Failed to create temporary chat resource.");
+      }
+
+      const parentId = temp.payload.id;
+
+      this.client.logger.debug(
+        `Created temporary resource with parent ID: ${parentId}`,
+      );
+
+      // Upload the media file
       const response = await this.client.api.media.uploadMedia(
         file,
         parentId,
         "chat-message",
       );
 
+      if (!response) {
+        throw new Error("Upload completed but no media item was returned.");
+      }
+
+      this.client.logger.info(
+        `Successfully uploaded file to room ${roomId}: ${
+          response.filename || "unknown"
+        }`,
+      );
       return response;
-    } else {
-      throw new Error("Temporary chat resource could not be created.");
+    } catch (error) {
+      this.client.logger.error(`File upload failed for room ${roomId}:`, error);
+
+      // Re-throw with more context if it's our error
+      if (error instanceof Error) {
+        throw error;
+      }
+
+      // Handle unexpected errors
+      throw new Error(`File upload failed: ${String(error)}`);
     }
   }
 
@@ -539,6 +514,92 @@ export class ChatManager extends events.EventEmitter {
     }
   }
 
+  /**
+   * Validates that a room channel exists for the given room ID and returns it.
+   *
+   * @param roomId - The unique identifier of the room to validate.
+   * @returns The RoomChannel instance associated with the given room ID.
+   * @throws {Error} When the room channel is not found for the specified room ID.
+   */
+  private validateRoomChannel(roomId: number): RoomChannel {
+    const roomChannel = this._roomChannels.get(roomId);
+    if (!roomChannel) {
+      throw new Error(`Room channel ${roomId} not found. Cannot send message.`);
+    }
+    return roomChannel;
+  }
+
+  /**
+   * Checks if the rate limit for sending messages in the specified room has been exceeded.
+   *
+   * @param roomId - The unique identifier of the room to check the rate limit for.
+   * @throws {Error} When the rate limit is exceeded for the specified room.
+   */
+  private checkRateLimit(roomId: number): void {
+    const rateLimiter = this.getRateLimiter(roomId);
+    if (rateLimiter && rateLimiter.throttle()) {
+      this.client.logger.warn(
+        `Rate limit exceeded for room ${roomId}. Cannot send message.`,
+      );
+      throw new Error(
+        `Rate limit exceeded for room ${roomId}. Please try again later.`,
+      );
+    }
+  }
+
+  /**
+   * Prepares the message content for sending by creating a Content object and converting it to JSON.
+   * @param message - The message to prepare, either as a string or a Content object.
+   * @returns The JSON representation of the message content.
+   * @throws {Error} When the content format is invalid.
+   */
+  private prepareContentJson(message: string | Content): string {
+    const content = this.createContent(message);
+    const contentJson = this.getContentJson(content);
+    if (!contentJson) {
+      this.client.logger.warn(`Invalid content format. Cannot send message.`);
+      throw new Error(`Invalid content format. Cannot send message.`);
+    }
+    return contentJson;
+  }
+
+  /**
+   * Pushes a message to a specific room channel and returns a Promise that resolves to the created Message.
+   *
+   * @param roomChannel - The room channel to send the message to.
+   * @param contentJson - The message content as a JSON string.
+   * @returns A Promise that resolves to a Message instance when successful.
+   * @throws {Error} When the message fails to send to the room.
+   *
+   * @private
+   */
+  private pushMessageToRoom(
+    roomChannel: RoomChannel,
+    contentJson: string,
+  ): Promise<Message> {
+    return new Promise((resolve, reject) => {
+      roomChannel
+        .push(Events.MESSAGE, { content: contentJson })
+        .receive("ok", (response: Partial<Message>) =>
+          resolve(new Message(this.client, response)),
+        )
+        .receive("error", (error) =>
+          reject(
+            new Error(
+              `Failed to send message to room ${
+                roomChannel.roomId
+              } with content ${JSON.stringify(contentJson)}: ${error}`,
+            ),
+          ),
+        );
+    });
+  }
+
+  /**
+   * Retrieves the room channel for the specified room ID.
+   * @param roomId The ID of the room.
+   * @returns The RoomChannel instance if found, or `undefined` if not found.
+   */
   private getRoomChannel(roomId: number): RoomChannel | undefined {
     const roomChannel = this._roomChannels.get(roomId);
     if (!roomChannel) {
@@ -583,18 +644,6 @@ export class ChatManager extends events.EventEmitter {
     const doc = ContentDocument.fromJson(content.contentJson());
     if (doc instanceof ContentDocument) {
       return doc.toJson();
-    }
-  }
-
-  /**
-   * Cleans up old cache entries.
-   */
-  private cleanUpMediaItemCache(): void {
-    const now = Date.now();
-    for (const key in this.cachedMediaItems) {
-      if (now - this.cachedMediaItems[key].timestamp >= CACHE_DURATION) {
-        delete this.cachedMediaItems[key];
-      }
     }
   }
 }

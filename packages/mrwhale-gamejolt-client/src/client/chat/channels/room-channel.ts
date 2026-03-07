@@ -4,11 +4,13 @@ import { ChatManager } from "../chat-manager";
 import { User } from "../../../structures/user";
 import { Message } from "../../../structures/message";
 import { Events } from "../../../constants";
-import { MemberLeavePayload } from "../../../types/member-leave-payload";
-import { MemberAddPayload } from "../../../types/member-add-payload";
-import { OwnerSyncPayload } from "../../../types/owner-sync-payload";
 import { Room } from "../../../structures/room";
 import { Client } from "../../../client/client";
+import {
+  MemberAddPayload,
+  MemberLeavePayload,
+  OwnerSyncPayload,
+} from "../../../types/payloads";
 
 const ROOM_CHANNEL_TOPIC_PREFIX = "room:";
 

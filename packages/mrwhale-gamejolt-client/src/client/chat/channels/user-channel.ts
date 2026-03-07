@@ -5,12 +5,11 @@ import { User } from "../../../structures/user";
 import { Events } from "../../../constants";
 import { Message } from "../../../structures/message";
 import { Room } from "../../../structures/room";
-import { FriendRemovePayload } from "../../../types/friend-remove-payload";
-import { GroupAddPayload } from "../../../types/group-add-payload";
 import { UserCollection } from "../../../collections/user-collection";
 import { UserChannelResponse } from "../../../types/user-channel-response";
 import { pollRequest } from "../../../util/poll-request";
 import { Client } from "../../../client/client";
+import { FriendRemovePayload, GroupAddPayload } from "../../../types/payloads";
 
 const USER_CHANNEL_TOPIC_PREFIX = "user:";
 
@@ -123,12 +122,12 @@ export class UserChannel extends Channel {
   constructor(
     userId: number,
     chat: ChatManager,
-    params?: Record<string, unknown>
+    params?: Record<string, unknown>,
   ) {
     super(
       USER_CHANNEL_TOPIC_PREFIX + userId,
       params,
-      chat.grid.socket as Socket
+      chat.grid.socket as Socket,
     );
     this.userId = userId;
     this.client = chat.client;
@@ -160,21 +159,21 @@ export class UserChannel extends Channel {
           new Promise((resolve, reject) => {
             this.join()
               .receive("ok", (response: UserChannelResponse) =>
-                resolve(response)
+                resolve(response),
               )
               .receive("error", reject);
-          })
+          }),
       );
       this.processJoinResponse(response);
       this.client.emit(Events.CHAT_READY, response);
       this.client.logger.info(
-        `Successfully joined user channel for user Id: ${this.userId}.`
+        `Successfully joined user channel for user Id: ${this.userId}.`,
       );
     } catch (error) {
       this.client.logger.error(
         `Failed to join user channel for user Id: ${this.userId}. Error: ${
           error.message || error
-        }`
+        }`,
       );
     }
   }
@@ -296,7 +295,7 @@ export class UserChannel extends Channel {
         : formattedPayload;
 
     this.client.logger.warn(
-      `Invalid event payload received for event: ${event}. Payload: ${truncatedPayload}`
+      `Invalid event payload received for event: ${event}. Payload: ${truncatedPayload}`,
     );
   }
 }
