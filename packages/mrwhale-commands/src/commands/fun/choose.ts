@@ -1,6 +1,10 @@
-import { CommandOptions } from "@mrwhale-io/core";
+import { CommandOptions, validateChoices } from "@mrwhale-io/core";
 
-export const responses = [
+// Configuration
+const MAX_CHOICE_LENGTH = 100;
+const MAX_CHOICES = 20;
+
+export const RESPONSES = [
   "Oh it has to be <<CHOICE>>",
   "I'd have to go with <<CHOICE>>",
   "It's obviously <<CHOICE>>",
@@ -29,27 +33,46 @@ export const data: CommandOptions = {
 
 export function action(args: string[]): string {
   const choices = args.join();
-  if (!choices) {
+  if (!choices.trim()) {
     return "No choices have been passed.";
   }
 
   const separators = [" or ", ","];
-  const options = choices.split(new RegExp(separators.join("|"), "gi"));
+  const rawOptions = choices.split(new RegExp(separators.join("|"), "gi"));
 
-  if (options.length > 1) {
-    const index = Math.floor(Math.random() * responses.length);
-    const choice = multiDecide(options).trim();
+  const validationResult = validateChoices(
+    rawOptions,
+    MAX_CHOICES,
+    MAX_CHOICE_LENGTH,
+  );
 
-    return responses[index].replace(/<<CHOICE>>/g, choice);
-  } else {
-    return "Please pass two or more choices.";
+  if (!validationResult.valid) {
+    return validationResult.message!;
   }
+
+  const cleanOptions = validationResult.choices!;
+
+  if (cleanOptions.length < 2) {
+    return "Please provide at least two different choices.";
+  }
+
+  const index = Math.floor(Math.random() * RESPONSES.length);
+  const choice = multiDecide(cleanOptions);
+
+  return RESPONSES[index].replace(/<<CHOICE>>/g, choice);
 }
 
+/**
+ * Selects a random option from the provided list.
+ *
+ * @param options The list of options to choose from.
+ * @returns A randomly selected option, or "nothing" if the list is empty.
+ */
 function multiDecide(options: string[]): string {
-  const selected = options[Math.floor(Math.random() * options.length)];
-  if (!selected) {
-    return this.multiDecide(options);
+  if (options.length === 0) {
+    return "nothing";
   }
-  return selected;
+
+  const selected = options[Math.floor(Math.random() * options.length)];
+  return selected || "nothing";
 }

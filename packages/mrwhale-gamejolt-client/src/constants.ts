@@ -86,6 +86,11 @@ export enum Events {
   MEMBER_WATCH = "member_watch",
 
   /**
+   * This event is triggered when a member is kicked from a group chat.
+   */
+  KICK_MEMBER = "kick_member",
+
+  /**
    * This event is triggered when the chat is ready.
    */
   CHAT_READY = "chat_ready",
@@ -143,6 +148,8 @@ export const Endpoints = {
     info: (id: number): string => `/web/discover/games/${id}`,
     /** Retrieves game overview information. */
     overview: (id: number): string => `/web/discover/games/overview/${id}`,
+    /** Retrieves a list of games based on discovery criteria. */
+    discover: `/web/discover/games`,
   },
 
   /** Comment system */

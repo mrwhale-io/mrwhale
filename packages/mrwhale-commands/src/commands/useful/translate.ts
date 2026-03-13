@@ -1,6 +1,6 @@
 import * as translate from "translate-google";
 
-import { CommandOptions } from "@mrwhale-io/core";
+import { CommandOptions, validateContent } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
   name: "translate",
@@ -23,10 +23,15 @@ export function languages(): {
 
 export async function action(
   toTranslate: string,
-  lang?: string
+  lang?: string,
 ): Promise<string> {
   if (!toTranslate) {
     return "Please pass some text to translate.";
+  }
+
+  const translationValidation = validateContent(toTranslate);
+  if (!translationValidation.isValid) {
+    return "I can't translate that text. Please use appropriate language.";
   }
 
   try {

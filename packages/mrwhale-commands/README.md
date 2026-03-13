@@ -4,7 +4,7 @@
 
 ## Commands
 
-### Fun (12 commands)
+### Fun (13 commands)
 
 | Name            | Description                             | Usage                                 |
 | --------------- | --------------------------------------- | ------------------------------------- |
@@ -18,41 +18,33 @@
 | **fact**        | Get a random useless fact.              | fact                                  |
 | **gameidea**    | Generate a random game idea.            | gameidea                              |
 | **roll**        | Roll one or multiple dice.              | roll [n sides] or [n dice] d[n sides] |
-| **ship**        | Find out how compatible two users are.  | ship [user1], [user2]                 |              
+| **ship**        | Find out how compatible two users are.  | ship [user1], [user2]                 |
+| **meme**        | Get a random meme from Reddit.          | meme [anime|cats|comics|programming]  |           
 | **whale**       | Generate a whale face.                  | whale [length]                        |
 
-### Game (2 commands)
+### Game (1 command)
 
 | Name          | Description                     | Usage                             |
 | ------------- | ------------------------------- | --------------------------------- |
-| **hangman**   | Play a classic game of hangman. | hangman [start|guess|end] [guess] |
 | **rockpaper** | Rock. Paper. Scissors.          | rockpaper [rock|paper|scissors]   |
 
-### Utility (6 commands)
+### Utility (1 command)
 
 | Name      | Description                                         | Usage            |
 | --------- | --------------------------------------------------- | ---------------- |
-| **help**  | Get command help.                                   | help [type|name] |
-| **info**  | Get bot information.                                | info             |
-| **langs** | List supported languages for the translate command. | langs            |
 | **ping**  | Sends back a pong response.                         | ping             |
-| **rank**  | Get your current rank.                              | rank             |
-| **whois** | Get information about a user.                       | whois [@user]    |
 
-### Useful (3 commands)
+### Useful (6 commands)
 
 | Name          | Description                                                                 | Usage                    |
 | ------------- | --------------------------------------------------------------------------- | ------------------------ |
 | **advice**    | Get advice.                                                                 | advice                   |
+| **bearweek**  | Countdown to bearweek.                                                      | bearweek                 |
+| **newyear**   | Countdown to the new year.                                                  | newyear                  |
 | **translate** | Translate to specified language. Use langs command for supported languages. | translate [lang], [text] |
+| **weather**   | Get the current weather for the given location.                             | weather <city>           |
 | **wiki**      | Search for a Wiki page.                                                     | wiki [search]            |
 
-### Admin (2 commands)
-
-| Name          | Description                              | Usage                |
-| ------------- | ---------------------------------------- | -------------------- |
-| **cleverbot** | Toggle cleverbot on/off.                 | cleverbot            |
-| **reload**    | Reload a command.                        | reload [command|all] |
 
 ## License
 

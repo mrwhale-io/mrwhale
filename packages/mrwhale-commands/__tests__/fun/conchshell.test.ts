@@ -45,12 +45,7 @@ describe("ConchShell Command", () => {
     expect(response).toBe("🐚 Follow your heart.");
   });
 
-  it("should respond with 'Love is complicated' for love-related questions", () => {
-    const question = "Do I have a crush on someone?";
-    const response = conchshell.action(question);
 
-    expect(response).toBe("🐚 Love is complicated. Try asking again.");
-  });
 
   it("should handle 'treasure' questions with a custom response", () => {
     const question = "Where is the treasure?";
@@ -65,7 +60,7 @@ describe("ConchShell Command", () => {
     const question = "What about Mr. Whale?";
     const response = conchshell.action(question);
 
-    expect(response).toBe("🐚 Mr. Whale knows best. Go ask him.");
+    expect(response).toBe("🐚 Mr. Whale is wise and wonderful. Trust his guidance.");
   });
 
   it("should reject empty questions", () => {
@@ -82,17 +77,17 @@ describe("ConchShell Command", () => {
     const response = conchshell.action(question);
 
     expect(response).toBe(
-      "🐚 Your question is too long. The conch is confused. Try again."
+      "🐚 Your question is too long. The conch is confused. Try a shorter question."
     );
   });
 
-  it("should return a personality response 20% of the time", () => {
-    jest.spyOn(global.Math, "random").mockReturnValue(0.15); // Simulate a personality response
+  it("should return a personality response 15% of the time", () => {
+    jest.spyOn(global.Math, "random").mockReturnValue(0.1); // Simulate a personality response
     const question = "Am I cool?";
     const response = conchshell.action(question);
 
     expect(response).toMatch(/^🐚 .+/); // Starts with the shell emoji
-    expect(response).toMatch(/(Why do you bother me|The conch is tired)/); // Matches personality responses
+    expect(response).toMatch(/(Why do you bother me|feeling mysterious|ocean spirits)/); // Matches personality responses
   });
 
   it("should handle case-insensitive input", () => {

@@ -18,17 +18,58 @@ describe("choose", () => {
   it("should ask the user to pass more options when less than 2 options are passed", () => {
     const result = choose.action(["Whale"]);
 
-    expect(result).toEqual("Please pass two or more choices.");
+    expect(result).toEqual("Please provide at least two different choices.");
   });
 
   it("should choose one of the options", () => {
     const choices = ["Apple", "Orange"];
     const response =
-      choose.responses[Math.floor(Math.random() * choose.responses.length)];
+      choose.RESPONSES[Math.floor(Math.random() * choose.RESPONSES.length)];
     const choice = choices[Math.floor(Math.random() * choices.length)];
 
     const result = choose.action(choices);
 
     expect(result).toEqual(`${response.replace(/<<CHOICE>>/g, choice)}`);
+  });
+
+  it("should handle comma-separated choices", () => {
+    const result = choose.action(["Apple,Orange,Banana"]);
+
+    // Should parse and choose from the comma-separated options
+    expect(result).toMatch(
+      /Oh it has to be|I'd have to go with|It's obviously|My choice is/,
+    );
+    expect(result).toMatch(/(Apple|Orange|Banana)/);
+  });
+
+  it("should handle 'or' separated choices", () => {
+    const result = choose.action(["Apple or Orange or Banana"]);
+
+    // Should parse and choose from the 'or' separated options
+    expect(result).toMatch(
+      /Oh it has to be|I'd have to go with|It's obviously|My choice is/,
+    );
+    expect(result).toMatch(/(Apple|Orange|Banana)/);
+  });
+
+  it("should handle individual choices as separate arguments", () => {
+    const result = choose.action(["Apple", "Orange"]);
+
+    // Should choose from separate arguments (joined with commas)
+    expect(result).toMatch(
+      /Oh it has to be|I'd have to go with|It's obviously|My choice is/,
+    );
+    expect(result).toMatch(/(Apple|Orange)/);
+  });
+
+  it("should handle inappropriate choices in safe mode", () => {
+    // Mock validateChoices to return invalid
+    jest.doMock("@mrwhale-io/core", () => ({
+      ...jest.requireActual("@mrwhale-io/core"),
+      validateChoices: jest.fn().mockReturnValue({ isValid: false }),
+    }));
+
+    const result = choose.action(["inappropriate", "content"]);
+    expect(result).toMatch(/appropriate|family-friendly/);
   });
 });

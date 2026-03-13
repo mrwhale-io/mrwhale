@@ -23,7 +23,7 @@ type ProsemirrorEditorFormat = {
  * Builds content editor content.
  */
 export class Content {
-  state: EditorState<ContentEditorSchema>;
+  state: EditorState;
   schema: ContentEditorSchema;
   capabilities: ContextCapabilities;
 
@@ -33,7 +33,7 @@ export class Content {
     this.state = EditorState.create({
       doc: contentMarkdownParser(this.schema).parse(content),
       plugins: [new UpdateAutolinkPlugin(this.schema, this.capabilities)],
-    }) as EditorState<ContentEditorSchema>;
+    }) as EditorState;
   }
 
   /**
@@ -43,9 +43,9 @@ export class Content {
    */
   textNode(
     content: string,
-    marks?: Mark<ContentEditorSchema>[]
-  ): Node<ContentEditorSchema> {
-    return this.state.schema.text(content, marks);
+    marks?: Mark[]
+  ): Node {
+    return this.state.schema.text(content, marks as any);
   }
 
   /**
@@ -53,7 +53,7 @@ export class Content {
    * @param href The address of the link.
    * @param title The title of the link.
    */
-  autoLink(href: string, title: string): Mark<ContentEditorSchema> {
+  autoLink(href: string, title: string): Mark {
     return this.state.schema.mark("link", {
       href,
       title,
@@ -65,7 +65,7 @@ export class Content {
    * Create a user mention mark.
    * @param username The username of the user to mention.
    */
-  mention(username: string): Mark<ContentEditorSchema> {
+  mention(username: string): Mark {
     return this.state.schema.mark("mention", { username });
   }
 
@@ -73,7 +73,7 @@ export class Content {
    * Create a code mark.
    * @param text The text content of the code.
    */
-  code(text: string): Mark<ContentEditorSchema> {
+  code(text: string): Mark {
     return this.state.schema.mark("code", { text });
   }
 
@@ -82,9 +82,9 @@ export class Content {
    * @param [content] The nodes to contain within paragraph node.
    */
   paragraphNode(
-    content?: Node<ContentEditorSchema> | Node<ContentEditorSchema>[]
-  ): Node<ContentEditorSchema> {
-    return this.state.schema.nodes.paragraph.create({}, content);
+    content?: Node | Node[]
+  ): Node {
+    return this.state.schema.nodes.paragraph.create({}, content as any);
   }
 
   /**
@@ -92,9 +92,9 @@ export class Content {
    * @param [content] The nodes to contain within list item node.
    */
   listItemNode(
-    content?: Node<ContentEditorSchema> | Node<ContentEditorSchema>[]
-  ): Node<ContentEditorSchema> {
-    return this.state.schema.nodes.listItem.create({}, content);
+    content?: Node | Node[]
+  ): Node {
+    return this.state.schema.nodes.listItem.create({}, content as any);
   }
 
   /**
@@ -102,7 +102,7 @@ export class Content {
    * @param content The content of the text node.
    * @param [marks] Any marks to include.
    */
-  insertText(content: string, marks?: Mark<ContentEditorSchema>[]): this {
+  insertText(content: string, marks?: Mark[]): this {
     const node = this.schema.text(content, marks);
     this.insertNewNode(node);
 
@@ -140,16 +140,16 @@ export class Content {
    * @param [content] The nodes to contain within code block node.
    */
   insertCodeBlock(
-    content: string | Node<ContentEditorSchema> | Node<ContentEditorSchema>[]
+    content: string | Node | Node[]
   ): this {
-    let contentNode: Node<ContentEditorSchema> | Node<ContentEditorSchema>[];
+    let contentNode: Node | Node[];
     if (typeof content === "string") {
       contentNode = this.textNode(content);
     } else {
       contentNode = content;
     }
 
-    const node = this.schema.nodes.codeBlock.create({}, contentNode);
+    const node = this.schema.nodes.codeBlock.create({}, contentNode as any);
     this.insertNewNode(node);
 
     return this;
@@ -159,9 +159,9 @@ export class Content {
    * Insert a bullet list node.
    * @param items The nodes to contain within bullet list node.
    */
-  insertBulletList(items: Node<ContentEditorSchema>[]): this {
-    const listNode = this.state.schema.nodes.bulletList.create({}, items);
-    this.insertNewNode(listNode);
+  insertBulletList(items: Node[]): this {
+    const listNode = this.state.schema.nodes.bulletList.create({}, items as any);
+    this.insertNewNode(listNode as any);
 
     return this;
   }
@@ -170,9 +170,9 @@ export class Content {
    * Insert a ordered list node.
    * @param items The nodes to contain within ordered list node.
    */
-  insertOrderedList(items: Node<ContentEditorSchema>[]): this {
-    const listNode = this.state.schema.nodes.orderedList.create({}, items);
-    this.insertNewNode(listNode);
+  insertOrderedList(items: Node[]): this {
+    const listNode = this.state.schema.nodes.orderedList.create({}, items as any);
+    this.insertNewNode(listNode as any);
 
     return this;
   }
@@ -205,13 +205,13 @@ export class Content {
     tr.replaceWith(
       this.state.selection.from - 1,
       this.state.selection.to + 1,
-      newNodes
+      newNodes as any
     );
 
     const resolvedCursorPos = tr.doc.resolve(this.state.selection.from);
     const selection = Selection.near(resolvedCursorPos);
     tr.setSelection(selection);
-    ContentEditor.ensureEndNode(tr, this.state.schema.nodes.paragraph);
+    ContentEditor.ensureEndNode(tr, this.state.schema.nodes.paragraph as any);
     this.state = this.state.apply(tr);
   }
 

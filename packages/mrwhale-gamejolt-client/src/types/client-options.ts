@@ -10,11 +10,6 @@ export interface ClientOptions {
   userId: number;
 
   /**
-   * The base url of the chat server.
-   */
-  baseChatUrl?: string;
-
-  /**
    * The base url of the site api.
    */
   baseApiUrl?: string;

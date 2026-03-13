@@ -18,6 +18,11 @@ export class GameOverview {
   readonly playCount: number;
 
   /**
+   * The number of supporters the game has.
+   */
+  readonly supporterCount: number;
+
+  /**
    * @param data Partial data to initialize the GameOverview instance.
    */
   constructor(data: Partial<GameOverview>) {

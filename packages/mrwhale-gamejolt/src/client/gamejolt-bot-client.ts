@@ -10,13 +10,13 @@ import {
   User,
   Content,
   Room,
-  RoomType,
   Client,
   UserCollection,
   Events,
   MemberAddEventData,
   MemberLeaveEventData,
   OwnerSyncEventData,
+  KickMemberEventData,
 } from "@mrwhale-io/gamejolt-client";
 import { GameJolt } from "joltite.js";
 
@@ -30,6 +30,7 @@ import { Policer } from "./managers/policer";
 import { GameJoltCommandDispatcher } from "./command/gamejolt-command-dispatcher";
 import { GameJoltCommand } from "./command/gamejolt-command";
 import { RoomStorageLoader } from "./storage/room-storage-loader";
+import { MAX_PREFIX_LENGTH } from "../constants";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -150,37 +151,37 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
    * Handles automated message replies and response generation.
    * Manages context-aware responses, reply templates, and conversation flow.
    */
-  private readonly replyManager: ReplyManager;
+  readonly replyManager: ReplyManager;
 
   /**
    * Optional Cleverbot integration manager for AI-powered conversations.
    * Provides natural language processing and contextual responses when enabled.
    */
-  private readonly cleverbotManager?: CleverbotManager;
+  readonly cleverbotManager?: CleverbotManager;
 
   /**
    * Manages URL detection, validation, and filtering in messages.
    * Handles link preview generation, security checks, and content filtering.
    */
-  private readonly urlManager: UrlManager;
+  readonly urlManager: UrlManager;
 
   /**
    * Manages user experience points, levels, and progression systems.
    * Tracks user activity, calculates experience gains, and handles level-up rewards.
    */
-  private readonly levelManager: LevelManager;
+  readonly levelManager: LevelManager;
 
   /**
    * Content moderation and policy enforcement manager.
    * Handles spam detection, content filtering, and automated moderation actions.
    */
-  private readonly policer: Policer;
+  readonly policer: Policer;
 
   /**
    * Manages persistent storage for room-specific settings and data.
    * Handles loading, saving, and caching of per-room configuration.
    */
-  private readonly roomStorageLoader: RoomStorageLoader;
+  readonly roomStorageLoader: RoomStorageLoader;
 
   /**
    * Creates a new Game Jolt bot client instance.
@@ -366,7 +367,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
       }
 
       const room = this.chat.activeRooms.get(data.room_id);
-      if (!room || room.type !== RoomType.ClosedGroup) {
+      if (!room || !room.isGroupRoom) {
         return;
       }
 
@@ -415,7 +416,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
       }
 
       const room = this.chat.activeRooms.get(data.room_id);
-      if (!room || room.type !== RoomType.ClosedGroup) {
+      if (!room || !room.isGroupRoom) {
         return;
       }
 
@@ -494,6 +495,43 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     }
   }
 
+  @on(Events.KICK_MEMBER)
+  protected onKickMember(data: KickMemberEventData): void {
+    try {
+      if (!data?.room_id || !data?.member) {
+        this.logger.warn(`Invalid kick_member data received:`, data);
+        return;
+      }
+
+      // Only send messages in rooms we're actually in
+      if (!this.chat.isInRoom(data.room_id)) {
+        return;
+      }
+      const room = this.chat.activeRooms.get(data.room_id);
+      if (!room || !room.isGroupRoom) {
+        return;
+      }
+
+      // Don't announce if the bot itself was kicked (it won't receive this event anyway)
+      if (data.member.id === this.client.userId) {
+        return;
+      }
+
+      const content = new Content().insertText(
+        `👋 @${data.member.username} was kicked from the group.`,
+      );
+      this.chat.sendMessage(content, data.room_id);
+      this.logger.info(
+        `User ${data.member.username} (${data.member.id}) was kicked from group chat ${data.room_id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Error handling ${Events.KICK_MEMBER} event: ${error.message}`,
+        error,
+      );
+    }
+  }
+
   /**
    * Retrieves the command prefix for a specific room.
    *
@@ -511,13 +549,51 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
    * ```
    */
   async getPrefix(roomId: number): Promise<string> {
-    if (!this.roomSettings.has(roomId)) {
+    const settings = this.roomSettings.get(roomId);
+
+    if (!settings) {
       return this.defaultPrefix;
     }
 
-    const settings = this.roomSettings.get(roomId);
+    try {
+      return settings.get<string>("prefix", this.defaultPrefix);
+    } catch (error) {
+      this.logger?.warn(`Failed to get prefix for room ${roomId}:`, error);
+      return this.defaultPrefix;
+    }
+  }
 
-    return await settings.get("prefix", this.defaultPrefix);
+  /**
+   * Sets the command prefix for a specific room.
+   *
+   * Each room can have its own custom prefix for bot commands. If no custom
+   * prefix is set for the room, the default bot prefix is used.
+   *
+   * @param roomId - The unique identifier of the room to set the prefix for.
+   * @param prefix - The command prefix to set for the room.
+   * @throws {Error} If the prefix is empty or exceeds the maximum length.
+   */
+  async setPrefix(roomId: number, prefix: string): Promise<void> {
+    if (!prefix) {
+      throw new Error("Prefix cannot be empty.");
+    }
+
+    if (prefix.length > MAX_PREFIX_LENGTH) {
+      throw new Error(
+        `Prefix cannot be longer than ${MAX_PREFIX_LENGTH} characters.`,
+      );
+    }
+
+    try {
+      const settings = this.roomSettings.get(roomId);
+      if (!settings) {
+        await this.roomStorageLoader.loadRoomSettings(roomId);
+      }
+      settings.set("prefix", prefix);
+    } catch (error) {
+      this.logger?.error(`Failed to set prefix for room ${roomId}:`, error);
+      throw new Error("Could not set prefix for this room.");
+    }
   }
 
   /**
@@ -644,10 +720,10 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
    * @param roomId - The unique identifier of the room to join.
    * @private
    */
-
   private async joinRoom(roomId: number) {
     try {
       await this.chat.joinRoom(roomId);
+      await this.roomStorageLoader.loadRoomSettings(roomId);
     } catch (e) {
       this.logger.error(`Error joining room ${roomId}: ${e.message}`);
     }

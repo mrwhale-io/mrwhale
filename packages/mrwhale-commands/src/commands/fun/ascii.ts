@@ -1,7 +1,7 @@
 import * as figlet from "figlet";
 import * as util from "util";
 
-import { codeBlock, CommandOptions } from "@mrwhale-io/core";
+import { codeBlock, CommandOptions, validateContent } from "@mrwhale-io/core";
 
 const figletAsync = util.promisify(figlet);
 
@@ -25,11 +25,21 @@ export async function action(text: string): Promise<string> {
     return `Text must be ${MAX_ASCII_LENGTH} characters or less.`;
   }
 
-  const result = (await figletAsync(text)) as string;
-
-  if (!result) {
-    return "Could not parse input.";
+  // Validate content for inappropriate text
+  const validation = validateContent(text.trim());
+  if (!validation.isValid) {
+    return "I can't create ASCII art for that text. Please use appropriate language.";
   }
 
-  return codeBlock(result);
+  try {
+    const result = (await figletAsync(text)) as string;
+
+    if (!result) {
+      return "Could not parse input.";
+    }
+
+    return codeBlock(result);
+  } catch (error) {
+    return "Failed to generate ASCII art. Please try again.";
+  }
 }

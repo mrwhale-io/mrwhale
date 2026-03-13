@@ -1,22 +1,19 @@
 import { gameIdea } from "@mrwhale-io/commands";
-import { InfoBuilder } from "@mrwhale-io/core";
 import { Message } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
 export default class extends GameJoltCommand {
   constructor() {
-    super(gameIdea.data);
+    super({
+      ...gameIdea.data,
+      usage: "<prefix>gameidea [simple|detailed]",
+      description: "Generate a random game idea with intelligent combinations.",
+    });
   }
 
-  async action(message: Message): Promise<Message> {
-    const game = gameIdea.action();
-    const info = new InfoBuilder()
-      .addField("Genre", game.genre)
-      .addField("Location", game.environment)
-      .addField("Objective", `${game.goal} ${game.item}`)
-      .addField("Rules/Mechanics", game.rule)
-      .build();
+  async action(message: Message, args: string[]): Promise<Message> {
+    const formattedIdea = gameIdea.action(args);
 
-    return message.reply(info);
+    return message.reply(formattedIdea);
   }
 }

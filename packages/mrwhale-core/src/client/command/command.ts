@@ -3,9 +3,33 @@ import { CommandTypes } from "../../types/command-types";
 import { BotClient } from "../bot-client";
 
 /**
- * Command class to extend which users can execute.
+ * Abstract base class for all bot commands.
  *
- * @template T The bot client.
+ * This class provides the foundation for creating commands that can be executed
+ * by the bot client. It defines the structure and common properties that all
+ * commands must have, including metadata like name, description, usage examples,
+ * and permission settings.
+ *
+ * @template T - The type of bot client that will execute this command, must extend BotClient
+ *
+ * @example
+ * ```typescript
+ * class PingCommand extends Command<MyBotClient> {
+ *   constructor() {
+ *     super({
+ *       name: 'ping',
+ *       description: 'Responds with pong',
+ *       type: CommandTypes.Utility,
+ *       usage: '<prefix>ping',
+ *       examples: ['!ping']
+ *     });
+ *   }
+ *
+ *   async action(message: unknown, args?: unknown[]): Promise<unknown> {
+ *     return 'Pong!';
+ *   }
+ * }
+ * ```
  */
 export abstract class Command<T extends BotClient> {
   /**
@@ -82,10 +106,11 @@ export abstract class Command<T extends BotClient> {
   }
 
   /**
-   * The action this command performs.
+   * The method that will be executed when the command is called.
    *
-   * @param message The message that invoked this command.
-   * @param [args] Any arguments passed with this command.
+   * @param message The message that triggered the command.
+   * @param args The command arguments.
+   * @returns The result of the command execution.
    */
   abstract action(message: unknown, args?: unknown[]): Promise<unknown>;
 

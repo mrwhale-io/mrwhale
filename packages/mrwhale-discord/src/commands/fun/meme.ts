@@ -23,8 +23,8 @@ export default class extends DiscordCommand {
           { name: "anime", value: "anime" },
           { name: "cats", value: "cats" },
           { name: "comics", value: "comics" },
-          { name: "programming", value: "programming" }
-        )
+          { name: "programming", value: "programming" },
+        ),
     );
   }
 
@@ -38,7 +38,7 @@ export default class extends DiscordCommand {
   }
 
   async slashCommandAction(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     try {
       const category = interaction.options.getString("category") ?? "meme";
@@ -66,7 +66,7 @@ export default class extends DiscordCommand {
       .setURL(post.url)
       .setColor(EMBED_COLOR)
       .setDescription(
-        `Posted by ${post.author} | :small_red_triangle: ${post.ups} upvotes`
+        `Posted by ${post.author} | :small_red_triangle: ${post.ups} upvotes`,
       )
       .setImage(post.url)
       .setFooter({
@@ -77,7 +77,7 @@ export default class extends DiscordCommand {
   private async fetchMemes(category: string = "meme") {
     const timeForFetch = this.isTimeToFetch(category);
 
-    let memeCache = this.memeCache[category];
+    const memeCache = this.memeCache[category];
 
     if (timeForFetch) {
       const memes = await meme.fetchMemes(category);
@@ -92,7 +92,7 @@ export default class extends DiscordCommand {
 
   private async replyWithMeme(
     interaction: ChatInputCommandInteraction | Message,
-    memes: meme.RedditPost[]
+    memes: meme.RedditPost[],
   ): Promise<void> {
     if (!memes.length) {
       await interaction.reply("Fresh out of memes.");

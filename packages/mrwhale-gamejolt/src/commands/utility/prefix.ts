@@ -13,21 +13,13 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, [prefix]: [string]): Promise<Message> {
-    if (!prefix) {
-      return message.reply("Please provide a prefix");
-    }
-
-    if (prefix.length > 10) {
-      return message.reply("Please provide a prefix less than 10 characters.");
-    }
-
-    const settings = this.botClient.roomSettings.get(message.room_id);
-
-    if (settings) {
-      settings.set("prefix", prefix);
-      return message.reply("Successfully set the prefix for this room.");
-    } else {
-      return message.reply("Could not set prefix for this room.");
+    try {
+      await this.botClient.setPrefix(message.room_id, prefix);
+      return message.reply(
+        `✅ Successfully set the prefix to "${prefix}" for this room.`,
+      );
+    } catch (error) {
+      return message.reply(`❌ Error setting prefix: ${error.message}`);
     }
   }
 }

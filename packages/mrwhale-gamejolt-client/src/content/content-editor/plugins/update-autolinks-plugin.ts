@@ -26,14 +26,14 @@ export default class UpdateAutolinkPlugin extends Plugin {
     this.schema = schema;
     this.capabilities = capabilities;
 
-    this.spec.appendTransaction = this.appendTransaction;
+    (this as any).spec.appendTransaction = this.appendTransaction;
   }
 
   appendTransaction(
-    _transactions: Transaction<ContentEditorSchema>[],
-    oldState: EditorState<ContentEditorSchema>,
-    newState: EditorState<ContentEditorSchema>
-  ): Transaction<ContentEditorSchema> {
+    _transactions: Transaction[],
+    oldState: EditorState,
+    newState: EditorState
+  ): Transaction {
     const tr = newState.tr;
     const mentionMarkType = this.schema.marks.mention;
     const tagMarkType = this.schema.marks.tag;
@@ -108,7 +108,7 @@ export default class UpdateAutolinkPlugin extends Plugin {
    *  - link
    */
   rangeHasLinks(
-    tr: Transaction<ContentEditorSchema>,
+    tr: Transaction,
     from: number,
     to: number
   ): boolean {
@@ -126,9 +126,9 @@ export default class UpdateAutolinkPlugin extends Plugin {
   }
 
   processTags(
-    tr: Transaction<ContentEditorSchema>,
+    tr: Transaction,
     cell: TextCell,
-    markType: MarkType<ContentEditorSchema>,
+    markType: MarkType,
     paragraphPos: number
   ): void {
     const matches = [] as RegexResult[];
@@ -161,9 +161,9 @@ export default class UpdateAutolinkPlugin extends Plugin {
   }
 
   processMentions(
-    tr: Transaction<ContentEditorSchema>,
+    tr: Transaction,
     cell: TextCell,
-    markType: MarkType<ContentEditorSchema>,
+    markType: MarkType,
     paragraphPos: number
   ): void {
     const matches = [] as RegexResult[];
@@ -196,9 +196,9 @@ export default class UpdateAutolinkPlugin extends Plugin {
   }
 
   processLinks(
-    tr: Transaction<ContentEditorSchema>,
+    tr: Transaction,
     cell: TextCell,
-    markType: MarkType<ContentEditorSchema>,
+    markType: MarkType,
     paragraphPos: number
   ): void {
     const matches = UrlDetector.detect(cell.text, cell.index + 1); // +1 to skip the paragraph node index
@@ -219,12 +219,12 @@ export default class UpdateAutolinkPlugin extends Plugin {
   }
 
   removeAutolinkMarks(
-    tr: Transaction<ContentEditorSchema>,
+    tr: Transaction,
     paragraphPos: number,
-    paragraph: Node<ContentEditorSchema>
+    paragraph: Node
   ): void {
     const autolinkMarks = [] as Mark[];
-    paragraph.descendants((node: Node<ContentEditorSchema>) => {
+    paragraph.descendants((node: Node) => {
       if (node.isText) {
         autolinkMarks.push(
           ...node.marks.filter(
@@ -244,9 +244,9 @@ export default class UpdateAutolinkPlugin extends Plugin {
   }
 
   getParagraphs(
-    parent: Node<ContentEditorSchema>
-  ): Node<ContentEditorSchema>[] {
-    const paragraphs = [] as Node<ContentEditorSchema>[];
+    parent: Node
+  ): Node[] {
+    const paragraphs = [] as Node[];
 
     for (let i = 0; i < parent.childCount; i++) {
       const child = parent.child(i);
@@ -260,7 +260,7 @@ export default class UpdateAutolinkPlugin extends Plugin {
     return paragraphs;
   }
 
-  getTextCells(parent: Node<ContentEditorSchema>): TextCell[] {
+  getTextCells(parent: Node): TextCell[] {
     const cells = [] as TextCell[];
     let currentCell = { index: 0, text: "" } as TextCell;
 

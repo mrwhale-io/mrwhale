@@ -7,6 +7,7 @@ import { Events } from "../../../constants";
 import { Room } from "../../../structures/room";
 import { Client } from "../../../client/client";
 import {
+  KickMemberPayload,
   MemberAddPayload,
   MemberLeavePayload,
   OwnerSyncPayload,
@@ -110,6 +111,7 @@ export class RoomChannel extends Channel {
     this.on(Events.USER_UPDATED, this.onUserUpdated.bind(this));
     this.on(Events.MEMBER_ADD, this.onMemberAdd.bind(this));
     this.on(Events.MEMBER_LEAVE, this.onMemberLeave.bind(this));
+    this.on(Events.KICK_MEMBER, this.onKickMember.bind(this));
     this.on(Events.OWNER_SYNC, this.onOwnerSync.bind(this));
   }
 
@@ -160,7 +162,18 @@ export class RoomChannel extends Channel {
   private processJoinResponse(response: { room: Partial<Room> }): void {
     const room = new Room(this.client, response.room);
     this._room = room;
+
+    // Check if room channel already exists (e.g., during reconnection)
+    if (this._chat.roomChannels.has(this.roomId)) {
+      this._chat.roomChannels.remove(this.roomId);
+    }
+
     this._chat.roomChannels.add(this.roomId, this);
+
+    // Check if active room already exists (e.g., during reconnection)
+    if (this._chat.activeRooms.has(this.roomId)) {
+      this._chat.activeRooms.remove(this.roomId);
+    }
     this._chat.activeRooms.add(this.roomId, room);
   }
 
@@ -274,6 +287,37 @@ export class RoomChannel extends Channel {
     this.client.emit(Events.OWNER_SYNC, {
       room_id: this.roomId,
       owner_id,
+    });
+  }
+
+  private onKickMember(data: KickMemberPayload): void {
+    if (!data?.user_id) {
+      this.logInvalidEventPayloadWarning(Events.KICK_MEMBER, data);
+      return;
+    }
+
+    const { user_id } = data;
+
+    const activeRoom = this._chat.activeRooms.get(this.roomId);
+    if (!activeRoom) {
+      this.client.logger.warn(
+        `Active room not found for room Id: ${this.roomId}`,
+      );
+      return;
+    }
+
+    const removedMember = activeRoom.removeMember(user_id);
+
+    if (!removedMember) {
+      this.client.logger.warn(
+        `Room member with Id: ${user_id} not found in room Id: ${this.roomId}`,
+      );
+      return;
+    }
+
+    this.client.emit(Events.KICK_MEMBER, {
+      room_id: this.roomId,
+      member: removedMember,
     });
   }
 

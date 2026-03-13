@@ -49,7 +49,7 @@ export class LevelManager {
   constructor(private bot: DiscordBotClient) {
     this.lastMessages = {};
     this.bot.client.on(Events.MessageCreate, (message: Message) =>
-      this.onMessage(message)
+      this.onMessage(message),
     );
   }
 
@@ -95,7 +95,7 @@ export class LevelManager {
    */
   static async getUserScore(
     guildId: string,
-    userId: string
+    userId: string,
   ): Promise<ScoreInstance> {
     return await Score.findOne({
       where: {
@@ -165,7 +165,7 @@ export class LevelManager {
   async increaseExp(
     userId: string,
     guildId: string,
-    expGained: number
+    expGained: number,
   ): Promise<void> {
     const score = await LevelManager.getorCreateScore(userId, guildId);
     const level = getLevelFromExp(score.exp);
@@ -178,11 +178,8 @@ export class LevelManager {
 
     if (newLevel > level && areLevelsEnabled) {
       const channel = await this.getLevelUpAnnouncementChannel(guildId);
-      const announcementLevelUpMessage = await this.getRandomLevelUpAnnouncement(
-        guildId,
-        userId,
-        newLevel
-      );
+      const announcementLevelUpMessage =
+        await this.getRandomLevelUpAnnouncement(guildId, userId, newLevel);
       channel.send({
         content: announcementLevelUpMessage,
         allowedMentions: { users: [] },
@@ -208,7 +205,7 @@ export class LevelManager {
    * @returns The text channel where level-up announcements should be sent.
    */
   private async getLevelUpAnnouncementChannel(
-    guildId: string
+    guildId: string,
   ): Promise<TextBasedChannel> {
     const guild = await loadGuild(this.bot, guildId);
     const firstChannel = getFirstTextChannel(guild) as GuildTextBasedChannel;
@@ -218,12 +215,12 @@ export class LevelManager {
     }
 
     const settings = this.bot.guildSettings.get(guildId);
-    const channelId = await settings.get(Settings.LevelChannel);
+    const channelId = await settings.get<string>(Settings.LevelChannel);
 
     if (!channelId) {
       return await this.bot.notificationManager.getAnnouncementChannel(
         guildId,
-        firstChannel
+        firstChannel,
       );
     }
 
@@ -241,7 +238,7 @@ export class LevelManager {
   private async getRandomLevelUpAnnouncement(
     guildId: string,
     userId: string,
-    newLevel: number
+    newLevel: number,
   ): Promise<string> {
     const mood = await this.bot.getCurrentMood(guildId);
     const announcements = LEVEL_UP_MESSAGES[mood];

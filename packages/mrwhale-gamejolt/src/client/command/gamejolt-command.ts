@@ -5,6 +5,15 @@ import { GameJoltBotClient } from "../gamejolt-bot-client";
 import { GameJoltCommandRateLimiter } from "./gamejolt-command-rate-limiter";
 import { GameJoltCommandOptions } from "../../types/command-options";
 
+/**
+ * Abstract base class for Game Jolt bot commands.
+ *
+ * Extends the base Command class with Game Jolt-specific functionality including
+ * rate limiting and group chat restrictions.
+ *
+ * @abstract
+ * @extends Command<GameJoltBotClient>
+ */
 export abstract class GameJoltCommand extends Command<GameJoltBotClient> {
   /**
    * Whether or not the command can be used only in group chats.
@@ -12,15 +21,21 @@ export abstract class GameJoltCommand extends Command<GameJoltBotClient> {
   groupOnly: boolean;
 
   /**
-   * The command rate limiter.
+   * A rate limiter instance to manage command usage and prevent spam.
+   * This rate limiter tracks command usage on a per-room and per-user basis,
+   * allowing for fine-grained control over command access and cooldowns.
    */
   readonly rateLimiter: GameJoltCommandRateLimiter;
 
+  /**
+   * Creates a new GameJoltCommand instance.
+   * @param options The options for this command, including cooldown duration and group-only restriction.
+   */
   constructor(options: GameJoltCommandOptions) {
     super(options);
     this.rateLimiter = new GameJoltCommandRateLimiter(
       DEFAULT_COMMAND_RATE_LIMIT,
-      options.cooldown
+      options.cooldown,
     );
     this.groupOnly = options.groupOnly ?? false;
   }

@@ -10,7 +10,7 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, [phrase]: [string]): Promise<Message> {
-    const definitionResult = await define.action(phrase);
+    const definitionResult = await define.action(phrase, false);
 
     if (typeof definitionResult === "string") {
       return message.reply(definitionResult);

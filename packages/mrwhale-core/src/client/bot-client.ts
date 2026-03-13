@@ -7,16 +7,35 @@ import { StorageProviderConstructor } from "../types/storage-provider-constructo
 import { SqliteStorageProvider } from "../storage/sqlite-storage-provider";
 
 /**
- * Base class to extend bot client integrations from.
+ * Abstract base class for bot clients that provides core functionality for command management,
+ * storage, and client configuration. This class serves as the foundation for platform-specific
+ * bot implementations.
+ *
+ * @template T - The command type that extends Command, defaults to Command<any>
+ *
+ * @example
+ * ```typescript
+ * class MyBot extends BotClient<MyCommand> {
+ *   async getPrefix(id?: string): Promise<string> {
+ *     return this.defaultPrefix;
+ *   }
+ * }
+ *
+ * const bot = new MyBot({
+ *   commandsDir: './commands',
+ *   prefix: '!',
+ *   ownerId: '123456789'
+ * });
+ * ```
  */
 export abstract class BotClient<T extends Command<any> = Command<any>> {
   /**
-   * Default prefix denoting a command call.
+   * The default prefix for commands.
    */
   defaultPrefix: string;
 
   /**
-   * Contains the time the bot started.
+   * The timestamp when the bot started.
    */
   startTime: number;
 
@@ -26,32 +45,33 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
   ownerId: number | string;
 
   /**
-   * The commands directory.
+   * The directory where command files are located.
    */
   commandsDir: string;
 
   /**
-   * Whether the client is running in tsnode.
+   * Whether the client is running in ts-node.
+   * This is determined by checking for the presence of the ts-node register instance symbol in the process object.
    */
   readonly tsNode: boolean;
 
   /**
-   * The storage provider.
+   * The storage provider constructor to use for the bot's storage needs. This allows for flexible storage solutions, with a default of SqliteStorageProvider if none is provided in the options.
    */
   readonly provider: StorageProviderConstructor;
 
   /**
-   * Bot client logging instance.
+   * The logger instance for the bot client, used for logging messages and errors throughout the bot's operation.
    */
   readonly logger = logger;
 
   /**
-   * Contains the command registry.
+   * Contains the command storage system for managing bot commands. This is an instance of CommandStorage that allows for registering, retrieving, and managing commands within the bot client.
    */
   readonly commands: CommandStorage<this, T>;
 
   /**
-   * Contains the command loader.
+   * The command loader responsible for loading and reloading commands from the file system. This instance of CommandLoader provides methods to load all commands or reload specific commands by name, facilitating dynamic command management without needing to restart the bot.
    */
   protected commandLoader: CommandLoader;
 
@@ -62,7 +82,7 @@ export abstract class BotClient<T extends Command<any> = Command<any>> {
     this.provider = options.provider ?? SqliteStorageProvider();
     this.commands = new CommandStorage<this, T>();
     this.commandLoader = new CommandLoader(this);
-  
+
     if (process[Symbol.for("ts-node.register.instance")]) {
       this.tsNode = true;
     }

@@ -1,6 +1,8 @@
 import crypto = require("crypto");
 
-import { CommandOptions } from "@mrwhale-io/core";
+import { CommandOptions, validateContent } from "@mrwhale-io/core";
+
+const MAX_NAME_LENGTH = 50;
 
 export const data: CommandOptions = {
   name: "ship",
@@ -52,17 +54,13 @@ export interface ShipResult {
 }
 
 export function action(firstUser: string, secondUser: string): ShipResult {
-  if (!firstUser) {
-    throw "First user is missing.";
-  }
+  const { firstUser: cleanFirstUser, secondUser: cleanSecondUser } =
+    validateAndSanitizeNames(firstUser, secondUser);
 
-  if (!secondUser) {
-    throw "Second user is missing.";
-  }
-
+  // Sort users for consistent hash generation
   const users = [
-    firstUser.trim().toLowerCase(),
-    secondUser.trim().toLowerCase(),
+    cleanFirstUser.toLowerCase(),
+    cleanSecondUser.toLowerCase(),
   ].sort();
 
   const hash = crypto.createHash("md5").update(users.toString()).digest("hex");
@@ -76,13 +74,45 @@ export function action(firstUser: string, secondUser: string): ShipResult {
 
   return {
     description: getMatchDescription(percent),
-    shipName: getShipName(firstUser, secondUser),
+    shipName: getShipName(cleanFirstUser, cleanSecondUser),
     percent,
     prediction: getPrediction(percent),
     breakdown: getBreakdown(percent),
     randomFact: getRandomFact(),
     emojiScale: getEmojiScale(percent),
   };
+}
+
+function validateAndSanitizeNames(firstUser: string, secondUser: string) {
+  if (!firstUser) {
+    throw "First user is missing.";
+  }
+
+  if (!secondUser) {
+    throw "Second user is missing.";
+  }
+
+  // Validate length limits
+  if (firstUser.length > MAX_NAME_LENGTH) {
+    throw "First user name is too long. Please use a shorter name.";
+  }
+
+  if (secondUser.length > MAX_NAME_LENGTH) {
+    throw "Second user name is too long. Please use a shorter name.";
+  }
+
+  // Validate content of both user names
+  const firstUserValidation = validateContent(firstUser.trim());
+  if (!firstUserValidation.isValid) {
+    throw "First user name contains inappropriate content. Please use a family-friendly name.";
+  }
+
+  const secondUserValidation = validateContent(secondUser.trim());
+  if (!secondUserValidation.isValid) {
+    throw "Second user name contains inappropriate content. Please use a family-friendly name.";
+  }
+
+  return { firstUser, secondUser };
 }
 
 /**

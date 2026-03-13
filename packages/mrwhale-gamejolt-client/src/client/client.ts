@@ -19,7 +19,8 @@ import {
   MemberAddEventData,
   MemberLeaveEventData,
   OwnerSyncEventData,
-  ClientEventName
+  ClientEventName,
+  KickMemberEventData,
 } from "../types/events";
 
 /** Interval (in milliseconds) for fetching friend request updates from the API. */
@@ -259,6 +260,13 @@ export class Client extends events.EventEmitter {
     event: "member_leave",
     listener: (data: MemberLeaveEventData) => void,
   ): this;
+
+  /**
+   * Fired when a member is kicked from a group room.
+   * @param event - The 'kick_member' event name.
+   * @param listener - Callback function that receives member kick data.
+   */
+  on(event: "kick_member", listener: (data: KickMemberEventData) => void): this;
 
   /**
    * Fired when a group room's owner changes.

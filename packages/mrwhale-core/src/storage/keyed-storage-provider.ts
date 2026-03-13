@@ -1,5 +1,9 @@
 import { StorageProvider } from "./storage-provider";
 
+/**
+ * A storage provider that uses a key to store and retrieve data.
+ * It wraps around another storage provider and adds a key-based interface.
+ */
 export class KeyedStorageProvider {
   protected readonly _key: string;
   protected readonly _storageProvider: StorageProvider;
@@ -16,7 +20,9 @@ export class KeyedStorageProvider {
   }
 
   /**
-   * Initialise the storage provider
+   * Initializes the storage provider by fetching existing data from the underlying storage provider using the specified key.
+   * If no data is found for the key, it initializes an empty object and stores it in the underlying storage provider.
+   * The fetched or initialized data is then cached in memory for faster access during subsequent get/set operations.
    */
   async init(): Promise<void> {
     let data: any = await this._storageProvider.get(this._key);
@@ -37,12 +43,13 @@ export class KeyedStorageProvider {
    * @param key The key of the value to fetch.
    * @param [defaultValue] The default value to return if no value is found.
    */
-  get(key: string, defaultValue?: unknown): Promise<any> {
-    return this._cache
-      ? typeof this._cache[key] !== "undefined"
-        ? this._cache[key]
-        : defaultValue
-      : defaultValue;
+  get<T = unknown>(key: string, defaultValue?: T): T | undefined {
+    if (!this._cache) {
+      return defaultValue;
+    }
+
+    const value = this._cache[key];
+    return typeof value !== "undefined" ? value : defaultValue;
   }
 
   /**
@@ -60,7 +67,7 @@ export class KeyedStorageProvider {
   /**
    * Remove a key from the store.
    *
-   * @param key The key of the value to set.
+   * @param key The key of the value to remove.
    */
   async remove(key: string): Promise<void> {
     delete this._cache[key];

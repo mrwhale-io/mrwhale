@@ -18,6 +18,7 @@ export type {
   UserUpdatedEventData,
   MemberAddEventData,
   MemberLeaveEventData,
+  KickMemberEventData,
   OwnerSyncEventData,
   ClientEventName,
   MemberAddPayload,
@@ -26,3 +27,13 @@ export type {
   FriendRemovePayload,
   GroupAddPayload,
 } from "./types/events";
+export {
+  GameFilterType,
+  GamePriceType,
+  GameOperatingSystem,
+  GamePlatformType,
+  GameMaturityType,
+  DiscoverParams,
+  DiscoverResponse,
+  GameManager,
+} from "./client/api/game-manager";

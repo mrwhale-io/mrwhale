@@ -62,7 +62,7 @@ export default class extends DiscordCommand {
   private async getDefinitionEmbed(
     phrase: string
   ): Promise<EmbedBuilder | EmbedBuilder[]> {
-    const definitionResult = await define.action(phrase);
+    const definitionResult = await define.action(phrase, true);
 
     if (typeof definitionResult === "string") {
       return new EmbedBuilder()

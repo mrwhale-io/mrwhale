@@ -299,7 +299,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   async feed(
     interactionOrMessage: ChatInputCommandInteraction | Message,
     fishName: FishTypeNames,
-    quantity: number
+    quantity: number,
   ): Promise<EmbedBuilder> {
     const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
 
@@ -310,7 +310,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       const result = await this._hungerManager.feed(
         interactionOrMessage,
         fish,
-        quantity
+        quantity,
       );
 
       // Create an embed with the rewards details
@@ -347,7 +347,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * @returns An embed with the rewards and experience gained from feeding all fish.
    */
   async feedAll(
-    interactionOrMessage: ChatInputCommandInteraction | Message
+    interactionOrMessage: ChatInputCommandInteraction | Message,
   ): Promise<EmbedBuilder> {
     const { userId, guildId } = extractUserAndGuildId(interactionOrMessage);
     const itemType: ItemTypes = "Fish";
@@ -368,7 +368,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
         const result = await this._hungerManager.feed(
           interactionOrMessage,
           fish,
-          quantity
+          quantity,
         );
 
         totalExpGained += result.expGained;
@@ -436,19 +436,19 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   async addToUserBalance(
     guildId: string,
     userId: string,
-    amount: number
+    amount: number,
   ): Promise<number> {
     const { balance } = await this.userBalanceManager.addToUserBalance(
       userId,
       guildId,
-      amount
+      amount,
     );
 
     await checkAndAwardBalanceAchievements(
       guildId,
       userId,
       balance,
-      this.levelManager
+      this.levelManager,
     );
 
     return balance;
@@ -476,7 +476,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    * @param guildId The identifier of the guild.
    */
   async getFishingAnnouncementChannel(
-    guildId: string
+    guildId: string,
   ): Promise<GuildTextBasedChannel> {
     const guild = await loadGuild(this, guildId);
     const firstChannel = getFirstTextChannel(guild) as GuildTextBasedChannel;
@@ -487,19 +487,19 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
     const settings = this.guildSettings.get(guildId);
     const announcementChannelId = await settings.get(
-      Settings.AnnouncementChannel
+      Settings.AnnouncementChannel,
     );
-    const levelupChannelId = await settings.get(Settings.LevelChannel);
+    const levelupChannelId = await settings.get<string>(Settings.LevelChannel);
     const levelupChannel = (await loadChannel(
       this.client,
       levelupChannelId,
-      firstChannel
+      firstChannel,
     )) as GuildTextBasedChannel;
 
     if (announcementChannelId) {
       return await this.notificationManager.getAnnouncementChannel(
         guildId,
-        levelupChannel
+        levelupChannel,
       );
     }
 
@@ -519,7 +519,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
    */
   async resetUserData(
     interaction: ChatInputCommandInteraction,
-    isGlobal: boolean
+    isGlobal: boolean,
   ) {
     const { guildId, userId } = extractUserAndGuildId(interaction);
 
@@ -536,10 +536,13 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private async onClientReady(): Promise<void> {
     await this.guildStorageLoader.loadAllGuildSettings();
     if (this.discordBotList) {
-      const discordBotList = createDjsClient(this.discordBotList, this.client);
+      const discordBotList = createDjsClient(
+        this.discordBotList,
+        this.client as Client<true>,
+      );
       discordBotList.startPosting();
       discordBotList.postBotCommands(
-        this.commands.map((cmd) => cmd.slashCommandData.toJSON())
+        this.commands.map((cmd) => cmd.slashCommandData.toJSON()),
       );
       discordBotList.startPolling();
     }
@@ -564,7 +567,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     } catch (error) {
       this.logger.error(
         `Error processing interaction for guild ${guildId}:`,
-        error
+        error,
       );
     }
   }
@@ -586,7 +589,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     } catch (error) {
       this.logger.error(
         `Error processing message for guild ${guildId}:`,
-        error
+        error,
       );
     }
   }
@@ -612,7 +615,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   @on(Events.ChannelDelete)
   private async onChannelDelete(
-    channel: DMChannel | NonThreadGuildBasedChannel
+    channel: DMChannel | NonThreadGuildBasedChannel,
   ): Promise<void> {
     if (channel.type !== ChannelType.GuildText) {
       return;
@@ -631,7 +634,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       }
 
       const announcementChannelId = await settings.get(
-        Settings.AnnouncementChannel
+        Settings.AnnouncementChannel,
       );
 
       if (announcementChannelId === channel.id) {
@@ -642,7 +645,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
 
   private async spawnActivity(
     guildId: string,
-    nextActivity: Activities
+    nextActivity: Activities,
   ): Promise<void> {
     switch (nextActivity) {
       case Activities.TreasureHunt:
@@ -670,7 +673,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
       this,
       this._fishSpawner,
       this._fishingAttemptTracker,
-      this.levelManager
+      this.levelManager,
     );
     this.userBalanceManager = new UserBalanceManager();
     this.greetingsManager = new GreetingsManager(this);

@@ -35,6 +35,14 @@ export interface MemberLeaveEventData {
   member: User;
 }
 
+/** Data emitted when a member is kicked from a group room. */
+export interface KickMemberEventData {
+  /** The ID of the room where the member was kicked. */
+  room_id: number;
+  /** The user who was kicked from the room. */
+  member: User;
+}
+
 /**
  * Data emitted when a group room's owner changes.
  * Extends the existing OwnerSyncPayload with room_id for consistency.

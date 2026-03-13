@@ -12,12 +12,19 @@ export const genres = [
   "puzzle",
   "MMO",
   "MMORPG",
-  "stealth",
   "rhythm",
   "simulation",
   "real-time strategy",
   "racing",
   "tower defense",
+  "roguelike",
+  "metroidvania",
+  "auto-battler",
+  "card game",
+  "city builder",
+  "farming sim",
+  "dating sim",
+  "visual novel",
 ];
 
 export const goals = [
@@ -29,6 +36,14 @@ export const goals = [
   "collect all",
   "save",
   "race",
+  "build",
+  "defend",
+  "explore",
+  "conquer",
+  "discover",
+  "befriend",
+  "evolve",
+  "unlock",
 ];
 
 export const items = [
@@ -47,6 +62,16 @@ export const items = [
   "pizzas",
   "spiders",
   "butterflies",
+  "cats",
+  "zombies",
+  "crystals",
+  "ancient artifacts",
+  "magical creatures",
+  "time travelers",
+  "space marines",
+  "witch doctors",
+  "cyber hackers",
+  "dancing bears",
 ];
 
 export const environments = [
@@ -74,15 +99,181 @@ export const environments = [
   "prison",
   "basement",
   "subway",
+  "cyberpunk city",
+  "floating islands",
+  "underground laboratory",
+  "medieval village",
+  "alien planet",
+  "virtual world",
+  "haunted mansion",
+  "post-apocalyptic wasteland",
 ];
 
 export const rules = [
   "can only move forward",
-  "avoid Unkillable objects",
+  "avoid unkillable objects",
   "instant death",
   "limited time",
   "increasing difficulty until player dies",
   "limited inventory",
-  "gravity",
+  "gravity reverses randomly",
   "bounce off walls",
+  "can only jump once",
+  "everything is made of ice",
+  "you shrink over time",
+  "no user interface",
+  "commands are reversed",
+  "world rotates constantly",
+  "you can only see in the dark",
+  "resources deplete constantly",
 ];
+
+// New data categories for richer ideas
+export const themes = [
+  "cyberpunk",
+  "medieval fantasy",
+  "post-apocalyptic",
+  "comedy",
+  "horror",
+  "noir detective",
+  "space opera",
+  "steampunk",
+  "ancient mythology",
+  "modern day",
+  "western",
+  "superhero",
+];
+
+export const artStyles = [
+  "pixel art",
+  "low poly",
+  "realistic",
+  "cartoon",
+  "minimalist",
+  "hand-drawn",
+  "voxel",
+  "noir black & white",
+  "neon synthwave",
+  "watercolor",
+  "comic book",
+  "abstract",
+];
+
+export const mechanics = [
+  "crafting system",
+  "base building",
+  "deck building",
+  "match-3 puzzles",
+  "physics manipulation",
+  "time manipulation",
+  "resource management",
+  "diplomacy",
+  "turn-based combat",
+  "real-time combat",
+  "stealth mechanics",
+  "parkour movement",
+];
+
+export const moods = [
+  "whimsical",
+  "dark and gritty",
+  "lighthearted",
+  "mysterious",
+  "epic",
+  "cozy",
+  "chaotic",
+  "peaceful",
+  "intense",
+  "surreal",
+  "nostalgic",
+  "futuristic",
+];
+
+// Genre compatibility data for intelligent combinations
+export const genreCompatibility = {
+  RPG: {
+    preferredGoals: ["save", "collect all", "explore", "discover", "evolve"],
+    preferredItems: [
+      "dragons",
+      "monsters",
+      "skeletons",
+      "ancient artifacts",
+      "magical creatures",
+    ],
+    preferredEnvironments: [
+      "castle",
+      "cave",
+      "alternate reality",
+      "medieval village",
+      "haunted mansion",
+    ],
+    preferredThemes: [
+      "medieval fantasy",
+      "ancient mythology",
+      "post-apocalyptic",
+    ],
+    preferredMechanics: [
+      "turn-based combat",
+      "resource management",
+      "crafting system",
+    ],
+    avoidedMechanics: [],
+  },
+  racing: {
+    preferredGoals: ["race", "escape", "survive"],
+    preferredItems: ["robots", "space marines", "cyber hackers"],
+    preferredEnvironments: [
+      "mars",
+      "moon",
+      "spaceship",
+      "cyberpunk city",
+      "post-apocalyptic wasteland",
+    ],
+    preferredThemes: ["cyberpunk", "space opera", "post-apocalyptic"],
+    preferredMechanics: [],
+    avoidedMechanics: ["crafting system", "base building", "diplomacy"],
+  },
+  puzzle: {
+    preferredGoals: ["unlock", "discover", "escape", "collect all"],
+    preferredItems: ["crystals", "ancient artifacts", "magical creatures"],
+    preferredEnvironments: [
+      "castle",
+      "haunted mansion",
+      "underground laboratory",
+      "virtual world",
+    ],
+    preferredThemes: ["mysterious", "noir detective", "cyberpunk"],
+    preferredMechanics: [
+      "match-3 puzzles",
+      "physics manipulation",
+      "time manipulation",
+    ],
+    avoidedMechanics: ["real-time combat", "stealth mechanics"],
+  },
+  "tower defense": {
+    preferredGoals: ["defend", "survive", "destroy"],
+    preferredItems: ["monsters", "space aliens", "zombies", "robots"],
+    preferredEnvironments: [
+      "post-apocalyptic wasteland",
+      "alien planet",
+      "haunted mansion",
+      "cyberpunk city",
+    ],
+    preferredThemes: ["post-apocalyptic", "space opera", "medieval fantasy"],
+    preferredMechanics: ["resource management", "base building"],
+    avoidedMechanics: ["stealth mechanics", "parkour movement"],
+  },
+  stealth: {
+    preferredGoals: ["escape", "capture", "rescue", "discover"],
+    preferredItems: ["ninjas", "spiders", "ghosts", "cyber hackers"],
+    preferredEnvironments: [
+      "prison",
+      "castle",
+      "cyberpunk city",
+      "underground laboratory",
+    ],
+    preferredThemes: ["noir detective", "cyberpunk", "medieval fantasy"],
+    preferredMechanics: ["stealth mechanics", "parkour movement"],
+    avoidedMechanics: ["turn-based combat", "match-3 puzzles"],
+  },
+};

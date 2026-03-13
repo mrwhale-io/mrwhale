@@ -6,7 +6,7 @@ export const data: CommandOptions = {
   name: "meme",
   description: "Get a random meme from Reddit.",
   type: "fun",
-  usage: "<prefix>meme",
+  usage: "<prefix>meme [anime|cats|comics|programming]",
   cooldown: 5000,
 };
 
@@ -48,7 +48,7 @@ interface ApiResponse {
 }
 
 export async function fetchMemes(
-  category: string = "meme"
+  category: string = "meme",
 ): Promise<RedditPost[]> {
   if (!isValidCategory(category)) {
     throw new Error("You must pass a valid category.");

@@ -2,7 +2,7 @@ import { CommandOptions, TimeUtilities } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
   name: "newyear",
-  description: "Countdown the new year.",
+  description: "Countdown to the new year.",
   type: "useful",
   usage: "<prefix>newyear",
   aliases: ["year"],

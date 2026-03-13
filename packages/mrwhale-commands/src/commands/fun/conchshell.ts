@@ -1,4 +1,7 @@
-import { CommandOptions } from "@mrwhale-io/core";
+import {
+  CommandOptions,
+  validateContent
+} from "@mrwhale-io/core";
 
 const CONCHSHELL_RESPONSES = [
   `I don't think so.`,
@@ -14,17 +17,22 @@ const CONCHSHELL_RESPONSES = [
   `Definitely not.`,
   `The odds are in your favor.`,
   `The stars say no.`,
+  `The tides are uncertain.`,
   `Ask next time.`,
+  `The conch shell is thinking...`,
+  `Reply hazy, try again.`,
 ];
 
 const CONCHSHELL_PERSONALITY_RESPONSES = [
-  `Why do you bother me with such questions?`,
-  `Do you really want to know?`,
-  `The conch is tired today.`,
-  `Hmm... let me think. Nope.`,
-  `You're asking the wrong shell.`,
+  `Why do you bother me with such trivial questions?`,
+  `Do you really want to know the answer?`,
+  `The conch is feeling mysterious today.`,
+  `Hmm... let me consult the ocean spirits.`,
+  `You're asking the right shell, but at the wrong time.`,
+  `The tide will bring you answers.`,
 ];
 
+// Safe, family-friendly regex patterns for special responses
 const WHAT_TO_DO_REGEX = /\bwhat\s(?:do|to|should|would)\b/gi;
 const MARRIED_REGEX = /\bwill\s+i\s+(?:ever\s+)?get\s+married\??\b/gi;
 const NEITHER_REGEX = /\b(?:[^?]+\s+or\s+[^?]+)\b/gi;
@@ -52,40 +60,52 @@ export function action(question: string): string {
 
   // Handle overly long questions
   if (question.length > 200) {
-    return "🐚 Your question is too long. The conch is confused. Try again.";
+    return "🐚 Your question is too long. The conch is confused. Try a shorter question.";
   }
 
-  // Special cases based on regex matches
-  if (question.match(WHAT_TO_DO_REGEX)) {
+  // Validate the question content
+  const validation = validateContent(question.trim());
+  if (!validation.isValid) {
+    return "🐚 The conch shell only answers appropriate questions.";
+  }
+
+  const cleanQuestion = question.toLowerCase();
+
+  if (cleanQuestion.match(WHAT_TO_DO_REGEX)) {
     return "🐚 Nothing.";
   }
 
-  if (question.match(MARRIED_REGEX)) {
+  if (cleanQuestion.match(MARRIED_REGEX)) {
     return "🐚 Maybe someday.";
   }
 
-  if (question.match(NEITHER_REGEX)) {
+  if (cleanQuestion.match(NEITHER_REGEX)) {
     return "🐚 Neither.";
   }
 
-  if (question.match(LIFE_ADVICE_REGEX)) {
+  if (cleanQuestion.match(LIFE_ADVICE_REGEX)) {
     return "🐚 Follow your heart.";
   }
 
-  if (question.match(LOVE_QUESTIONS_REGEX)) {
+  if (cleanQuestion.match(LOVE_QUESTIONS_REGEX)) {
     return "🐚 Love is complicated. Try asking again.";
   }
 
-  if (question.toLowerCase().includes("treasure")) {
+  // Safe topic responses
+  if (cleanQuestion.includes("treasure")) {
     return "🐚 Treasure? You mean my secret stash? Keep dreaming.";
   }
 
-  if (question.toLowerCase().includes("whale")) {
-    return "🐚 Mr. Whale knows best. Go ask him.";
+  if (cleanQuestion.includes("whale")) {
+    return "🐚 Mr. Whale is wise and wonderful. Trust his guidance.";
   }
 
-  // Personality responses (20% chance)
-  const randomPersonalityResponse = Math.random() < 0.2;
+  if (cleanQuestion.includes("friend")) {
+    return "🐚 Friendship is the greatest treasure of all.";
+  }
+
+  // Personality responses (15% chance for more variety)
+  const randomPersonalityResponse = Math.random() < 0.15;
   if (randomPersonalityResponse) {
     return `🐚 ${
       CONCHSHELL_PERSONALITY_RESPONSES[

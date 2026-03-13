@@ -15,6 +15,11 @@ export class Game {
   readonly title: string;
 
   /**
+   * The URL slug of the game.
+   */
+  readonly slug: string;
+
+  /**
    * The developer of the game.
    */
   readonly developer: User;
@@ -30,14 +35,34 @@ export class Game {
   readonly posted_on: number;
 
   /**
+   * The timestamp when the game was last modified.
+   */
+  readonly modified_on: number;
+
+  /**
    * The number of followers the game has.
    */
   readonly follower_count: number;
 
   /**
-   * The TIGRS rating of the game.
+   * The number of likes the game has.
    */
-  readonly tigrs: number;
+  readonly like_count: number;
+
+  /**
+   * The number of media items associated with the game.
+   */
+  readonly media_count: number;
+
+  /**
+   * The TIGRS age rating of the game.
+   */
+  readonly tigrs_age: number;
+
+  /**
+   * Whether the game has adult content.
+   */
+  readonly has_adult_content: boolean;
 
   /**
    * The tool used to create the game.
@@ -53,6 +78,36 @@ export class Game {
    * The category of the game.
    */
   readonly category: string;
+
+  /**
+   * The game's website URL.
+   */
+  readonly web_site: string;
+
+  /**
+   * The game's thumbnail image URL.
+   */
+  readonly img_thumbnail: string;
+
+  /**
+   * The development status of the game.
+   */
+  readonly development_status: number;
+
+  /**
+   * Whether the game has been canceled.
+   */
+  readonly canceled: boolean;
+
+  /**
+   * Whether comments are enabled for the game.
+   */
+  readonly comments_enabled: boolean;
+
+  /**
+   * Whether the current user is following the game.
+   */
+  readonly is_following: boolean;
 
   /**
    * @param data Partial data to initialize the game.

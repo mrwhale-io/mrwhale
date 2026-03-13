@@ -10,10 +10,41 @@ import {
 import { GameJoltBotClient } from "../gamejolt-bot-client";
 
 const { on, registerListeners } = ListenerDecorators;
-const RESPONSES = [
+
+/**
+ * Configuration for the reply manager
+ */
+interface ReplyManagerConfig {
+  enabled: boolean;
+  responseChance: number; // 0-1, chance to respond to triggers
+  rateLimitCooldown: number; // milliseconds between responses per room
+  maxResponsesPerMinute: number; // global rate limit
+}
+
+/**
+ * Response pattern configuration
+ */
+interface ResponsePattern {
+  regex: RegExp;
+  mentionOnly: boolean;
+  responses: string[];
+  cooldown?: number; // specific cooldown for this pattern
+}
+
+/**
+ * Rate limiting tracker
+ */
+interface RateLimit {
+  lastResponse: number;
+  responsesThisMinute: number;
+  minuteStart: number;
+}
+
+const RESPONSES: ResponsePattern[] = [
   {
     regex: /\bharp(o+|oo+)n\b/gi,
     mentionOnly: false,
+    cooldown: 30000, // 30 second cooldown for dramatic responses
     responses: [
       "H-h-harpoon????! 😱",
       "*swims away fast*",
@@ -89,7 +120,8 @@ const RESPONSES = [
 ];
 
 const WHALE_USER_REGEX = /@?Mr\.?\W?whale|whale/gi;
-const SHUT_UP_REGEX = /(stfu|shut (the (fuck|hell)\W)?up) (@?Mr\.?\W?whale|whale)/gi;
+const SHUT_UP_REGEX =
+  /(stfu|shut (the (fuck|hell)\W)?up) (@?Mr\.?\W?whale|whale)/gi;
 
 const COMEBACKS = [
   "Why don't you shut up.",
@@ -99,107 +131,249 @@ const COMEBACKS = [
   "You're not the boss of me.",
   "Please lead by example.",
   "You know you can just disable levels right? 🙄",
+  "Shutting up is harder than you think.",
+  "I would ask you to be quiet but I don't want to interrupt your screaming into the void.",
 ];
 
 export class ReplyManager {
-  constructor(private bot: GameJoltBotClient) {
+  private static readonly DEFAULT_CONFIG: ReplyManagerConfig = {
+    enabled: true,
+    responseChance: 0.5, // 50% chance
+    rateLimitCooldown: 5000, // 5 seconds between responses per room
+    maxResponsesPerMinute: 12, // max 12 responses per minute globally
+  };
+
+  private config: ReplyManagerConfig;
+  private roomRateLimits: Map<number, RateLimit> = new Map();
+  private globalRateLimit: RateLimit = {
+    lastResponse: 0,
+    responsesThisMinute: 0,
+    minuteStart: Date.now(),
+  };
+
+  constructor(
+    private bot: GameJoltBotClient,
+    customConfig?: Partial<ReplyManagerConfig>,
+  ) {
+    this.config = { ...ReplyManager.DEFAULT_CONFIG, ...customConfig };
     registerListeners(this.bot.client, this);
+
+    this.bot.logger?.info("ReplyManager initialized with config:", this.config);
+  }
+
+  /**
+   * Updates the reply manager configuration
+   */
+  updateConfig(newConfig: Partial<ReplyManagerConfig>): void {
+    this.config = { ...this.config, ...newConfig };
+    this.bot.logger?.info("ReplyManager configuration updated");
+  }
+
+  /**
+   * Checks if we can respond based on rate limiting
+   */
+  private canRespond(roomId: number, patternCooldown?: number): boolean {
+    if (!this.config.enabled) return false;
+
+    const now = Date.now();
+
+    // Check global rate limiting
+    if (now - this.globalRateLimit.minuteStart > 60000) {
+      // Reset minute counter
+      this.globalRateLimit.minuteStart = now;
+      this.globalRateLimit.responsesThisMinute = 0;
+    }
+
+    if (
+      this.globalRateLimit.responsesThisMinute >=
+      this.config.maxResponsesPerMinute
+    ) {
+      return false;
+    }
+
+    // Check room-specific rate limiting
+    const roomLimit = this.roomRateLimits.get(roomId);
+    const cooldown = patternCooldown || this.config.rateLimitCooldown;
+
+    if (roomLimit && now - roomLimit.lastResponse < cooldown) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Updates rate limiting counters
+   */
+  private updateRateLimit(roomId: number): void {
+    const now = Date.now();
+
+    // Update global counter
+    this.globalRateLimit.responsesThisMinute++;
+    this.globalRateLimit.lastResponse = now;
+
+    // Update room counter
+    this.roomRateLimits.set(roomId, {
+      lastResponse: now,
+      responsesThisMinute: 0,
+      minuteStart: now,
+    });
   }
 
   @on("message")
-  protected async onMessage(message: Message): Promise<Message> {
-    if (message.user.id === this.bot.chat.currentUser.id) {
-      return;
-    }
+  protected async onMessage(message: Message): Promise<Message | void> {
+    try {
+      // Skip own messages
+      if (message.user.id === this.bot.chat.currentUser?.id) {
+        return;
+      }
 
-    const blockedUsersIds = this.bot.client.blockedUsers.map(
-      (blocked) => blocked.user.id
-    );
+      // Skip blocked users
+      const blockedUsersIds =
+        this.bot.client.blockedUsers?.map((blocked) => blocked.user.id) || [];
 
-    if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
-      return;
-    }
+      if (blockedUsersIds.includes(message.user.id)) {
+        return;
+      }
 
-    if (message.textContent.match(WHALE_REGEX)) {
-      return message.reply(message.toString().match(WHALE_REGEX)[0]);
-    } else if (message.textContent.match(SHUT_UP_REGEX)) {
-      const content = new Content();
-      content.insertText(
-        `@${message.user.username} ${
-          COMEBACKS[Math.floor(Math.random() * COMEBACKS.length)]
-        }`
-      );
+      // Check basic rate limiting first
+      if (!this.canRespond(message.room_id)) {
+        return;
+      }
 
-      return message.reply(content);
-    }
+      // Handle whale regex (highest priority)
+      if (message.textContent.match(WHALE_REGEX)) {
+        this.updateRateLimit(message.room_id);
+        const whaleMatch = message.textContent.match(WHALE_REGEX)[0];
+        this.bot.logger?.debug(`Responding to whale regex: ${whaleMatch}`);
+        return await message.reply(whaleMatch);
+      }
 
-    const pm = this.bot.friendsList.getByRoom(message.room_id);
+      // Handle shut up responses
+      if (message.textContent.match(SHUT_UP_REGEX)) {
+        this.updateRateLimit(message.room_id);
+        const content = new Content("chat-message");
+        const comeback =
+          COMEBACKS[Math.floor(Math.random() * COMEBACKS.length)];
+        content.insertText(`@${message.user.username} ${comeback}`);
+        this.bot.logger?.debug(`Responding to shut up with: ${comeback}`);
+        return await message.reply(content);
+      }
 
-    for (const response of RESPONSES) {
-      const matches = message.textContent.match(response.regex);
+      // Check if in private message
+      const pm = this.bot.friendsList?.getByRoom(message.room_id);
 
-      if (
-        matches &&
-        Math.random() < 0.5 && // 50% chance to respond
-        (pm ||
-          !response.mentionOnly ||
-          message.isMentioned ||
-          message.textContent.match(WHALE_USER_REGEX))
-      ) {
-        const content = new Content();
-        content.insertText(
-          `@${message.user.username} ${
+      // Handle regular response patterns
+      for (const response of RESPONSES) {
+        const matches = message.textContent.match(response.regex);
+
+        if (!matches) continue;
+
+        // Check specific pattern cooldown
+        if (!this.canRespond(message.room_id, response.cooldown)) {
+          continue;
+        }
+
+        // Check response conditions
+        const shouldRespond =
+          Math.random() < this.config.responseChance &&
+          (pm ||
+            !response.mentionOnly ||
+            message.isMentioned ||
+            message.textContent.match(WHALE_USER_REGEX));
+
+        if (shouldRespond) {
+          this.updateRateLimit(message.room_id);
+          const content = new Content("chat-message");
+          const selectedResponse =
             response.responses[
               Math.floor(Math.random() * response.responses.length)
-            ]
-          }`
-        );
+            ];
+          content.insertText(`@${message.user.username} ${selectedResponse}`);
 
-        return message.reply(content);
+          this.bot.logger?.debug(
+            `Responding to pattern ${response.regex.source} with: ${selectedResponse}`,
+          );
+
+          return await message.reply(content);
+        }
       }
+    } catch (error) {
+      this.bot.logger?.error("Error in ReplyManager onMessage:", error);
     }
   }
 
   @on("user_notification")
   protected async onUserNotification(
-    notification: Notification
-  ): Promise<boolean> {
-    if (
-      notification.type === "post-add" &&
-      notification.from_model instanceof User &&
-      notification.action_model instanceof FiresidePost
-    ) {
-      const content = new Content("fireside-post-comment");
+    notification: Notification,
+  ): Promise<boolean | void> {
+    try {
+      if (
+        notification.type === "post-add" &&
+        notification.from_model instanceof User &&
+        notification.action_model instanceof FiresidePost
+      ) {
+        const content = new Content("fireside-post-comment");
 
-      if (notification.action_model.leadStr.match(WHALE_REGEX)) {
-        content.insertText(
-          notification.action_model.leadStr.match(WHALE_REGEX)[0]
-        );
-        return this.bot.client.api.comments.addComment(
-          notification.action_resource_id,
-          notification.action_resource,
-          content.contentJson()
-        );
-      }
-
-      for (const response of RESPONSES) {
-        if (
-          notification.action_model.leadStr.match(response.regex) &&
-          (!response.mentionOnly ||
-            notification.action_model.leadStr.match(WHALE_USER_REGEX))
-        ) {
-          content.insertText(
-            response.responses[
-              Math.floor(Math.random() * response.responses.length)
-            ]
+        // Handle whale regex
+        const whaleMatch = notification.action_model.leadStr.match(WHALE_REGEX);
+        if (whaleMatch) {
+          content.insertText(whaleMatch[0]);
+          this.bot.logger?.debug(
+            `Responding to fireside whale regex: ${whaleMatch[0]}`,
           );
-          return this.bot.client.api.comments.addComment(
+          return await this.bot.client.api.comments.addComment(
             notification.action_resource_id,
             notification.action_resource,
-            content.contentJson()
+            content.contentJson(),
           );
         }
+
+        // Handle regular patterns
+        for (const response of RESPONSES) {
+          const matches = notification.action_model.leadStr.match(
+            response.regex,
+          );
+          if (
+            matches &&
+            (!response.mentionOnly ||
+              notification.action_model.leadStr.match(WHALE_USER_REGEX))
+          ) {
+            const selectedResponse =
+              response.responses[
+                Math.floor(Math.random() * response.responses.length)
+              ];
+            content.insertText(selectedResponse);
+
+            this.bot.logger?.debug(
+              `Responding to fireside pattern with: ${selectedResponse}`,
+            );
+
+            return await this.bot.client.api.comments.addComment(
+              notification.action_resource_id,
+              notification.action_resource,
+              content.contentJson(),
+            );
+          }
+        }
       }
+    } catch (error) {
+      this.bot.logger?.error(
+        "Error in ReplyManager onUserNotification:",
+        error,
+      );
     }
+  }
+
+  /**
+   * Gets current rate limiting statistics
+   */
+  getStats() {
+    return {
+      config: this.config,
+      globalResponses: this.globalRateLimit.responsesThisMinute,
+      activeRooms: this.roomRateLimits.size,
+      roomLimits: Object.fromEntries(this.roomRateLimits),
+    };
   }
 }

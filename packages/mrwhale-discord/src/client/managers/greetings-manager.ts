@@ -28,7 +28,7 @@ import { loadChannel } from "../../util/load-channel";
 export class GreetingsManager {
   constructor(private bot: DiscordBotClient) {
     this.bot.client.on(Events.GuildMemberAdd, (guildMember: GuildMember) =>
-      this.onGuildMemberAdd(guildMember)
+      this.onGuildMemberAdd(guildMember),
     );
   }
 
@@ -66,12 +66,12 @@ export class GreetingsManager {
     }
 
     const settings = this.bot.guildSettings.get(guildId);
-    const channelId = await settings.get(Settings.GreetingChannel);
+    const channelId = await settings.get<string>(Settings.GreetingChannel);
 
     if (!channelId) {
       return await this.bot.notificationManager.getAnnouncementChannel(
         guildId,
-        firstChannel
+        firstChannel,
       );
     }
 
@@ -84,7 +84,7 @@ export class GreetingsManager {
    * @returns A promise that resolves to an attachment builder containing the greeting.
    */
   private async getGreetingAttachment(
-    guildMember: GuildMember
+    guildMember: GuildMember,
   ): Promise<AttachmentBuilder> {
     return await new Greeting()
       .setGuild(guildMember.guild.name)
@@ -107,7 +107,7 @@ export class GreetingsManager {
    * @returns A promise containing a random greeting announcement.
    */
   private async getRandomGreetingAnnouncement(
-    guildMember: GuildMember
+    guildMember: GuildMember,
   ): Promise<string> {
     const mood = await this.bot.getCurrentMood(guildMember.guild.id);
     const greetings = GREETINGS[mood];
@@ -120,7 +120,7 @@ export class GreetingsManager {
 
   private async onGuildMemberAdd(guildMember: GuildMember): Promise<void> {
     const isGreetingsEnabled = await this.isGreetingsEnabled(
-      guildMember.guild.id
+      guildMember.guild.id,
     );
 
     if (!isGreetingsEnabled) {

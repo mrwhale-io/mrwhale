@@ -14,7 +14,7 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message): Promise<void> {
-    const room = this.botClient.chat.activeRooms[message.room_id];
+    const room = this.botClient.chat.activeRooms.get(message.room_id);  
     const leaveResponses = [
       `Alright I'm leaving 👋`,
       `Bye Bye 👋`,
@@ -25,7 +25,7 @@ export default class extends GameJoltCommand {
 
     message.reply(leaveResponses[index]);
 
-    if (room?.type === RoomType.ClosedGroup) {
+    if (room.isGroupRoom) {
       this.botClient.chat.userChannel?.push("group_leave", {
         room_id: room.id,
       });

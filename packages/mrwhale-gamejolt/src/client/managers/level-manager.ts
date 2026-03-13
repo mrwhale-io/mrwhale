@@ -16,6 +16,21 @@ interface MessageMap {
   [roomId: number]: { [user: number]: number };
 }
 
+/**
+ * Manages user experience points and leveling system for chat rooms.
+ *
+ * The LevelManager handles tracking user activity, awarding experience points,
+ * calculating levels, and announcing level-ups in chat rooms. It maintains
+ * message timestamps to prevent experience spam and integrates with room
+ * settings to enable/disable the leveling feature per room.
+ *
+ * @example
+ * ```typescript
+ * const levelManager = new LevelManager(botClient);
+ * const isEnabled = await levelManager.isLevelsEnabled(roomId);
+ * const scores = await LevelManager.getScores(roomId);
+ * ```
+ */
 export class LevelManager {
   private lastMessages: MessageMap;
 
@@ -58,7 +73,7 @@ export class LevelManager {
    */
   static async getUserScore(
     roomId: number,
-    userId: number
+    userId: number,
   ): Promise<ScoreInstance> {
     return await Score.findOne({
       where: {
@@ -102,7 +117,7 @@ export class LevelManager {
     }
 
     const blockedUsersIds = this.bot.client.blockedUsers.map(
-      (blocked) => blocked.user.id
+      (blocked) => blocked.user.id,
     );
 
     if (blockedUsersIds && blockedUsersIds.includes(message.user.id)) {
@@ -128,7 +143,7 @@ export class LevelManager {
 
     if (newLevel > level) {
       const content = new Content().insertText(
-        `Congrats @${message.user.username}, you just advanced to level ${newLevel}!`
+        `Congrats @${message.user.username}, you just advanced to level ${newLevel}!`,
       );
 
       this.bot.chat.sendMessage(content, message.room_id);

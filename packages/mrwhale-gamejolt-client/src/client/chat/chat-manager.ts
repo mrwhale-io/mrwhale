@@ -49,13 +49,6 @@ import { KeyedCollection } from "../../util/keyed-collection";
  */
 export class ChatManager extends events.EventEmitter {
   /**
-   * The URL of the Game Jolt chat server endpoint.
-   * Used for establishing WebSocket connections to the chat system.
-   * @readonly
-   */
-  readonly chatUrl: string;
-
-  /**
    * Reference to the main Game Jolt client instance that owns this chat manager.
    * Provides access to API methods, authentication, and logging.
    * @readonly
@@ -146,10 +139,8 @@ export class ChatManager extends events.EventEmitter {
    * The internal list of room channels the user is in.
    * The key is the room id and the value is the room channel.
    */
-  private _roomChannels: KeyedCollection<
-    number,
-    RoomChannel
-  > = new KeyedCollection();
+  private _roomChannels: KeyedCollection<number, RoomChannel> =
+    new KeyedCollection();
 
   /**
    * The internal list of active rooms the user is in.
@@ -191,6 +182,16 @@ export class ChatManager extends events.EventEmitter {
    */
   isInRoom(roomId: number): boolean {
     return this._activeRooms.has(roomId) && this._roomChannels.has(roomId);
+  }
+
+  /**
+   * Checks if the current user is the owner of the specified room.
+   * @param roomId - The unique identifier of the room to check ownership for.
+   * @returns `true` if the current user is the owner of the room, `false` otherwise.
+   */
+  isRoomOwner(roomId: number): boolean {
+    const room = this._activeRooms.get(roomId);
+    return room ? room.owner_id === this.client.userId : false;
   }
 
   /**
@@ -458,10 +459,36 @@ export class ChatManager extends events.EventEmitter {
   }
 
   /**
+   * Kicks a member from a specified chat room.
+   *
+   * @param userId - The unique identifier of the user to be kicked
+   * @param roomId - The unique identifier of the room from which to kick the user
+   * @returns A Promise that resolves when the member is successfully kicked
+   * @throws {Error} Throws an error if the kick operation fails or if the room channel is invalid
+   */
+  async kickMember(userId: number, roomId: number): Promise<void> {
+    const roomChannel = this.validateRoomChannel(roomId);
+
+    return new Promise((resolve, reject) => {
+      roomChannel
+        .push(Events.KICK_MEMBER, { member_id: userId })
+        .receive("ok", () => {
+          this.client.logger.info(`Successfully kicked member: ${userId}`);
+          resolve();
+        })
+        .receive("error", (error) => {
+          this.client.logger.error(`Failed to kick member ${userId}: ${error}`);
+          reject(new Error(`Failed to kick member ${userId}: ${error}`));
+        });
+    });
+  }
+
+  /**
    * Resets the chat client state to initial values.
    *
    * This method:
    * - Clears all active rooms
+   * - Clears all room channels
    * - Resets the start time to current timestamp
    * - Does not affect connection state or channels
    *
@@ -469,6 +496,7 @@ export class ChatManager extends events.EventEmitter {
    */
   reset(): void {
     this._activeRooms = new RoomCollection();
+    this._roomChannels = new KeyedCollection();
     this._startTime = Date.now();
   }
 

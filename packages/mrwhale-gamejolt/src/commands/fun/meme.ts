@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { meme } from "@mrwhale-io/commands";
-import { link, unorderedList } from "@mrwhale-io/core";
+import { unorderedList } from "@mrwhale-io/core";
 import { Message, Content, MediaItem } from "@mrwhale-io/gamejolt-client";
 import { GameJoltCommand } from "../../client/command/gamejolt-command";
 
@@ -26,8 +26,8 @@ export default class extends GameJoltCommand {
     if (memeCategory.toLowerCase().trim() === "categories") {
       return message.reply(
         unorderedList(
-          Object.keys(meme.SUBREDDITS).map((subreddit) => subreddit)
-        )
+          Object.keys(meme.SUBREDDITS).map((subreddit) => subreddit),
+        ),
       );
     }
     let memes: meme.RedditPost[];
@@ -39,13 +39,13 @@ export default class extends GameJoltCommand {
 
     if (!memes.length) {
       return message.reply(
-        "It seems I'm out of fresh memes!, Try again later."
+        "It seems I'm out of fresh memes!, Try again later.",
       );
     }
     const content = new Content();
     const selectedMeme = memes[Math.floor(Math.random() * memes.length)];
     const memeId = selectedMeme.postLink.substring(
-      selectedMeme.postLink.lastIndexOf("/") + 1
+      selectedMeme.postLink.lastIndexOf("/") + 1,
     );
     const mediaItem = this.cachedMediaItems[memeId];
 
@@ -57,7 +57,7 @@ export default class extends GameJoltCommand {
 
         const mediaItem = await this.botClient.client.chat.uploadFile(
           file.data,
-          message.room_id
+          message.room_id,
         );
         this.cachedMediaItems[memeId] = mediaItem;
         this.previous = mediaItem;
@@ -93,8 +93,7 @@ export default class extends GameJoltCommand {
     }
 
     const timeForFetch = this.isTimeToFetch(category);
-
-    let memeCache = this.memeCache[category];
+    const memeCache = this.memeCache[category];
 
     if (timeForFetch) {
       const memes = await meme.fetchMemes(category);

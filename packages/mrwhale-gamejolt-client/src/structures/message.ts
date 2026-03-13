@@ -164,10 +164,23 @@ export class Message {
 
   /**
    * Checks if the message sender is the owner of the room.
+   * Useful for implementing room-specific permissions or actions.
+   *
+   * @returns `true` if the sender is the room owner, `false` otherwise.
    */
   get isRoomOwner(): boolean {
     const room = this.client.chat.activeRooms.get(this.room_id);
     return room && this.user.id === room.owner_id;
+  }
+
+  /**
+   * Checks if the message sender is blocked by the current authenticated user.
+   * This is a convenient property that internally checks the BlockManager for the sender's user ID.
+   *
+   * @returns `true` if the sender is blocked, `false` otherwise.
+   */
+  get isAuthorBlocked(): boolean {
+    return this.client.api.blocks.isUserBlocked(this.user_id);
   }
 
   /**

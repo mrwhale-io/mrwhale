@@ -1,4 +1,5 @@
 interface Item {
+  /** The probability weight of the item. Higher values increase the likelihood of selection. */
   probability: number;
 }
 

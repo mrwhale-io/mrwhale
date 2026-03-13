@@ -11,6 +11,16 @@ export { loadCommand } from "./util/load-command";
 export { BotOptions } from "./types/bot-options";
 export { TimeUtilities } from "./util/time";
 export { purifyText } from "./util/purify-text";
+export {
+  validateContent,
+  isInappropriate,
+  getRandomSafetyResponse,
+  validateChoices,
+  SAFETY_RESPONSES,
+  CONTENT_FILTER_CONFIG,
+  ContentValidationResult,
+  ContentFilterOptions,
+} from "./util/content-filter";
 export { Time } from "./types/time";
 export { CommandOptions } from "./types/command-options";
 export { CommandTypes } from "./types/command-types";
@@ -38,7 +48,18 @@ export { HangmanGame } from "./types/hangman-game";
 export { GuessingGame } from "./types/guessing-game";
 export { getCommandName, getCommandArgs, dispatch } from "./helpers/command";
 export { eyes } from "./data/eyes";
-export { genres, goals, items, environments, rules } from "./data/game-idea";
+export {
+  genres,
+  goals,
+  items,
+  environments,
+  rules,
+  themes,
+  artStyles,
+  mechanics,
+  moods,
+  genreCompatibility,
+} from "./data/game-idea";
 export {
   bold,
   code,

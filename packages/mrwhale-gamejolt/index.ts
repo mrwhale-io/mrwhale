@@ -10,7 +10,6 @@ const client = new GameJoltBotClient(
     frontend: config.frontend,
     mrwhaleToken: config.mrwhaleToken,
     baseApiUrl: config.baseApiUrl,
-    baseChatUrl: config.baseChatUrl,
     baseGridUrl: config.baseGridUrl,
     rateLimitRequests: 3,
   },

@@ -17,13 +17,13 @@ export default class extends DiscordCommand {
       option
         .setName("first")
         .setDescription("The first user.")
-        .setRequired(true)
+        .setRequired(true),
     );
     this.slashCommandData.addMentionableOption((option) =>
       option
         .setName("second")
         .setDescription("The second user.")
-        .setRequired(true)
+        .setRequired(true),
     );
   }
 
@@ -35,24 +35,36 @@ export default class extends DiscordCommand {
       return message.reply("Please mention two users to ship.");
     }
 
-    const result = ship.action(firstUser.displayName, secondUser.displayName);
-    const embed = this.createShipEmbed(result, firstUser, secondUser);
-
-    return message.reply({ embeds: [embed] });
+    try {
+      const result = ship.action(firstUser.displayName, secondUser.displayName);
+      const embed = this.createShipEmbed(result, firstUser, secondUser);
+      return message.reply({ embeds: [embed] });
+    } catch (error) {
+      return message.reply(
+        "An error occurred while processing the ship command.",
+      );
+    }
   }
 
   async slashCommandAction(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction,
   ): Promise<InteractionResponse<boolean>> {
     const first = interaction.options.getMentionable("first") as User;
     const second = interaction.options.getMentionable("second") as User;
-    const result = ship.action(first.displayName, second.displayName);
-    const embed = this.createShipEmbed(result, first, second);
 
-    return interaction.reply({
-      embeds: [embed],
-      allowedMentions: { users: [] },
-    });
+    try {
+      const result = ship.action(first.displayName, second.displayName);
+      const embed = this.createShipEmbed(result, first, second);
+      return interaction.reply({
+        embeds: [embed],
+        allowedMentions: { users: [] },
+      });
+    } catch (error) {
+      return interaction.reply({
+        content: "An error occurred while processing the ship command.",
+        ephemeral: true,
+      });
+    }
   }
 
   /**
@@ -61,10 +73,10 @@ export default class extends DiscordCommand {
   private createShipEmbed(
     result: ship.ShipResult,
     firstUser: User,
-    secondUser: User
+    secondUser: User,
   ): EmbedBuilder {
     return createEmbed(
-      `Let's see how compatible <@${firstUser.id}> and <@${secondUser.id}> are!`
+      `Let's see how compatible <@${firstUser.id}> and <@${secondUser.id}> are!`,
     )
       .setTitle("💘 Compatibility Results 💘")
       .addFields(
@@ -81,7 +93,7 @@ export default class extends DiscordCommand {
           value: result.breakdown,
           inline: false,
         },
-        { name: "Fun Fact", value: result.randomFact, inline: false }
+        { name: "Fun Fact", value: result.randomFact, inline: false },
       )
       .addFields({
         name: "Compatibility Scale",

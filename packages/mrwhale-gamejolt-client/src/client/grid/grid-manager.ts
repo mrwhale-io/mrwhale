@@ -5,7 +5,11 @@ import { Socket, Channel } from "phoenix-channels";
 import { Client } from "../client";
 import { GridManagerOptions } from "../../types/grid-manager-options";
 import { Notification } from "../../structures/notification";
-import { Events, GJ_PLATFORM_VERSION, GRID_API_BASE_URL } from "../../constants";
+import {
+  Events,
+  GJ_PLATFORM_VERSION,
+  GRID_API_BASE_URL,
+} from "../../constants";
 import { ChatManager } from "../chat/chat-manager";
 import { pollRequest } from "../../util/poll-request";
 
@@ -49,12 +53,6 @@ export class GridManager extends events.EventEmitter {
   notificationChannel: Channel;
 
   /**
-   * The URL of the grid service.
-   * This is a read-only property.
-   */
-  readonly gridUrl: string;
-
-  /**
    * The client instance used to interact with the GameJolt API.
    * This is a read-only property.
    */
@@ -67,16 +65,19 @@ export class GridManager extends events.EventEmitter {
   readonly chat: ChatManager;
 
   /**
-   * The frontend identifier used for authentication.
-   * This is a read-only property.
+   * The session identifier used for authentication.
    */
   private frontend: string;
 
   /**
-   * The token used to tell Game Jolt that the client is Mr. Whale.
-   * This is a read-only property.
+   * The token used to tell Game Jolt that the client connecting is Mr. Whale.
    */
   private mrwhaleToken: string;
+
+  /**
+   * The URL of the grid service.
+   */
+  private gridUrl: string;
 
   /**
    * @param client The Game Jolt client.
@@ -140,12 +141,12 @@ export class GridManager extends events.EventEmitter {
     });
 
     this.socket.onError((err) => {
-      console.warn("[Chat] Got error from socket", err);
+      this.client.logger.warn("[Grid] Got error from socket", err);
       this.restart();
     });
 
     this.socket.onClose((err) => {
-      console.warn("[Chat] Socket closed unexpectedly", err);
+      this.client.logger.warn("[Grid] Socket closed unexpectedly", err);
       this.restart();
     });
 
@@ -192,7 +193,9 @@ export class GridManager extends events.EventEmitter {
     );
 
     channel.onError((reason) => {
-      console.log(`[Grid] Connection error encountered (Reason: ${reason}).`);
+      this.client.logger.warn(
+        `[Grid] Connection error encountered (Reason: ${reason}).`,
+      );
       this.restart(0);
     });
 
@@ -249,6 +252,16 @@ export class GridManager extends events.EventEmitter {
     }
   }
 
+  /**
+   * Retrieves authentication details (host and token) from the grid service.
+   *
+   * This method sends two requests to the grid service:
+   * 1. A GET request to the `/host` endpoint to retrieve the host URL for the socket connection.
+   * 2. A POST request to the `/token` endpoint to retrieve the authentication token for the socket connection, using the frontend identifier and user ID.
+   *
+   * @returns A promise that resolves to an array containing the responses from both requests: `[hostResponse, tokenResponse]`.
+   * The `hostResponse` contains the host URL for the socket connection, and the `tokenResponse` contains the authentication token.
+   */
   private async getAuth(): Promise<[AxiosResponse<any>, AxiosResponse<any>]> {
     const headers = { "mrwhale-token": this.mrwhaleToken };
     return await pollRequest("Auth to server", () => {

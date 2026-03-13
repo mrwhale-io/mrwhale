@@ -1,6 +1,6 @@
 import wiki from "wikijs";
 
-import { CommandOptions } from "@mrwhale-io/core";
+import { CommandOptions, validateContent } from "@mrwhale-io/core";
 
 export const data: CommandOptions = {
   name: "wiki",
@@ -22,6 +22,11 @@ const WIKI_SEARCH_LIMIT = 1;
 export async function action(query: string): Promise<WikiResult | string> {
   if (!query) {
     return "Please provide a search.";
+  }
+
+  const searchQueryValidation = validateContent(query);
+  if (!searchQueryValidation.isValid) {
+    return "I can't search for that query. Please use appropriate language.";
   }
 
   try {

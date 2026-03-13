@@ -54,6 +54,12 @@ export interface OwnerSyncPayload {
   owner_id: number;
 }
 
+/** Payload for kicking a member from a chat room. */
+export interface KickMemberPayload {
+  /** The user id of the member to kick. */
+  user_id: number;
+}
+
 /** Represents a list of blocked users and communities queried from the API. */
 export interface BlockedUsersPayload {
   /** A list of blocked users and communities. */
