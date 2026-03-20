@@ -24,6 +24,11 @@ export const FORBIDDEN_PATTERNS = [
 
   // Self-Harm
   /\b(self harm|cutting)\b/gi,
+
+  // Inappropriate Content Involving Minors
+  /\b(child|children|kid|kids|teen|minor|minors|underage)\b/gi,
+
+
 ] as const;
 
 // Safe fallback responses for different contexts
@@ -31,19 +36,16 @@ export const SAFETY_RESPONSES = {
   general: [
     "I can't help with that content. Please try something more appropriate.",
     "That content isn't suitable for this chat. Let's keep things friendly.",
-    "I'd prefer to help with family-friendly content. Try something else?",
     "Let's stick to appropriate topics, shall we?",
   ],
   choices: [
     "I can't help choose between those options. Please provide appropriate choices.",
     "Those choices aren't suitable for me to decide on. Try some different options.",
     "I'd prefer not to choose between those. How about some other options?",
-    "Let's stick to family-friendly choices, shall we?",
   ],
   definitions: [
     "I found a definition, but it's not appropriate for this chat.",
     "That word has definitions that aren't suitable for all audiences.",
-    "The available definitions for that word aren't family-friendly.",
     "I'd rather not share the definitions I found for that word.",
   ],
 } as const;
