@@ -5,7 +5,26 @@ import { define } from "../../src/commands/fun";
 jest.mock("axios");
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+// Mock the core module
+jest.mock("@mrwhale-io/core", () => {
+  const originalModule = jest.requireActual("@mrwhale-io/core");
+  return {
+    ...originalModule,
+    validateContent: jest.fn(() => ({ isValid: true })),
+    getRandomSafetyResponse: jest.fn(() => "Safety response"),
+  };
+});
+
+const mockedValidateContent = jest.mocked(
+  require("@mrwhale-io/core").validateContent,
+);
+
 describe("define", () => {
+  beforeEach(() => {
+    // Reset mocks before each test
+    mockedValidateContent.mockReturnValue({ isValid: true });
+  });
+
   it("should define a word in safe mode", async () => {
     const definition =
       "noun; a wealthy patron to a casino, gets paid special attention by a casino host so the patron will feel comfortable to gamble more money.";
@@ -67,12 +86,62 @@ describe("define", () => {
     expect(result).toEqual("You must pass a word or phrase to define.");
   });
 
+  it("should return nonsense definition when no results found", async () => {
+    const phrase = "nonexistentword123";
+    const response = { data: { list: [] } };
+    mockedAxios.get.mockResolvedValue(response);
+
+    const result = await define.action(phrase, false);
+
+    expect(Array.isArray(result)).toBe(true);
+    if (Array.isArray(result)) {
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveProperty('word', phrase);
+      expect(result[0]).toHaveProperty('definition');
+      expect(result[0]).toHaveProperty('example');
+      expect(typeof result[0].definition).toBe('string');
+      expect(typeof result[0].example).toBe('string');
+    }
+  });
+
   it("should handle inappropriate search terms in safe mode", async () => {
+    // Mock validateContent to return false for the search term
+    mockedValidateContent.mockReturnValue({ isValid: false });
+
     const result = await define.action("inappropriateword", false);
     
-    // When content validation fails, it should return a string error message
+    // When content validation fails for search term, it should return a string error message
     expect(typeof result).toBe("string");
-    expect(result).toMatch(/can't look up|not appropriate|Could not fetch/);
+    expect(result).toEqual("I can't look up definitions for that word.");
+  });
+
+  it("should return nonsense definition when all definitions are filtered out", async () => {
+    const phrase = "testword";
+    const response = {
+      data: { 
+        list: [{
+          definition: "This is an inappropriate definition that will be filtered",
+          example: "Inappropriate example"
+        }]
+      }
+    };
+    mockedAxios.get.mockResolvedValue(response);
+
+    // First call for search term validation (allow search)
+    // Subsequent calls for definition validation (block definitions)
+    mockedValidateContent
+      .mockReturnValueOnce({ isValid: true })  // Allow search term
+      .mockReturnValue({ isValid: false });     // Block definition content
+
+    const result = await define.action(phrase, false);
+
+    expect(Array.isArray(result)).toBe(true);
+    if (Array.isArray(result)) {
+      expect(result).toHaveLength(1);
+      expect(result[0]).toHaveProperty('word', phrase);
+      expect(result[0]).toHaveProperty('definition');
+      expect(result[0]).toHaveProperty('example');
+    }
   });
 
   it("should handle long search terms", async () => {

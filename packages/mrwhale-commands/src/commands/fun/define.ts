@@ -4,7 +4,6 @@ import {
   CommandOptions,
   validateContent,
   purifyText,
-  getRandomSafetyResponse,
   truncate,
 } from "@mrwhale-io/core";
 
@@ -35,6 +34,118 @@ interface DefineResult {
 }
 
 const URBAN_DICTIONARY_URL = "https://api.urbandictionary.com/v0/define";
+
+// Nonsense definition generator
+const nonsenseAdjectives = [
+  "fluffy",
+  "sparkly",
+  "invisible",
+  "quantum",
+  "magnetic",
+  "holographic",
+  "crystalline",
+  "ethereal",
+  "cosmic",
+  "interdimensional",
+  "glowing",
+  "bouncy",
+  "mysterious",
+  "ancient",
+  "digital",
+  "frozen",
+  "explosive",
+  "telepathic",
+];
+
+const nonsenseNouns = [
+  "banana",
+  "robot",
+  "unicorn",
+  "spaceship",
+  "teapot",
+  "wizard",
+  "dragon",
+  "sandwich",
+  "rainbow",
+  "portal",
+  "crystal",
+  "hamster",
+  "ninja",
+  "volcano",
+  "toaster",
+  "galaxy",
+  "penguin",
+  "doorknob",
+  "lighthouse",
+  "octopus",
+];
+
+const nonsenseVerbs = [
+  "dances with",
+  "transforms into",
+  "communicates with",
+  "levitates above",
+  "disguises as",
+  "befriends",
+  "quantum entangles with",
+  "teleports to",
+  "harmonizes with",
+  "photosynthesizes",
+  "materializes",
+  "vibrates at",
+];
+
+const nonsenseContexts = [
+  "on Tuesdays",
+  "during solar eclipses",
+  "in parallel dimensions",
+  "when nobody's watching",
+  "at exactly 3:42 AM",
+  "in zero gravity",
+  "while humming show tunes",
+  "during thunderstorms",
+  "in the presence of cats",
+  "when the WiFi is down",
+  "during leap years",
+  "in slow motion",
+];
+
+function generateNonsenseDefinition(word: string): DefineResult {
+  const adjective =
+    nonsenseAdjectives[Math.floor(Math.random() * nonsenseAdjectives.length)];
+  const noun = nonsenseNouns[Math.floor(Math.random() * nonsenseNouns.length)];
+  const verb = nonsenseVerbs[Math.floor(Math.random() * nonsenseVerbs.length)];
+  const context =
+    nonsenseContexts[Math.floor(Math.random() * nonsenseContexts.length)];
+  const secondNoun =
+    nonsenseNouns[Math.floor(Math.random() * nonsenseNouns.length)];
+
+  const definitionTemplates = [
+    `A ${adjective} ${noun} that ${verb} ${secondNoun} ${context}.`,
+    `The ancient art of ${verb} ${noun} while being ${adjective} ${context}.`,
+    `${adjective} state of being that occurs when ${noun} ${verb} ${secondNoun} ${context}.`,
+    `A legendary ${noun} known for its ability to become ${adjective} ${context}.`,
+    `The process by which ${adjective} ${secondNoun} ${verb} ordinary ${noun} ${context}.`,
+  ];
+
+  const exampleTemplates = [
+    `"I can't believe my ${noun} just became ${adjective} ${context}!"`,
+    `"Every time I see a ${adjective} ${secondNoun}, I think of ${word}."`,
+    `"My grandmother always said ${word} ${context}, and now I understand."`,
+    `"The ${adjective} ${noun} ${verb} my ${secondNoun} yesterday."`,
+  ];
+
+  const definition =
+    definitionTemplates[Math.floor(Math.random() * definitionTemplates.length)];
+  const example =
+    exampleTemplates[Math.floor(Math.random() * exampleTemplates.length)];
+
+  return {
+    word: word,
+    definition: definition,
+    example: example,
+  };
+}
 
 export async function action(
   phrase: string,
@@ -72,7 +183,7 @@ export async function action(
     );
 
     if (!response.data.list || response.data.list.length === 0) {
-      return "Could not find a definition for that word.";
+      return [generateNonsenseDefinition(cleanPhrase)];
     }
 
     // Filter and validate definitions based on mode
@@ -83,9 +194,7 @@ export async function action(
     );
 
     if (processedDefinitions.length === 0) {
-      return allowNsfw
-        ? "No suitable definitions found, even after content filtering."
-        : getRandomSafetyResponse("definitions");
+      return [generateNonsenseDefinition(cleanPhrase)];
     }
 
     return processedDefinitions;
