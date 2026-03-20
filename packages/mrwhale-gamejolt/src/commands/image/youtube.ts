@@ -23,6 +23,11 @@ export default class extends GameJoltCommand {
     }
 
     const user = message.firstMentionOrAuthor;
+
+    if (user.id === this.botClient.chat.currentUser.id) {
+      return message.reply("I can't generate a YouTube comment for myself!");
+    }
+
     const responseMsg = await message.reply("Processing please wait...");
     const image = await loadImage(
       await canvacord.Canvas.youtube({
