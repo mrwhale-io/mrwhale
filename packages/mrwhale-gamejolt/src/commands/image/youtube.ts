@@ -28,6 +28,10 @@ export default class extends GameJoltCommand {
       return message.reply("I can't generate a YouTube comment for myself!");
     }
 
+    if (user.id === this.botClient.ownerId) {
+      return message.reply("I can't generate a YouTube comment for my owner!");
+    }
+
     const responseMsg = await message.reply("Processing please wait...");
     const image = await loadImage(
       await canvacord.Canvas.youtube({
@@ -35,7 +39,7 @@ export default class extends GameJoltCommand {
         content: comment.replace(/(@[^\s]+)/, ""),
         avatar: await this.circleAvatar(user.img_avatar),
         dark: true,
-      })
+      }),
     );
 
     const canvas = createCanvas(image.width, image.height);
@@ -55,7 +59,7 @@ export default class extends GameJoltCommand {
       canvas.height / 2,
       canvas.height / 2,
       0,
-      Math.PI * 2
+      Math.PI * 2,
     );
     ctx.closePath();
     ctx.clip();
