@@ -292,8 +292,14 @@ export class Policer {
   @on(Events.MESSAGE)
   private async onMessage(message: Message): Promise<void> {
     try {
-      // Skip if policer is disabled
+      // Skip if policer is disabled globally
       if (!this.config.enabled) {
+        return;
+      }
+
+      // Check if policer is enabled for this specific room
+      const roomPolicerEnabled = await this.bot.getPolicerEnabled(message.room_id);
+      if (!roomPolicerEnabled) {
         return;
       }
 

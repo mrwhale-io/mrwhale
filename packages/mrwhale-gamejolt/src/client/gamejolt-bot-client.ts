@@ -597,6 +597,54 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   }
 
   /**
+   * Gets the policer enabled status for a specific room.
+   *
+   * Each room can have the chat policer enabled or disabled independently.
+   * If no setting is found for the room, the policer is disabled by default.
+   *
+   * @param roomId - The unique identifier of the room to check.
+   * @returns True if the policer is enabled for the room, false otherwise.
+   */
+  async getPolicerEnabled(roomId: number): Promise<boolean> {
+    const settings = this.roomSettings.get(roomId);
+
+    if (!settings) {
+      return false; // Default to disabled
+    }
+
+    try {
+      return settings.get<boolean>("policer_enabled", false);
+    } catch (error) {
+      this.logger?.warn(`Failed to get policer setting for room ${roomId}:`, error);
+      return false; // Default to disabled on error
+    }
+  }
+
+  /**
+   * Sets the policer enabled status for a specific room.
+   *
+   * Each room can have the chat policer enabled or disabled independently.
+   * This setting controls whether the policer will moderate messages in the specified room.
+   *
+   * @param roomId - The unique identifier of the room to set the policer setting for.
+   * @param enabled - Whether the policer should be enabled (true) or disabled (false).
+   * @throws {Error} If the setting could not be saved.
+   */
+  async setPolicerEnabled(roomId: number, enabled: boolean): Promise<void> {
+    try {
+      let settings = this.roomSettings.get(roomId);
+      if (!settings) {
+        await this.roomStorageLoader.loadRoomSettings(roomId);
+        settings = this.roomSettings.get(roomId)!;
+      }
+      settings.set("policer_enabled", enabled);
+    } catch (error) {
+      this.logger?.error(`Failed to set policer setting for room ${roomId}:`, error);
+      throw new Error("Could not set policer setting for this room.");
+    }
+  }
+
+  /**
    * Creates a managed timeout that will be automatically cleaned up on bot shutdown.
    *
    * This method wraps the standard setTimeout function and tracks the timeout
