@@ -57,6 +57,13 @@ export function action(firstUser: string, secondUser: string): ShipResult {
   const { firstUser: cleanFirstUser, secondUser: cleanSecondUser } =
     validateAndSanitizeNames(firstUser, secondUser);
 
+  // Generate ship name and validate it
+  const shipName = getShipName(cleanFirstUser, cleanSecondUser);
+  const shipNameValidation = validateContent(shipName);
+  if (!shipNameValidation.isValid) {
+    throw "The combination of these names creates inappropriate content. Please try different names.";
+  }
+
   // Sort users for consistent hash generation
   const users = [
     cleanFirstUser.toLowerCase(),
@@ -74,7 +81,7 @@ export function action(firstUser: string, secondUser: string): ShipResult {
 
   return {
     description: getMatchDescription(percent),
-    shipName: getShipName(cleanFirstUser, cleanSecondUser),
+    shipName,
     percent,
     prediction: getPrediction(percent),
     breakdown: getBreakdown(percent),
