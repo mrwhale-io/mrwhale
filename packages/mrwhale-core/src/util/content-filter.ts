@@ -27,8 +27,6 @@ export const FORBIDDEN_PATTERNS = [
 
   // Inappropriate Content Involving Minors
   /\b(child|children|kid|kids|teen|minor|minors|underage)\b/gi,
-
-
 ] as const;
 
 // Safe fallback responses for different contexts

@@ -122,13 +122,7 @@ export class GameJoltCommandDispatcher {
     }
 
     // Check owner-only commands
-    if (
-      command.owner &&
-      !message.isRoomOwner &&
-      room &&
-      this.bot.client.userId !== room.owner_id &&
-      !isFriendChat
-    ) {
+    if (command.owner && !message.isRoomOwner && !isFriendChat) {
       message.reply("👑 You need to be the room owner to use this command.");
       return false;
     }

@@ -31,6 +31,7 @@ import { GameJoltCommandDispatcher } from "./command/gamejolt-command-dispatcher
 import { GameJoltCommand } from "./command/gamejolt-command";
 import { RoomStorageLoader } from "./storage/room-storage-loader";
 import { MAX_PREFIX_LENGTH } from "../constants";
+import { VoteLeaveManager } from "./managers/vote-leave-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -172,6 +173,12 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   readonly levelManager: LevelManager;
 
   /**
+   * Manages the voting system for users to vote to remove the bot from a group chat when it's the room owner.
+   * Allows users to democratically decide to remove the bot if they don't want it in the chat anymore.
+   */
+  readonly voteLeaveManager: VoteLeaveManager;
+
+  /**
    * Content moderation and policy enforcement manager.
    * Handles spam detection, content filtering, and automated moderation actions.
    */
@@ -234,6 +241,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
       this.replyManager = new ReplyManager(this);
       this.urlManager = new UrlManager(this);
       this.levelManager = new LevelManager(this);
+      this.voteLeaveManager = new VoteLeaveManager(this);
       this.roomStorageLoader = new RoomStorageLoader(this);
       this.policer = new Policer(this);
 
@@ -459,11 +467,32 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
         return;
       }
 
-      // Don't announce if the bot becomes owner (less spam)
       if (data.owner_id === this.client.userId) {
         this.logger.info(`Bot became owner of group chat ${data.room_id}`);
+
+        // Auto-enable policer when bot becomes owner
+        try {
+          this.setPolicerEnabled(data.room_id, true);
+          this.logger.info(
+            `Auto-enabled policer for room ${data.room_id} (bot became owner)`,
+          );
+
+          this.chat.sendMessage(
+            `🛡️ **Chat moderation has been automatically enabled.** As the new owner, I've enabled the chat policer to help moderate the chat.`,
+            data.room_id,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to auto-enable policer for room ${data.room_id}:`,
+            error,
+          );
+        }
+
         return;
       }
+
+      // Clear any outstanding leave votes since ownership changed
+      this.voteLeaveManager.clearLeaveVotes(data.room_id);
 
       // Try to get the owner from room members, fallback to user ID if not found
       const owner = room.owner;
@@ -615,7 +644,10 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     try {
       return settings.get<boolean>("policer_enabled", false);
     } catch (error) {
-      this.logger?.warn(`Failed to get policer setting for room ${roomId}:`, error);
+      this.logger?.warn(
+        `Failed to get policer setting for room ${roomId}:`,
+        error,
+      );
       return false; // Default to disabled on error
     }
   }
@@ -639,8 +671,65 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
       }
       settings.set("policer_enabled", enabled);
     } catch (error) {
-      this.logger?.error(`Failed to set policer setting for room ${roomId}:`, error);
+      this.logger?.error(
+        `Failed to set policer setting for room ${roomId}:`,
+        error,
+      );
       throw new Error("Could not set policer setting for this room.");
+    }
+  }
+
+  /**
+   * Gets the NSFW definitions enabled status for a specific room.
+   *
+   * Each room can have NSFW dictionary definitions enabled or disabled independently.
+   * If no setting is found for the room, NSFW definitions are disabled by default.
+   *
+   * @param roomId - The unique identifier of the room to check.
+   * @returns True if NSFW definitions are enabled for the room, false otherwise.
+   */
+  async getNsfwEnabled(roomId: number): Promise<boolean> {
+    const settings = this.roomSettings.get(roomId);
+
+    if (!settings) {
+      return false; // Default to disabled
+    }
+
+    try {
+      return settings.get<boolean>("nsfw_enabled", false);
+    } catch (error) {
+      this.logger?.warn(
+        `Failed to get NSFW setting for room ${roomId}:`,
+        error,
+      );
+      return false; // Default to disabled on error
+    }
+  }
+
+  /**
+   * Sets the NSFW definitions enabled status for a specific room.
+   *
+   * Each room can have NSFW dictionary definitions enabled or disabled independently.
+   * This setting controls whether the define command will allow NSFW content in the specified room.
+   *
+   * @param roomId - The unique identifier of the room to set the NSFW setting for.
+   * @param enabled - Whether NSFW definitions should be enabled (true) or disabled (false).
+   * @throws {Error} If the setting could not be saved.
+   */
+  async setNsfwEnabled(roomId: number, enabled: boolean): Promise<void> {
+    try {
+      let settings = this.roomSettings.get(roomId);
+      if (!settings) {
+        await this.roomStorageLoader.loadRoomSettings(roomId);
+        settings = this.roomSettings.get(roomId)!;
+      }
+      settings.set("nsfw_enabled", enabled);
+    } catch (error) {
+      this.logger?.error(
+        `Failed to set NSFW setting for room ${roomId}:`,
+        error,
+      );
+      throw new Error("Could not set NSFW setting for this room.");
     }
   }
 
@@ -746,6 +835,12 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
         if (interval) clearInterval(interval as NodeJS.Timeout);
       }
       this.intervals.clear();
+
+      // Clear all leave vote timeouts
+      for (const [, voteData] of this.voteLeaveManager.leaveVotes) {
+        clearTimeout(voteData.timeout);
+      }
+      this.voteLeaveManager.leaveVotes.clear();
 
       // Disconnect from chat
       if (this.chat?.connected) {

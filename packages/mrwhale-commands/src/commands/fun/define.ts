@@ -5,6 +5,11 @@ import {
   validateContent,
   purifyText,
   truncate,
+  alternativeWords,
+  nonsenseAdjectives,
+  nonsenseNouns,
+  nonsenseVerbs,
+  nonsenseContexts,
 } from "@mrwhale-io/core";
 
 // Safety configuration
@@ -35,118 +40,6 @@ interface DefineResult {
 
 const URBAN_DICTIONARY_URL = "https://api.urbandictionary.com/v0/define";
 
-// Nonsense definition generator
-const nonsenseAdjectives = [
-  "fluffy",
-  "sparkly",
-  "invisible",
-  "quantum",
-  "magnetic",
-  "holographic",
-  "crystalline",
-  "ethereal",
-  "cosmic",
-  "interdimensional",
-  "glowing",
-  "bouncy",
-  "mysterious",
-  "ancient",
-  "digital",
-  "frozen",
-  "explosive",
-  "telepathic",
-];
-
-const nonsenseNouns = [
-  "banana",
-  "robot",
-  "unicorn",
-  "spaceship",
-  "teapot",
-  "wizard",
-  "dragon",
-  "sandwich",
-  "rainbow",
-  "portal",
-  "crystal",
-  "hamster",
-  "ninja",
-  "volcano",
-  "toaster",
-  "galaxy",
-  "penguin",
-  "doorknob",
-  "lighthouse",
-  "octopus",
-];
-
-const nonsenseVerbs = [
-  "dances with",
-  "transforms into",
-  "communicates with",
-  "levitates above",
-  "disguises as",
-  "befriends",
-  "quantum entangles with",
-  "teleports to",
-  "harmonizes with",
-  "photosynthesizes",
-  "materializes",
-  "vibrates at",
-];
-
-const nonsenseContexts = [
-  "on Tuesdays",
-  "during solar eclipses",
-  "in parallel dimensions",
-  "when nobody's watching",
-  "at exactly 3:42 AM",
-  "in zero gravity",
-  "while humming show tunes",
-  "during thunderstorms",
-  "in the presence of cats",
-  "when the WiFi is down",
-  "during leap years",
-  "in slow motion",
-];
-
-function generateNonsenseDefinition(word: string): DefineResult {
-  const adjective =
-    nonsenseAdjectives[Math.floor(Math.random() * nonsenseAdjectives.length)];
-  const noun = nonsenseNouns[Math.floor(Math.random() * nonsenseNouns.length)];
-  const verb = nonsenseVerbs[Math.floor(Math.random() * nonsenseVerbs.length)];
-  const context =
-    nonsenseContexts[Math.floor(Math.random() * nonsenseContexts.length)];
-  const secondNoun =
-    nonsenseNouns[Math.floor(Math.random() * nonsenseNouns.length)];
-
-  const definitionTemplates = [
-    `A ${adjective} ${noun} that ${verb} ${secondNoun} ${context}.`,
-    `The ancient art of ${verb} ${noun} while being ${adjective} ${context}.`,
-    `${adjective} state of being that occurs when ${noun} ${verb} ${secondNoun} ${context}.`,
-    `A legendary ${noun} known for its ability to become ${adjective} ${context}.`,
-    `The process by which ${adjective} ${secondNoun} ${verb} ordinary ${noun} ${context}.`,
-  ];
-
-  const exampleTemplates = [
-    `"I can't believe my ${noun} just became ${adjective} ${context}!"`,
-    `"Every time I see a ${adjective} ${secondNoun}, I think of ${word}."`,
-    `"My grandmother always said ${word} ${context}, and now I understand."`,
-    `"The ${adjective} ${noun} ${verb} my ${secondNoun} yesterday."`,
-  ];
-
-  const definition =
-    definitionTemplates[Math.floor(Math.random() * definitionTemplates.length)];
-  const example =
-    exampleTemplates[Math.floor(Math.random() * exampleTemplates.length)];
-
-  return {
-    word: word,
-    definition: definition,
-    example: example,
-  };
-}
-
 export async function action(
   phrase: string,
   allowNsfw: boolean,
@@ -164,7 +57,15 @@ export async function action(
   // Check if the search term itself is inappropriate
   const searchTermValidation = validateContent(cleanPhrase);
   if (!searchTermValidation.isValid && !allowNsfw) {
-    return "I can't look up definitions for that word.";
+    // Instead of rejecting, offer a fun alternative word
+    const alternative = getAlternativeWord();
+    return [
+      {
+        word: alternative.word,
+        definition: `Since "${purifyText(cleanPhrase)}" isn't appropriate, here's an alternative: ${alternative.definition}`,
+        example: alternative.example,
+      },
+    ];
   }
 
   const url = `${URBAN_DICTIONARY_URL}?page=1&term=${encodeURIComponent(
@@ -263,4 +164,64 @@ async function filterDefinitions(
   }
 
   return processedDefinitions;
+}
+
+/**
+ * Selects a random alternative word from the predefined list and returns it as a DefineResult.
+ * This is used when the user's search term is deemed inappropriate, providing a fun and family-friendly alternative instead of rejecting the request outright.
+ *
+ * @returns A DefineResult containing the alternative word, its definition, and an example usage.
+ */
+function getAlternativeWord(): DefineResult {
+  const alternative =
+    alternativeWords[Math.floor(Math.random() * alternativeWords.length)];
+  return {
+    word: alternative.word,
+    definition: alternative.definition,
+    example: alternative.example,
+  };
+}
+
+/**
+ * Generates a random nonsense definition for a given word.
+ * This is used when the user's search term is not found, providing a humorous and creative alternative instead of returning an empty result.
+ *
+ * @param word The word for which to generate a nonsense definition.
+ * @returns A DefineResult containing the nonsense definition and an example usage.
+ */
+function generateNonsenseDefinition(word: string): DefineResult {
+  const adjective =
+    nonsenseAdjectives[Math.floor(Math.random() * nonsenseAdjectives.length)];
+  const noun = nonsenseNouns[Math.floor(Math.random() * nonsenseNouns.length)];
+  const verb = nonsenseVerbs[Math.floor(Math.random() * nonsenseVerbs.length)];
+  const context =
+    nonsenseContexts[Math.floor(Math.random() * nonsenseContexts.length)];
+  const secondNoun =
+    nonsenseNouns[Math.floor(Math.random() * nonsenseNouns.length)];
+
+  const definitionTemplates = [
+    `A ${adjective} ${noun} that ${verb} ${secondNoun} ${context}.`,
+    `The ancient art of ${verb} ${noun} while being ${adjective} ${context}.`,
+    `${adjective} state of being that occurs when ${noun} ${verb} ${secondNoun} ${context}.`,
+    `A legendary ${noun} known for its ability to become ${adjective} ${context}.`,
+    `The process by which ${adjective} ${secondNoun} ${verb} ordinary ${noun} ${context}.`,
+  ];
+
+  const exampleTemplates = [
+    `"I can't believe my ${noun} just became ${adjective} ${context}!"`,
+    `"Every time I see a ${adjective} ${secondNoun}, I think of ${word}."`,
+    `"My grandmother always said ${word} ${context}, and now I understand."`,
+    `"The ${adjective} ${noun} ${verb} my ${secondNoun} yesterday."`,
+  ];
+
+  const definition =
+    definitionTemplates[Math.floor(Math.random() * definitionTemplates.length)];
+  const example =
+    exampleTemplates[Math.floor(Math.random() * exampleTemplates.length)];
+
+  return {
+    word: word,
+    definition: definition,
+    example: example,
+  };
 }

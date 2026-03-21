@@ -74,6 +74,13 @@ export { applyText } from "./util/apply-text";
 export { allFishTypes } from "./data/fish-types";
 export { GREETINGS } from "./data/greetings";
 export {
+  alternativeWords,
+  nonsenseAdjectives,
+  nonsenseNouns,
+  nonsenseVerbs,
+  nonsenseContexts,
+} from "./data/definitions";
+export {
   FISH_SPAWNED_ANNOUNCEMENTS,
   SHARK_SPAWNED_ANNOUNCEMENTS,
   SQUID_SPAWNED_ANNOUNCEMENTS,

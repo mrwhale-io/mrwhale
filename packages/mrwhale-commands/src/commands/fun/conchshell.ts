@@ -32,7 +32,6 @@ const CONCHSHELL_PERSONALITY_RESPONSES = [
   `The tide will bring you answers.`,
 ];
 
-// Safe, family-friendly regex patterns for special responses
 const WHAT_TO_DO_REGEX = /\bwhat\s(?:do|to|should|would)\b/gi;
 const MARRIED_REGEX = /\bwill\s+i\s+(?:ever\s+)?get\s+married\??\b/gi;
 const NEITHER_REGEX = /\b(?:[^?]+\s+or\s+[^?]+)\b/gi;
