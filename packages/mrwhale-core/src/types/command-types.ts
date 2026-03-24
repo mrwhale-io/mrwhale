@@ -10,4 +10,5 @@ export type CommandTypes =
   | "utility"
   | "game"
   | "image"
-  | "level";
+  | "level"
+  | "subscription";

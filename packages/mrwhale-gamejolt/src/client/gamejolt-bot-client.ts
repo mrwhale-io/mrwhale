@@ -32,6 +32,7 @@ import { GameJoltCommand } from "./command/gamejolt-command";
 import { RoomStorageLoader } from "./storage/room-storage-loader";
 import { MAX_PREFIX_LENGTH } from "../constants";
 import { VoteLeaveManager } from "./managers/vote-leave-manager";
+import { SubscriptionManager } from "./managers/subscription-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -179,6 +180,12 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   readonly voteLeaveManager: VoteLeaveManager;
 
   /**
+   * Manages premium subscriptions, billing, and feature access control.
+   * Handles PayPal integration, subscription tiers, usage tracking, and webhook processing.
+   */
+  readonly subscriptionManager?: SubscriptionManager;
+
+  /**
    * Content moderation and policy enforcement manager.
    * Handles spam detection, content filtering, and automated moderation actions.
    */
@@ -255,6 +262,11 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
           this,
           botOptions.cleverbotToken,
         );
+      }
+
+      // Initialize subscription manager if PayPal config is provided
+      if (botOptions.paypal) {
+        this.subscriptionManager = new SubscriptionManager(this, botOptions.paypal);
       }
 
       this.roomStorageLoader.init();
@@ -730,6 +742,85 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
         error,
       );
       throw new Error("Could not set NSFW setting for this room.");
+    }
+  }
+
+  /**
+   * Checks if a user has an active premium subscription.
+   * 
+   * @param userId - The unique identifier of the user to check.
+   * @returns True if the user has premium access, false otherwise.
+   */
+  async isPremiumUser(userId: number): Promise<boolean> {
+    if (!this.subscriptionManager) {
+      // No subscription manager configured, allow during development
+      return true;
+    }
+
+    try {
+      return await this.subscriptionManager.isPremiumUser(userId);
+    } catch (error) {
+      this.logger?.warn(`Failed to check premium status for user ${userId}:`, error);
+      return false; // Default to free tier on error
+    }
+  }
+
+  /**
+   * Gets the subscription tier for a user.
+   * 
+   * @param userId - The unique identifier of the user to check.
+   * @returns The subscription tier: 'free', 'premium', or 'pro'.
+   */
+  async getUserSubscriptionTier(userId: number): Promise<'free' | 'premium' | 'pro'> {
+    if (!this.subscriptionManager) {
+      // No subscription manager configured, default to premium during development
+      return 'premium';
+    }
+
+    try {
+      return await this.subscriptionManager.getUserSubscriptionTier(userId);
+    } catch (error) {
+      this.logger?.warn(`Failed to get subscription tier for user ${userId}:`, error);
+      return 'free';
+    }
+  }
+
+  /**
+   * Gets the premium feature limits for a user based on their subscription tier.
+   * 
+   * @param userId - The unique identifier of the user to check.
+   * @returns Object containing feature limits for the user's tier.
+   */
+  async getUserPremiumLimits(userId: number): Promise<{
+    maxCustomCommands: number;
+    maxImageEffectsPerDay: number;
+    hasAdvancedEffects: boolean;
+    hasAIEffects: boolean;
+    hasAnimatedEffects: boolean;
+  }> {
+    if (!this.subscriptionManager) {
+      // No subscription manager configured, return premium limits during development
+      return {
+        maxCustomCommands: 25,
+        maxImageEffectsPerDay: -1,
+        hasAdvancedEffects: true,
+        hasAIEffects: true,
+        hasAnimatedEffects: true,
+      };
+    }
+
+    try {
+      return await this.subscriptionManager.getUserPremiumLimits(userId);
+    } catch (error) {
+      this.logger?.warn(`Failed to get premium limits for user ${userId}:`, error);
+      // Default to free tier limits on error
+      return {
+        maxCustomCommands: 5,
+        maxImageEffectsPerDay: 10,
+        hasAdvancedEffects: false,
+        hasAIEffects: false,
+        hasAnimatedEffects: false,
+      };
     }
   }
 

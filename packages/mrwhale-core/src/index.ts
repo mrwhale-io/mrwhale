@@ -128,3 +128,11 @@ export { BaseItem } from "./types/base-item";
 export { AchievementNames } from "./types/achievement-names";
 export { AchievementCriteria } from "./types/achievement-criteria";
 export { FishRarity } from "./types/fish-rarity";
+export { PayPalConfig } from "./types/paypal-config";
+export {
+  PayPalAccessToken,
+  PayPalSubscriptionRequest,
+  PayPalSubscriptionResponse,
+  PayPalWebhookEvent,
+} from "./types/paypal";
+export { SubscriptionPlan } from "./types/subscription-plan";

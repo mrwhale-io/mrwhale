@@ -1,4 +1,4 @@
-import { BotOptions } from "@mrwhale-io/core";
+import { BotOptions, PayPalConfig } from "@mrwhale-io/core";
 
 /**
  * Contains options to be passed to a BotClient object on construction.
@@ -18,4 +18,10 @@ export interface GameJoltBotOptions extends BotOptions {
    * The game id.
    */
   gameId: number;
+
+  /**
+   * PayPal configuration for subscription management.
+   * Optional - if not provided, subscription features will be disabled.
+   */
+  paypal?: PayPalConfig;
 }

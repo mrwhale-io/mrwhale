@@ -199,6 +199,16 @@ export class Message {
   }
 
   /**
+   * Checks if the message was sent by the current authenticated user.
+   * This is a convenient property to quickly determine if the message is from the bot itself.
+   *
+   * @returns `true` if the sender is the current user, `false` otherwise.
+   */
+  get isClientUser(): boolean {
+    return this.user.id === this.client.userId;
+  }
+
+  /**
    * Creates a new Message instance.
    *
    * @param client - The Game Jolt client instance that owns this message.

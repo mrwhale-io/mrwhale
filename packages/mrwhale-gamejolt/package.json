@@ -12,7 +12,11 @@
   },
   "scripts": {
     "dev": "ts-node --transpile-only index.ts",
-    "start": "rm -rf ./lib && tsc && copyfiles ./images/*.png ./lib && node ./lib/index.js"
+    "dev:server": "ts-node --transpile-only src/server.ts",
+    "dev:bot": "ts-node --transpile-only index.ts",
+    "start": "rm -rf ./lib && tsc && copyfiles ./images/*.png ./lib && node ./lib/index.js",
+    "start:server": "rm -rf ./lib && tsc && copyfiles ./images/*.png ./lib && node ./lib/src/server.js",
+    "create-paypal-plans": "tsc && node ./lib/scripts/create-paypal-plans.js"
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
@@ -30,6 +34,7 @@
     "cleverbot-node": "^0.3.11",
     "copyfiles": "^2.4.1",
     "date-fns": "^2.30.0",
+    "express": "^4.18.2",
     "jimp": "^0.16.1",
     "joltite.js": "^1.0.1",
     "moment": "^2.27.0",

@@ -46,21 +46,21 @@ export class GameJoltCommandDispatcher {
   private async handleMessage(message: Message) {
     try {
       // Ignore messages from the bot itself or if dispatcher is not ready
-      if (message.user.id === this.bot.client.userId || !this._ready) {
+      if (message.isClientUser || !this._ready) {
         return;
       }
 
-      // Ignore messages from blocked users
+      // Ignore messages from users the bot has blocked
       if (message.isAuthorBlocked) {
         return;
       }
-
+      
       const prefix = await this.bot.getPrefix(message.room_id);
-
       if (!message.textContent.trim().startsWith(prefix)) {
         return;
       }
 
+      // Extract the command name from the message and find corresponding command
       const commandName = getCommandName(message.textContent, prefix);
       const command = this.bot.commands.findByNameOrAlias(commandName);
 
@@ -76,10 +76,17 @@ export class GameJoltCommandDispatcher {
         return; // Error messages are handled within the permission check
       }
 
-      if (!this.checkRateLimits(message, command)) {
-        return;
+      // Check premium access requirements
+      if (!(await this.checkPremiumAccess(command, message))) {
+        return; // Error messages are handled within the premium check
       }
 
+      // Check rate limits and cooldowns
+      if (!this.checkRateLimits(message, command)) {
+        return; // Cooldown message is handled within the rate limit check
+      }
+
+      // Extract command arguments and execute the command
       const args = getCommandArgs(
         message.textContent,
         prefix,
@@ -128,6 +135,116 @@ export class GameJoltCommandDispatcher {
     }
 
     return true;
+  }
+
+  /**
+   * Checks if the user has premium access for commands that require it.
+   * Validates subscription status and usage limits for premium features.
+   *
+   * @param command The command to check premium access for
+   * @param message The message that triggered the command
+   * @returns true if user has access, false otherwise (with error message sent)
+   */
+  private async checkPremiumAccess(
+    command: GameJoltCommand,
+    message: Message,
+  ): Promise<boolean> {
+    // Skip check if command doesn't require premium access
+    if (!command.requiresPremium && !command.premiumTier) {
+      return true;
+    }
+
+    if (!this.bot.subscriptionManager) {
+      message.reply(
+        "❌ **Premium features not available**\n" +
+          "Subscription system is not configured on this bot instance.",
+      );
+      return false;
+    }
+
+    try {
+      const userTier =
+        await this.bot.subscriptionManager.getUserSubscriptionTier(
+          message.user.id,
+        );
+
+      // Check if user has required subscription tier
+      if (command.premiumTier && userTier === "free") {
+        const requiredTier = command.premiumTier.toUpperCase();
+        message.reply(
+          `💎 **${requiredTier} Required**\n\n` +
+            `This command requires a ${requiredTier} subscription.\n\n` +
+            `🎯 **Upgrade to unlock:**\n` +
+            `• Use \`!subscribe\` to view premium plans\n` +
+            `• Get access to exclusive features\n` +
+            `• Support continued development`,
+        );
+        return false;
+      }
+
+      // Check if user has specific premium tier required
+      if (command.premiumTier === "pro" && userTier !== "pro") {
+        message.reply(
+          `👑 **PRO Subscription Required**\n\n` +
+            `This AI-powered command requires a PRO subscription.\n\n` +
+            `🚀 **PRO Features:**\n` +
+            `• 100 custom commands daily\n` +
+            `• AI-powered effects and analysis\n` +
+            `• Animated GIF outputs\n` +
+            `• Priority support\n\n` +
+            `Use \`!subscribe pro your@email.com\` to upgrade!`,
+        );
+        return false;
+      }
+
+      // Check usage limits for premium commands
+      if (command.requiresPremium) {
+        const usageType =
+          command.type === "image" ? "imageEffects" : "customCommands";
+        const hasExceededLimit =
+          await this.bot.subscriptionManager.checkUsageLimit(
+            message.user.id,
+            usageType,
+          );
+
+        if (hasExceededLimit) {
+          const usage = await this.bot.subscriptionManager.getRemainingUsage(
+            message.user.id,
+          );
+          const limitType =
+            usageType === "imageEffects" ? "effects" : "commands";
+          const currentLimit =
+            usageType === "imageEffects"
+              ? usage.effectLimit
+              : usage.commandLimit;
+
+          message.reply(
+            `⏰ **Daily Limit Reached**\n\n` +
+              `You've used all ${currentLimit} ${limitType} for today.\n\n` +
+              `💡 **Solutions:**\n` +
+              `• Wait until tomorrow (resets at midnight)\n` +
+              `• Upgrade to premium for higher limits\n` +
+              `• Use \`!usage\` to check your current usage`,
+          );
+          return false;
+        }
+
+        // Track usage for premium features
+        await this.bot.subscriptionManager.trackUsage(
+          message.user.id,
+          usageType,
+        );
+      }
+
+      return true;
+    } catch (error) {
+      this.bot.logger.error("Premium access check failed:", error);
+      message.reply(
+        "❌ **Error checking premium access**\n" +
+          "There was an error verifying your subscription. Please try again later.",
+      );
+      return false;
+    }
   }
 
   /**

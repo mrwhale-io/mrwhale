@@ -11,5 +11,12 @@
   "openWeather": "",
   "privateKey": "",
   "gameId": 1,
-  "mrwhaleToken": ""
+  "mrwhaleToken": "",
+  "adminToken": "your-admin-dashboard-token-here",
+  "paypal": {
+    "clientId": "your-paypal-client-id",
+    "clientSecret": "your-paypal-client-secret",
+    "environment": "sandbox",
+    "webhookId": "your-paypal-webhook-id"
+  }
 }
