@@ -16,7 +16,7 @@
     "dev:bot": "ts-node --transpile-only index.ts",
     "start": "rm -rf ./lib && tsc && copyfiles ./images/*.png ./lib && node ./lib/index.js",
     "start:server": "rm -rf ./lib && tsc && copyfiles ./images/*.png ./lib && node ./lib/src/server.js",
-    "create-paypal-plans": "tsc && node ./lib/scripts/create-paypal-plans.js"
+    "create-stripe-products": "ts-node --transpile-only ./scripts/create-stripe-products.ts"
   },
   "bugs": {
     "url": "https://github.com/mrwhale-io/mrwhale/issues"
@@ -44,6 +44,7 @@
     "seedrandom": "^3.0.5",
     "sequelize": "^6.9.0",
     "sqlite3": "^5.0.0",
+    "stripe": "^21.0.1",
     "tmp-promise": "^3.0.2",
     "translate-google": "^1.4.2"
   }

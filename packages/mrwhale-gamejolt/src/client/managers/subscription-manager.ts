@@ -1,20 +1,25 @@
 import { Op } from "sequelize";
+import Stripe from "stripe";
 
+import { SubscriptionPlan } from "@mrwhale-io/core";
 import { GameJoltBotClient } from "../gamejolt-bot-client";
 import {
   Subscription,
   SubscriptionInstance,
 } from "../../database/models/subscription";
 import { Usage } from "../../database/models/usage";
-import {
-  HttpStatusCode,
-  PayPalAccessToken,
-  PayPalConfig,
-  PayPalSubscriptionRequest,
-  PayPalSubscriptionResponse,
-  PayPalWebhookEvent,
-  SubscriptionPlan,
-} from "@mrwhale-io/core";
+
+/**
+ * Stripe configuration for subscription management.
+ */
+interface StripeConfig {
+  /** Stripe secret key (starts with sk_) */
+  secretKey: string;
+  /** Stripe webhook endpoint secret (starts with whsec_) */
+  webhookSecret: string;
+  /** Environment: 'test' for development, 'live' for production */
+  environment: string;
+}
 
 /**
  * Subscription statistics for admin dashboard.
@@ -53,19 +58,18 @@ interface SubscriptionStats {
 /**
  * Manages user subscriptions, including creation, cancellation, and status checks.
  *
- * This class integrates with the PayPal API to handle subscription billing and status updates.
+ * This class integrates with the Stripe API to handle subscription billing and status updates.
  */
 export class SubscriptionManager {
-  private paypalConfig: PayPalConfig;
-  private accessToken?: PayPalAccessToken;
-  private tokenExpiry?: number;
+  private stripe: Stripe;
+  private stripeConfig: StripeConfig;
 
   /**
-   * Predefined subscription plans with corresponding PayPal plan IDs and details.
+   * Predefined subscription plans with corresponding Stripe price IDs and details.
    */
   private readonly subscriptionPlans: Record<string, SubscriptionPlan> = {
     premium_monthly: {
-      planId: "P-5ML4271244454362WXNWU5NQ", // Replace with your actual PayPal plan IDs
+      planId: "price_1TH72aC4pYrmkGjJExfzf764", // Replace with your Stripe price IDs
       name: "Premium Monthly",
       tier: "premium",
       price: "2.99",
@@ -73,7 +77,7 @@ export class SubscriptionManager {
       interval: "month",
     },
     premium_yearly: {
-      planId: "P-1GJ4485843924560BXNWU5NQ",
+      planId: "price_1TH72aC4pYrmkGjJ3ZyApfqC",
       name: "Premium Yearly",
       tier: "premium",
       price: "29.99",
@@ -81,7 +85,7 @@ export class SubscriptionManager {
       interval: "year",
     },
     pro_monthly: {
-      planId: "P-0WJ4485843924566CXNWU5NQ",
+      planId: "price_1TH72bC4pYrmkGjJWAKHLtk6",
       name: "Pro Monthly",
       tier: "pro",
       price: "7.99",
@@ -89,7 +93,7 @@ export class SubscriptionManager {
       interval: "month",
     },
     pro_yearly: {
-      planId: "P-3DJ4485843924561DXNWU5NQ",
+      planId: "price_1TH72bC4pYrmkGjJ5KrBmlrS",
       name: "Pro Yearly",
       tier: "pro",
       price: "79.99",
@@ -98,141 +102,33 @@ export class SubscriptionManager {
     },
   };
 
-  constructor(private bot: GameJoltBotClient, config: PayPalConfig) {
-    this.paypalConfig = config;
+  constructor(private bot: GameJoltBotClient, config: StripeConfig) {
+    this.stripeConfig = config;
+    this.stripe = new Stripe(config.secretKey, {
+      apiVersion: "2026-03-25.dahlia",
+    });
   }
 
   /**
-   * Get PayPal access token for API calls.
-   */
-  private async getAccessToken(): Promise<string> {
-    // Return cached token if still valid
-    if (this.accessToken && this.tokenExpiry && Date.now() < this.tokenExpiry) {
-      return this.accessToken.access_token;
-    }
-
-    const baseUrl = this.fetchApiEndpoint();
-
-    const auth = Buffer.from(
-      `${this.paypalConfig.clientId}:${this.paypalConfig.clientSecret}`,
-    ).toString("base64");
-
-    try {
-      const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${auth}`,
-          Accept: "application/json",
-          "Accept-Language": "en_US",
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: "grant_type=client_credentials",
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `PayPal auth failed: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      const tokenData: PayPalAccessToken = await response.json();
-      this.accessToken = tokenData;
-      this.tokenExpiry = Date.now() + tokenData.expires_in * 1000 - 60000; // Refresh 1 minute early
-
-      return tokenData.access_token;
-    } catch (error) {
-      this.bot.logger.error("Failed to get PayPal access token:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch the appropriate PayPal API endpoint based on the environment configuration.
-   * Uses the sandbox endpoint for development and the live endpoint for production.
-   */
-  private fetchApiEndpoint() {
-    return this.paypalConfig.environment === "sandbox"
-      ? "https://api-m.sandbox.paypal.com"
-      : "https://api-m.paypal.com";
-  }
-
-  /**
-   * Make a PayPal API request with proper authentication and error handling.
+   * Create a new subscription for a user using Stripe.
    *
-   * @param endpoint - The API endpoint path (e.g., "/v1/billing/subscriptions")
-   * @param method - HTTP method (GET, POST, PUT, DELETE)
-   * @param body - Request body for POST/PUT requests
-   * @param accessToken - PayPal access token for authentication
-   * @returns Parsed JSON response from PayPal API
-   */
-  private async makePayPalRequest(
-    endpoint: string,
-    method: string,
-    body?: any,
-    accessToken?: string,
-  ): Promise<any> {
-    const token = accessToken || (await this.getAccessToken());
-    const baseUrl = this.fetchApiEndpoint();
-
-    const options: RequestInit = {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-    };
-
-    if (body && (method === "POST" || method === "PUT")) {
-      options.body = JSON.stringify(body);
-    }
-
-    try {
-      const response = await fetch(`${baseUrl}${endpoint}`, options);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        this.bot.logger.error(
-          `PayPal API request failed: ${response.status}`,
-          errorText,
-        );
-        throw new Error(
-          `PayPal API error: ${response.status} ${response.statusText}`,
-        );
-      }
-
-      // Handle 204 No Content responses
-      if (response.status === HttpStatusCode.NO_CONTENT) {
-        return null;
-      }
-
-      return await response.json();
-    } catch (error) {
-      this.bot.logger.error(`PayPal API request to ${endpoint} failed:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Create a new subscription for a user.
-   *
-   * This method checks if the user already has an active subscription, then creates a new subscription using the PayPal API and stores it in the database.
-   * It returns the subscription ID and approval URL for the user to complete the subscription process.
+   * This method checks if the user already has an active subscription, then creates a new subscription using the Stripe API and stores it in the database.
+   * It returns the subscription ID and checkout URL for the user to complete the subscription process.
    *
    * @param userId - The ID of the user subscribing
    * @param planKey - The key of the subscription plan (e.g., "premium_monthly")
-   * @param userEmail - The email address of the user (for PayPal)
-   * @param userName - The name of the user (for PayPal)
-   * @param returnUrl - The URL to redirect the user after successful subscription approval
+   * @param userEmail - The email address of the user (for Stripe)
+   * @param userName - The name of the user (for Stripe customer)
+   * @param successUrl - The URL to redirect the user after successful subscription
    * @param cancelUrl - The URL to redirect the user if they cancel the subscription process
-   * @returns An object containing the PayPal subscription ID and approval URL
+   * @returns An object containing the Stripe subscription ID and checkout URL
    */
   async createSubscription(
     userId: number,
     planKey: string,
     userEmail: string,
     userName: { given: string; surname: string },
-    returnUrl: string,
+    successUrl: string,
     cancelUrl: string,
   ): Promise<{ subscriptionId: string; approvalUrl: string }> {
     const plan = this.subscriptionPlans[planKey];
@@ -246,147 +142,132 @@ export class SubscriptionManager {
       throw new Error("User already has an active subscription");
     }
 
-    const accessToken = await this.getAccessToken();
-    const baseUrl = this.fetchApiEndpoint();
-
-    const subscriptionRequest: PayPalSubscriptionRequest = {
-      plan_id: plan.planId,
-      start_time: new Date(Date.now() + 60000).toISOString(), // Start in 1 minute
-      subscriber: {
-        name: {
-          given_name: userName.given,
-          surname: userName.surname,
-        },
-        email_address: userEmail,
-      },
-      application_context: {
-        brand_name: "Mr. Whale Bot Premium",
-        locale: "en-US",
-        shipping_preference: "NO_SHIPPING",
-        user_action: "SUBSCRIBE_NOW",
-        payment_method: {
-          payer_selected: "PAYPAL",
-          payee_preferred: "IMMEDIATE_PAYMENT_REQUIRED",
-        },
-        return_url: returnUrl,
-        cancel_url: cancelUrl,
-      },
-    };
-
     try {
-      const response = await fetch(`${baseUrl}/v1/billing/subscriptions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "PayPal-Request-Id": `mrwhale-${userId}-${Date.now()}`,
-          Prefer: "return=representation",
+      // Create or get existing customer
+      const customer = await this.stripe.customers.create({
+        email: userEmail,
+        name: `${userName.given} ${userName.surname}`,
+        metadata: {
+          userId: userId.toString(),
+          source: "mrwhale-bot",
         },
-        body: JSON.stringify(subscriptionRequest),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        this.bot.logger.error(
-          `PayPal subscription creation failed: ${response.status}`,
-          errorText,
-        );
-        throw new Error(`Failed to create subscription: ${response.status}`);
-      }
-
-      const subscriptionData: PayPalSubscriptionResponse =
-        await response.json();
-
-      // Store subscription in database
-      await Subscription.create({
-        userId,
-        paypalSubscriptionId: subscriptionData.id,
-        paypalPlanId: plan.planId,
-        tier: plan.tier,
-        status: "active", // Will be updated via webhook when actually approved
-        startDate: new Date(subscriptionData.start_time),
-        failedPayments: 0,
+      // Create checkout session
+      const session = await this.stripe.checkout.sessions.create({
+        customer: customer.id,
+        payment_method_types: ["card"],
+        mode: "subscription",
+        line_items: [
+          {
+            price: plan.planId,
+            quantity: 1,
+          },
+        ],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata: {
+          userId: userId.toString(),
+          planKey: planKey,
+          tier: plan.tier,
+        },
+        subscription_data: {
+          metadata: {
+            userId: userId.toString(),
+            planKey: planKey,
+            tier: plan.tier,
+          },
+        },
       });
 
-      // Find approval URL
-      const approvalLink = subscriptionData.links.find(
-        (link) => link.rel === "approve",
-      );
-      if (!approvalLink) {
-        throw new Error("No approval URL returned from PayPal");
+      // Store pending subscription in database (will be updated via webhook)
+      if (existingSubscription) {
+        // Update existing subscription record
+        await existingSubscription.update({
+          stripeSubscriptionId: session.id, // Store checkout session ID initially
+          stripePriceId: plan.planId, // Store Stripe price ID
+          tier: plan.tier,
+          status: "pending", // Will be updated via webhook when payment completes
+          startDate: new Date(),
+          failedPayments: 0,
+          cancelledAt: null, // Clear any previous cancellation date
+        });
+      } else {
+        // Create new subscription record
+        await Subscription.create({
+          userId,
+          stripeSubscriptionId: session.id, // Store checkout session ID initially
+          stripePriceId: plan.planId, // Store Stripe price ID
+          tier: plan.tier,
+          status: "pending", // Will be updated via webhook when payment completes
+          startDate: new Date(),
+          failedPayments: 0,
+        });
       }
 
       this.bot.logger.info(
-        `Created subscription ${subscriptionData.id} for user ${userId}`,
+        `Created Stripe checkout session ${session.id} for user ${userId}`,
       );
 
       return {
-        subscriptionId: subscriptionData.id,
-        approvalUrl: approvalLink.href,
+        subscriptionId: session.id,
+        approvalUrl: session.url!,
       };
     } catch (error) {
-      this.bot.logger.error("Failed to create PayPal subscription:", error);
+      this.bot.logger.error("Failed to create Stripe subscription:", error);
       throw error;
     }
   }
 
   /**
-   * Cancel an active subscription for a user.
+   * Cancel an active subscription for a user using Stripe.
    *
-   * This method cancels the user's active subscription using the PayPal API and updates the subscription status in the database.
+   * This method cancels the user's active subscription using the Stripe API and updates the subscription status in the database.
    *
    * @param userId - The ID of the user whose subscription is to be cancelled
-   * @param reason - Optional reason for cancellation to provide to PayPal
+   * @param cancelImmediately - Whether to cancel immediately or at the end of the billing period
    */
   async cancelSubscription(
     userId: number,
-    reason = "User requested cancellation",
+    cancelImmediately = false,
   ): Promise<void> {
     const subscription = await this.getUserSubscription(userId);
     if (!subscription || subscription.status !== "active") {
       throw new Error("No active subscription found");
     }
 
-    const accessToken = await this.getAccessToken();
-    const baseUrl = this.fetchApiEndpoint();
-
     try {
-      const response = await fetch(
-        `${baseUrl}/v1/billing/subscriptions/${subscription.paypalSubscriptionId}/cancel`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            reason: reason,
-          }),
-        },
-      );
+      // Get the actual Stripe subscription ID
+      const stripeSubscriptionId = subscription.stripeSubscriptionId;
 
-      if (!response.ok && response.status !== HttpStatusCode.NO_CONTENT) {
-        const errorText = await response.text();
-        this.bot.logger.error(
-          `PayPal subscription cancellation failed: ${response.status}`,
-          errorText,
-        );
-        throw new Error(`Failed to cancel subscription: ${response.status}`);
+      if (cancelImmediately) {
+        // Cancel immediately
+        await this.stripe.subscriptions.cancel(stripeSubscriptionId);
+
+        // Update subscription in database
+        await subscription.update({
+          status: "cancelled",
+          cancelledAt: new Date(),
+        });
+      } else {
+        // Cancel at end of billing period
+        await this.stripe.subscriptions.update(stripeSubscriptionId, {
+          cancel_at_period_end: true,
+        });
+
+        // Update subscription in database to show it's set to cancel
+        await subscription.update({
+          status: "cancelling", // New status to indicate it will cancel at period end
+        });
       }
 
-      // Update subscription in database
-      await subscription.update({
-        status: "cancelled",
-        cancelledAt: new Date(),
-      });
-
       this.bot.logger.info(
-        `Cancelled subscription ${subscription.paypalSubscriptionId} for user ${userId}`,
+        `${
+          cancelImmediately ? "Cancelled" : "Scheduled cancellation for"
+        } subscription ${stripeSubscriptionId} for user ${userId}`,
       );
     } catch (error) {
-      this.bot.logger.error("Failed to cancel PayPal subscription:", error);
+      this.bot.logger.error("Failed to cancel Stripe subscription:", error);
       throw error;
     }
   }
@@ -577,108 +458,384 @@ export class SubscriptionManager {
   }
 
   /**
-   * Handle incoming PayPal webhook events to update subscription statuses accordingly.
+   * Handle incoming Stripe webhook events to update subscription statuses accordingly.
    * This method processes various subscription-related events such as activation, cancellation, payment failures, and updates the subscription records in the database based on the event data.
    *
-   * @param event - The PayPal webhook event object containing details about the subscription event that occurred
+   * @param body - The raw webhook body (needed for signature verification)
+   * @param signature - The Stripe signature header for webhook verification
    */
-  async handleWebhook(event: PayPalWebhookEvent): Promise<void> {
+  async handleWebhook(body: string, signature: string): Promise<void> {
     try {
-      this.bot.logger.info(
-        `Processing PayPal webhook: ${event.event_type} for subscription ${event.resource.id}`,
+      // Verify webhook signature
+      const event = this.stripe.webhooks.constructEvent(
+        body,
+        signature,
+        this.stripeConfig.webhookSecret,
       );
 
-      const subscription = await Subscription.findOne({
-        where: { paypalSubscriptionId: event.resource.id },
-      });
+      // this.bot.logger.info(
+      //   `Processing Stripe webhook: ${event.type} for ${event.data.object.id}`,
+      // );
+      console.log(event);
 
-      if (!subscription) {
-        this.bot.logger.warn(
-          `Webhook for unknown subscription: ${event.resource.id}`,
-        );
-        return;
-      }
-
-      switch (event.event_type) {
-        case "BILLING.SUBSCRIPTION.ACTIVATED":
-          await subscription.update({
-            status: "active",
-            startDate: new Date(event.resource.start_time),
-            lastPaymentDate: new Date(),
-            failedPayments: 0,
-          });
-          this.bot.logger.info(`Subscription ${event.resource.id} activated`);
-          break;
-
-        case "BILLING.SUBSCRIPTION.CANCELLED":
-          await subscription.update({
-            status: "cancelled",
-            cancelledAt: new Date(),
-          });
-          this.bot.logger.info(`Subscription ${event.resource.id} cancelled`);
-          break;
-
-        case "BILLING.SUBSCRIPTION.SUSPENDED":
-          await subscription.update({
-            status: "suspended",
-          });
-          this.bot.logger.info(`Subscription ${event.resource.id} suspended`);
-          break;
-
-        case "BILLING.SUBSCRIPTION.PAYMENT.FAILED":
-          await subscription.update({
-            failedPayments: subscription.failedPayments + 1,
-            status: "past_due",
-          });
-          this.bot.logger.warn(
-            `Payment failed for subscription ${event.resource.id} (${
-              subscription.failedPayments + 1
-            } failures)`,
+      switch (event.type) {
+        case "checkout.session.completed":
+          await this.handleCheckoutCompleted(
+            event.data.object as Stripe.Checkout.Session,
           );
           break;
 
-        case "PAYMENT.SALE.COMPLETED":
-          if (event.resource.billing_info?.last_payment) {
-            await subscription.update({
-              lastPaymentDate: new Date(
-                event.resource.billing_info.last_payment.time,
-              ),
-              status: "active",
-              failedPayments: 0,
-            });
-
-            if (event.resource.billing_info.next_billing_time) {
-              await subscription.update({
-                nextBillingDate: new Date(
-                  event.resource.billing_info.next_billing_time,
-                ),
-              });
-            }
-          }
-          this.bot.logger.info(
-            `Payment completed for subscription ${event.resource.id}`,
+        case "customer.subscription.created":
+          await this.handleSubscriptionCreated(
+            event.data.object as Stripe.Subscription,
           );
           break;
 
-        case "BILLING.SUBSCRIPTION.EXPIRED":
-          await subscription.update({
-            status: "expired",
-          });
-          this.bot.logger.info(`Subscription ${event.resource.id} expired`);
+        case "customer.subscription.updated":
+          await this.handleSubscriptionUpdated(
+            event.data.object as Stripe.Subscription,
+          );
+          break;
+
+        case "customer.subscription.deleted":
+          await this.handleSubscriptionDeleted(
+            event.data.object as Stripe.Subscription,
+          );
+          break;
+
+        case "invoice.payment_succeeded":
+          await this.handlePaymentSucceeded(
+            event.data.object as Stripe.Invoice,
+          );
+          break;
+
+        case "invoice.payment_failed":
+          await this.handlePaymentFailed(event.data.object as Stripe.Invoice);
           break;
 
         default:
-          this.bot.logger.info(`Unhandled webhook event: ${event.event_type}`);
+          this.bot.logger.info(`Unhandled webhook event: ${event.type}`);
       }
     } catch (error) {
-      this.bot.logger.error("Error processing PayPal webhook:", error);
+      this.bot.logger.error("Error processing Stripe webhook:", error);
       throw error;
     }
   }
 
   /**
+   * Handle successful checkout session completion.
+   */
+  private async handleCheckoutCompleted(
+    session: Stripe.Checkout.Session,
+  ): Promise<void> {
+    if (session.mode !== "subscription") return;
+
+    const userId = parseInt(session.metadata?.userId || "0");
+    if (!userId) {
+      this.bot.logger.warn(`Checkout completed without user ID: ${session.id}`);
+      return;
+    }
+
+    // Update the subscription record with the actual subscription ID
+    const subscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: session.id, userId },
+    });
+
+    if (subscription && session.subscription) {
+      await subscription.update({
+        stripeSubscriptionId: session.subscription as string,
+        status: "active",
+        startDate: new Date(),
+        lastPaymentDate: new Date(),
+        failedPayments: 0,
+      });
+
+      this.bot.logger.info(
+        `Checkout completed and subscription activated for user ${userId}`,
+      );
+    }
+  }
+
+  /**
+   * Handle subscription creation (when payment is successful).
+   */
+  private async handleSubscriptionCreated(
+    stripeSubscription: Stripe.Subscription,
+  ): Promise<void> {
+    const userId = parseInt(stripeSubscription.metadata?.userId || "0");
+    if (!userId) {
+      this.bot.logger.warn(
+        `Subscription created without user ID: ${stripeSubscription.id}`,
+      );
+      return;
+    }
+
+    const subscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: stripeSubscription.id, userId },
+    });
+
+    if (subscription) {
+      // Calculate next billing date from subscription items
+      let nextBillingDate: Date | null = null;
+      if (
+        stripeSubscription.status === "active" &&
+        stripeSubscription.items?.data[0]?.price?.recurring
+      ) {
+        const interval =
+          stripeSubscription.items.data[0].price.recurring.interval;
+        const intervalCount =
+          stripeSubscription.items.data[0].price.recurring.interval_count || 1;
+
+        const startDate = new Date(stripeSubscription.created * 1000);
+        if (interval === "month") {
+          startDate.setMonth(startDate.getMonth() + intervalCount);
+        } else if (interval === "year") {
+          startDate.setFullYear(startDate.getFullYear() + intervalCount);
+        } else if (interval === "week") {
+          startDate.setDate(startDate.getDate() + 7 * intervalCount);
+        } else if (interval === "day") {
+          startDate.setDate(startDate.getDate() + intervalCount);
+        }
+        nextBillingDate = startDate;
+      }
+
+      await subscription.update({
+        status: "active",
+        startDate: new Date(stripeSubscription.created * 1000),
+        nextBillingDate,
+        failedPayments: 0,
+      });
+
+      this.bot.logger.info(
+        `Subscription ${stripeSubscription.id} activated for user ${userId}`,
+      );
+    }
+  }
+
+  /**
+   * Handle subscription updates (status changes, etc.).
+   */
+  private async handleSubscriptionUpdated(
+    stripeSubscription: Stripe.Subscription,
+  ): Promise<void> {
+    const userId = parseInt(stripeSubscription.metadata?.userId || "0");
+    if (!userId) return;
+
+    const subscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: stripeSubscription.id, userId },
+    });
+
+    if (!subscription) return;
+
+    let status:
+      | "active"
+      | "pending"
+      | "cancelled"
+      | "cancelling"
+      | "past_due"
+      | "suspended"
+      | "expired";
+    let cancelledAt: Date | null = null;
+
+    // Map Stripe statuses to our model's status enum
+    switch (stripeSubscription.status) {
+      case "active":
+        status = "active";
+        break;
+      case "canceled": // Stripe uses "canceled" not "cancelled"
+        status = "cancelled";
+        cancelledAt = new Date();
+        break;
+      case "past_due":
+        status = "past_due";
+        break;
+      case "unpaid":
+        status = "suspended";
+        break;
+      case "incomplete":
+      case "incomplete_expired":
+        status = "pending"; // Map incomplete statuses to pending
+        break;
+      case "trialing":
+        status = "active"; // Treat trial as active
+        break;
+      case "paused":
+        status = "suspended"; // Map paused to suspended
+        break;
+      default:
+        // Handle any unknown Stripe statuses by defaulting to suspended
+        this.bot.logger.warn(
+          `Unknown Stripe subscription status: ${stripeSubscription.status}, defaulting to suspended`,
+        );
+        status = "suspended";
+    }
+
+    // Calculate next billing date if subscription is active
+    let nextBillingDate: Date | null = null;
+    if (
+      status === "active" &&
+      stripeSubscription.items?.data[0]?.price?.recurring
+    ) {
+      const interval =
+        stripeSubscription.items.data[0].price.recurring.interval;
+      const intervalCount =
+        stripeSubscription.items.data[0].price.recurring.interval_count || 1;
+
+      const now = new Date();
+      if (interval === "month") {
+        now.setMonth(now.getMonth() + intervalCount);
+      } else if (interval === "year") {
+        now.setFullYear(now.getFullYear() + intervalCount);
+      } else if (interval === "week") {
+        now.setDate(now.getDate() + 7 * intervalCount);
+      } else if (interval === "day") {
+        now.setDate(now.getDate() + intervalCount);
+      }
+      nextBillingDate = now;
+    }
+
+    await subscription.update({
+      status: status,
+      cancelledAt,
+      nextBillingDate,
+    });
+
+    this.bot.logger.info(
+      `Subscription ${stripeSubscription.id} updated to ${status} for user ${userId}`,
+    );
+  }
+
+  /**
+   * Handle subscription deletion/cancellation.
+   */
+  private async handleSubscriptionDeleted(
+    stripeSubscription: Stripe.Subscription,
+  ): Promise<void> {
+    const userId = parseInt(stripeSubscription.metadata?.userId || "0");
+    if (!userId) return;
+
+    const subscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: stripeSubscription.id, userId },
+    });
+
+    if (subscription) {
+      await subscription.update({
+        status: "cancelled",
+        cancelledAt: new Date(),
+      });
+
+      this.bot.logger.info(
+        `Subscription ${stripeSubscription.id} cancelled for user ${userId}`,
+      );
+    }
+  }
+
+  /**
+   * Handle successful payment.
+   */
+  private async handlePaymentSucceeded(invoice: Stripe.Invoice): Promise<void> {
+    // Type assertion needed as subscription field exists in runtime but not in TS definitions
+    const invoiceWithSubscription = invoice as any;
+    if (!invoice || !invoiceWithSubscription.subscription) return;
+
+    const subscriptionId =
+      typeof invoiceWithSubscription.subscription === "string"
+        ? invoiceWithSubscription.subscription
+        : invoiceWithSubscription.subscription.id;
+
+    const stripeSubscription = await this.stripe.subscriptions.retrieve(
+      subscriptionId,
+    );
+
+    const userId = parseInt(stripeSubscription.metadata?.userId || "0");
+    if (!userId) return;
+
+    const subscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: stripeSubscription.id, userId },
+    });
+
+    if (subscription) {
+      // Get payment date from invoice
+      const paymentDate = new Date(invoice.created * 1000);
+
+      // Calculate next billing date - add billing interval to current date
+      let nextBillingDate: Date | null = null;
+      if (
+        stripeSubscription.status === "active" &&
+        stripeSubscription.items?.data[0]?.price?.recurring
+      ) {
+        const interval =
+          stripeSubscription.items.data[0].price.recurring.interval;
+        const intervalCount =
+          stripeSubscription.items.data[0].price.recurring.interval_count || 1;
+
+        const next = new Date();
+        if (interval === "month") {
+          next.setMonth(next.getMonth() + intervalCount);
+        } else if (interval === "year") {
+          next.setFullYear(next.getFullYear() + intervalCount);
+        } else if (interval === "week") {
+          next.setDate(next.getDate() + 7 * intervalCount);
+        } else if (interval === "day") {
+          next.setDate(next.getDate() + intervalCount);
+        }
+        nextBillingDate = next;
+      }
+
+      await subscription.update({
+        status: "active",
+        lastPaymentDate: paymentDate,
+        nextBillingDate,
+        failedPayments: 0,
+      });
+
+      this.bot.logger.info(
+        `Payment succeeded for subscription ${stripeSubscription.id}, user ${userId}`,
+      );
+    }
+  }
+
+  /**
+   * Handle failed payment.
+   */
+  private async handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
+    // Type assertion needed as subscription field exists in runtime but not in TS definitions
+    const invoiceWithSubscription = invoice as any;
+    if (!invoice || !invoiceWithSubscription.subscription) return;
+
+    const subscriptionId =
+      typeof invoiceWithSubscription.subscription === "string"
+        ? invoiceWithSubscription.subscription
+        : invoiceWithSubscription.subscription.id;
+
+    const stripeSubscription = await this.stripe.subscriptions.retrieve(
+      subscriptionId,
+    );
+
+    const userId = parseInt(stripeSubscription.metadata?.userId || "0");
+    if (!userId) return;
+
+    const subscription = await Subscription.findOne({
+      where: { stripeSubscriptionId: stripeSubscription.id, userId },
+    });
+
+    if (subscription) {
+      await subscription.update({
+        failedPayments: subscription.failedPayments + 1,
+        status: "past_due",
+      });
+
+      this.bot.logger.warn(
+        `Payment failed for subscription ${
+          stripeSubscription.id
+        }, user ${userId} (${subscription.failedPayments + 1} failures)`,
+      );
+    }
+  }
+
+  /**
    * Get the predefined subscription plans with their details.
-   * This method returns the available subscription plans that users can choose from when subscribing to premium features. Each plan includes information such as the PayPal plan ID, name, tier, price, currency, and billing interval.
+   * This method returns the available subscription plans that users can choose from when subscribing to premium features. Each plan includes information such as the Stripe price ID, name, tier, price, currency, and billing interval.
    *
    * @returns An object containing the subscription plans keyed by their identifiers (e.g., "premium_monthly", "pro_yearly") with their corresponding details.
    */
@@ -796,53 +953,13 @@ export class SubscriptionManager {
           nextBillingDate: sub.nextBillingDate,
         })),
         revenue: {
-          monthly: premiumUsers * 4.99 + proUsers * 9.99,
-          projected: (premiumUsers * 4.99 + proUsers * 9.99) * 12,
+          monthly: premiumUsers * 2.99 + proUsers * 7.99, // Updated to correct Stripe pricing
+          projected: (premiumUsers * 2.99 + proUsers * 7.99) * 12,
         },
       };
     } catch (error) {
       this.bot.logger.error("Error fetching subscription statistics:", error);
       throw error;
-    }
-  }
-
-  /**
-   * Verify the signature of incoming PayPal webhook events to ensure they are legitimate and have not been tampered with.
-   * This method uses the PayPal API to verify the webhook signature based on the transmission ID, timestamp, certificate ID, webhook ID, and the raw body of the webhook event. It returns a boolean indicating whether the signature is valid.
-   *
-   * @param params - An object containing the necessary parameters for verifying the webhook signature, including the signature, transmission ID, timestamp, certificate ID, webhook ID, and raw body of the event.
-   * @returns A boolean indicating whether the webhook signature is valid (true if valid, false if invalid).
-   */
-  async verifyWebhookSignature(params: {
-    signature: string;
-    transmissionId: string;
-    timestamp: string;
-    certId: string;
-    webhookId: string;
-    rawBody: string;
-  }): Promise<boolean> {
-    try {
-      const accessToken = await this.getAccessToken();
-
-      const verificationResponse = await this.makePayPalRequest(
-        "/v1/notifications/verify-webhook-signature",
-        "POST",
-        {
-          transmission_id: params.transmissionId,
-          cert_id: params.certId,
-          auth_algo: "SHA256withRSA",
-          transmission_sig: params.signature,
-          transmission_time: params.timestamp,
-          webhook_id: params.webhookId,
-          webhook_event: JSON.parse(params.rawBody),
-        },
-        accessToken,
-      );
-
-      return verificationResponse.verification_status === "SUCCESS";
-    } catch (error) {
-      this.bot.logger.error("Error verifying webhook signature:", error);
-      return false;
     }
   }
 }

@@ -25,14 +25,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, args: string[]): Promise<void> {
-    // TODO: Add premium check once subscription system is implemented
-    // if (!await this.bot.isPremiumUser(message.user.id)) {
-    //   return message.reply(
-    //     "🔒 **Premium Costume!** Upgrade to access magical transformations!\n" +
-    //     "Get premium for exclusive costume commands and unlimited usage."
-    //   );
-    // }
-
     const user = message.firstMentionOrAuthor;
     const colorArg =
       args.find((arg) => arg.toLowerCase() !== user.username?.toLowerCase()) ||

@@ -54,7 +54,7 @@ export class GameJoltCommandDispatcher {
       if (message.isAuthorBlocked) {
         return;
       }
-      
+
       const prefix = await this.bot.getPrefix(message.room_id);
       if (!message.textContent.trim().startsWith(prefix)) {
         return;
@@ -77,9 +77,9 @@ export class GameJoltCommandDispatcher {
       }
 
       // Check premium access requirements
-      if (!(await this.checkPremiumAccess(command, message))) {
-        return; // Error messages are handled within the premium check
-      }
+      // if (!(await this.checkPremiumAccess(command, message))) {
+      //   return; // Error messages are handled within the premium check
+      // }
 
       // Check rate limits and cooldowns
       if (!this.checkRateLimits(message, command)) {
@@ -140,6 +140,7 @@ export class GameJoltCommandDispatcher {
   /**
    * Checks if the user has premium access for commands that require it.
    * Validates subscription status and usage limits for premium features.
+   * In development mode, provides bypass options for testing.
    *
    * @param command The command to check premium access for
    * @param message The message that triggered the command
@@ -152,6 +153,25 @@ export class GameJoltCommandDispatcher {
     // Skip check if command doesn't require premium access
     if (!command.requiresPremium && !command.premiumTier) {
       return true;
+    }
+
+    // Development bypasses
+    if (this.isDevelopmentMode()) {
+      // Owner bypass - bot owner can always test premium features
+      if (message.user.id === this.bot.ownerId) {
+        this.bot.logger.debug(
+          `Premium bypass: Owner testing command '${command.name}'`,
+        );
+        return true;
+      }
+
+      // Environment bypass - if BYPASS_PREMIUM is set
+      if (process.env.BYPASS_PREMIUM === "true") {
+        this.bot.logger.debug(
+          `Premium bypass: Environment override for command '${command.name}'`,
+        );
+        return true;
+      }
     }
 
     if (!this.bot.subscriptionManager) {
@@ -229,11 +249,13 @@ export class GameJoltCommandDispatcher {
           return false;
         }
 
-        // Track usage for premium features
-        await this.bot.subscriptionManager.trackUsage(
-          message.user.id,
-          usageType,
-        );
+        // Track usage for premium features (skip in development mode)
+        if (!this.isDevelopmentMode()) {
+          await this.bot.subscriptionManager.trackUsage(
+            message.user.id,
+            usageType,
+          );
+        }
       }
 
       return true;
@@ -349,5 +371,20 @@ export class GameJoltCommandDispatcher {
     } else {
       message.reply("❌ Command failed to execute. Please try again later.");
     }
+  }
+
+  /**
+   * Checks if the bot is running in development mode.
+   * Development mode allows bypassing premium checks for testing.
+   *
+   * @returns true if in development mode
+   */
+  private isDevelopmentMode(): boolean {
+    return (
+      process.env.NODE_ENV === "development" ||
+      process.env.NODE_ENV === "dev" ||
+      process.env.DEV === "true" ||
+      this.bot.isDevelopment
+    );
   }
 }

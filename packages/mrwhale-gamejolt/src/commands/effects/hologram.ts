@@ -11,7 +11,7 @@ export default class extends GameJoltCommand {
       name: "hologram",
       description:
         "Transform your avatar into a futuristic hologram with scan lines and glow effects! ✨",
-      type: "image",
+      type: "effects",
       usage: "<prefix>hologram @user",
       cooldown: 8000,
       requiresPremium: true,

@@ -11,12 +11,15 @@ export const COMMAND_TYPE_NAMES: CommandTypes[] = [
   "admin",
   "economy",
   "fishing",
-  "fun",
-  "game",
-  "utility",
   "useful",
+  "fun",
+  "utility",
+  "game",
   "image",
+  "effects",
+  "ai",
   "level",
+  "subscription",
 ];
 
 export const DEFAULT_RANK_THEME: RankCardTheme = {

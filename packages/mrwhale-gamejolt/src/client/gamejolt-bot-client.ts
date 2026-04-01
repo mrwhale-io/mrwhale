@@ -124,6 +124,22 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   }
 
   /**
+   * Indicates whether the bot is running in development mode.
+   * When enabled, certain features or behaviors may be altered for testing purposes.
+   *
+   * @returns `true` if the bot is in development mode, `false` otherwise.
+   */
+  get isDevelopment() {
+    return this.development;
+  }
+
+  /**
+   * Indicates whether the bot is running in development mode.
+   * When enabled, certain features or behaviors may be altered for testing purposes.
+   */
+  private development: boolean;
+
+  /**
    * Collection of active timeout handles for cleanup management.
    * Tracks all setTimeout calls to ensure proper cleanup on bot shutdown.
    */
@@ -264,9 +280,16 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
         );
       }
 
-      // Initialize subscription manager if PayPal config is provided
-      if (botOptions.paypal) {
-        this.subscriptionManager = new SubscriptionManager(this, botOptions.paypal);
+      // Initialize subscription manager if Stripe config is provided
+      if (botOptions.stripe) {
+        this.subscriptionManager = new SubscriptionManager(
+          this,
+          botOptions.stripe,
+        );
+      }
+
+      if (botOptions.development) {
+        this.development = true;
       }
 
       this.roomStorageLoader.init();
@@ -747,7 +770,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
 
   /**
    * Checks if a user has an active premium subscription.
-   * 
+   *
    * @param userId - The unique identifier of the user to check.
    * @returns True if the user has premium access, false otherwise.
    */
@@ -760,34 +783,42 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     try {
       return await this.subscriptionManager.isPremiumUser(userId);
     } catch (error) {
-      this.logger?.warn(`Failed to check premium status for user ${userId}:`, error);
+      this.logger?.warn(
+        `Failed to check premium status for user ${userId}:`,
+        error,
+      );
       return false; // Default to free tier on error
     }
   }
 
   /**
    * Gets the subscription tier for a user.
-   * 
+   *
    * @param userId - The unique identifier of the user to check.
    * @returns The subscription tier: 'free', 'premium', or 'pro'.
    */
-  async getUserSubscriptionTier(userId: number): Promise<'free' | 'premium' | 'pro'> {
+  async getUserSubscriptionTier(
+    userId: number,
+  ): Promise<"free" | "premium" | "pro"> {
     if (!this.subscriptionManager) {
       // No subscription manager configured, default to premium during development
-      return 'premium';
+      return "premium";
     }
 
     try {
       return await this.subscriptionManager.getUserSubscriptionTier(userId);
     } catch (error) {
-      this.logger?.warn(`Failed to get subscription tier for user ${userId}:`, error);
-      return 'free';
+      this.logger?.warn(
+        `Failed to get subscription tier for user ${userId}:`,
+        error,
+      );
+      return "free";
     }
   }
 
   /**
    * Gets the premium feature limits for a user based on their subscription tier.
-   * 
+   *
    * @param userId - The unique identifier of the user to check.
    * @returns Object containing feature limits for the user's tier.
    */
@@ -812,7 +843,10 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
     try {
       return await this.subscriptionManager.getUserPremiumLimits(userId);
     } catch (error) {
-      this.logger?.warn(`Failed to get premium limits for user ${userId}:`, error);
+      this.logger?.warn(
+        `Failed to get premium limits for user ${userId}:`,
+        error,
+      );
       // Default to free tier limits on error
       return {
         maxCustomCommands: 5,

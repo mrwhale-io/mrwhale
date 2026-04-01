@@ -20,14 +20,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message): Promise<void> {
-    // TODO: Add premium check once subscription system is implemented
-    // if (!await this.bot.isPremiumUser(message.user.id)) {
-    //   return message.reply(
-    //     "🔒 **Premium Costume!** Upgrade to join the ranks of the undead!\n" +
-    //     "Get premium for exclusive vampire transformations and unlimited usage."
-    //   );
-    // }
-
     const user = message.firstMentionOrAuthor;
     const responseMsg = await message.reply(
       "🧛‍♂️ Awakening ancient powers and embracing the darkness...",

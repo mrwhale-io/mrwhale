@@ -13,10 +13,11 @@
   "gameId": 1,
   "mrwhaleToken": "",
   "adminToken": "your-admin-dashboard-token-here",
-  "paypal": {
-    "clientId": "your-paypal-client-id",
-    "clientSecret": "your-paypal-client-secret",
-    "environment": "sandbox",
-    "webhookId": "your-paypal-webhook-id"
+  "development": false,
+  "developmentUsers": [],
+  "stripe": {
+    "secretKey": "sk_test_your-stripe-secret-key",
+    "webhookSecret": "whsec_your-stripe-webhook-secret",
+    "environment": "test"
   }
 }

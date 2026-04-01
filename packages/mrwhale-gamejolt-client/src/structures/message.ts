@@ -254,7 +254,7 @@ export class Message {
    */
   async reply(message: string | Content): Promise<Message> {
     // Prevent replying to self.
-    if (this.user.id === this.client.chat.currentUser.id || this.replied) {
+    if (this.isClientUser || this.replied) {
       return;
     }
 
@@ -281,7 +281,8 @@ export class Message {
    * ```
    */
   edit(message: string | Content): void {
-    if (this.user.id !== this.client.chat.currentUser.id) {
+    // Only allow editing if the message was sent by the current user
+    if (!this.isClientUser) {
       return;
     }
 

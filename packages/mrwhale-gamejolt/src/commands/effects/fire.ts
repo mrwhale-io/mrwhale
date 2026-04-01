@@ -10,7 +10,7 @@ export default class extends GameJoltCommand {
     super({
       name: "fire",
       description: "Ignite your avatar with blazing fire effects and burning embers! 🔥",
-      type: "image",
+      type: "effects",
       usage: "<prefix>fire @user [color]",
       examples: ["fire", "fire @user", "fire @user blue", "fire @user green"],
       cooldown: 8000,
@@ -19,14 +19,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, args: string[]): Promise<void> {
-    // TODO: Add premium check once subscription system is implemented
-    // if (!await this.bot.isPremiumUser(message.user.id)) {
-    //   return message.reply(
-    //     "🔒 **Premium Feature!** Upgrade to access blazing fire effects!\n" +
-    //     "Get premium for exclusive image commands and unlimited usage."
-    //   );
-    // }
-
     const user = message.firstMentionOrAuthor;
     const fireColor = args.find(arg => 
       ["red", "blue", "green", "purple", "white", "gold"].includes(arg.toLowerCase())

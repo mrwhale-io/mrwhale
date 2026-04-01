@@ -21,6 +21,7 @@ const client = new GameJoltBotClient(
     privateKey: config.privateKey,
     gameId: config.gameId,
     provider: SqliteStorageProvider(path.join(process.cwd(), config.database)),
+    development: config.development,
   },
 );
 

@@ -10,7 +10,7 @@ export default class extends GameJoltCommand {
     super({
       name: "sparkle",
       description: "Add magical sparkle effects with twinkling particles and glittery aura! ✨",
-      type: "image",
+      type: "effects",
       usage: "<prefix>sparkle @user [theme]",
       examples: ["sparkle", "sparkle @user", "sparkle @user rainbow", "sparkle @user gold"],
       cooldown: 8000,
@@ -19,14 +19,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, args: string[]): Promise<void> {
-    // TODO: Add premium check once subscription system is implemented
-    // if (!await this.bot.isPremiumUser(message.user.id)) {
-    //   return message.reply(
-    //     "🔒 **Premium Feature!** Upgrade to access magical sparkle effects!\n" +
-    //     "Get premium for exclusive image commands and unlimited usage."
-    //   );
-    // }
-
     const user = message.firstMentionOrAuthor;
     const theme = args.find(arg => 
       ["rainbow", "gold", "silver", "pink", "blue", "purple"].includes(arg.toLowerCase())

@@ -3,10 +3,17 @@ import { database } from "..";
 
 interface SubscriptionAttributes {
   userId: number;
-  paypalSubscriptionId: string;
-  paypalPlanId: string;
+  stripeSubscriptionId: string;
+  stripePriceId: string;
   tier: "free" | "premium" | "pro";
-  status: "active" | "cancelled" | "past_due" | "suspended" | "expired";
+  status:
+    | "active"
+    | "pending"
+    | "cancelled"
+    | "cancelling"
+    | "past_due"
+    | "suspended"
+    | "expired";
   startDate: Date;
   nextBillingDate?: Date;
   lastPaymentDate?: Date;
@@ -29,16 +36,16 @@ export const Subscription = database.connection.define<SubscriptionInstance>(
       type: DataTypes.INTEGER,
       comment: "Game Jolt user ID",
     },
-    paypalSubscriptionId: {
+    stripeSubscriptionId: {
       allowNull: false,
       type: DataTypes.STRING(50),
       unique: true,
-      comment: "PayPal subscription ID",
+      comment: "Stripe subscription ID",
     },
-    paypalPlanId: {
+    stripePriceId: {
       allowNull: false,
       type: DataTypes.STRING(50),
-      comment: "PayPal plan ID for the subscription tier",
+      comment: "Stripe price ID for the subscription tier",
     },
     tier: {
       allowNull: false,
@@ -48,8 +55,16 @@ export const Subscription = database.connection.define<SubscriptionInstance>(
     },
     status: {
       allowNull: false,
-      type: DataTypes.ENUM("active", "cancelled", "past_due", "suspended", "expired"),
-      defaultValue: "active",
+      type: DataTypes.ENUM(
+        "active",
+        "pending", 
+        "cancelled",
+        "cancelling",
+        "past_due",
+        "suspended",
+        "expired",
+      ),
+      defaultValue: "pending",
       comment: "Current subscription status",
     },
     startDate: {
@@ -87,12 +102,12 @@ export const Subscription = database.connection.define<SubscriptionInstance>(
       type: DataTypes.DATE,
     },
   },
-  { 
+  {
     tableName: "subscriptions",
     timestamps: true,
     indexes: [
       {
-        fields: ["paypalSubscriptionId"],
+        fields: ["stripeSubscriptionId"],
       },
       {
         fields: ["status"],
@@ -101,5 +116,5 @@ export const Subscription = database.connection.define<SubscriptionInstance>(
         fields: ["tier"],
       },
     ],
-  }
+  },
 );

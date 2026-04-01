@@ -11,7 +11,7 @@ export default class extends GameJoltCommand {
       name: "dragon",
       description:
         "Roar with ancient power! Transform into a mighty dragon with scales, wings, and blazing fire! 🐉",
-      type: "image",
+      type: "effects",
       usage: "<prefix>dragon @user [color]",
       examples: ["dragon", "dragon @user red", "dragon @user blue"],
       cooldown: 10000,
@@ -20,14 +20,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message): Promise<void> {
-    // TODO: Add premium check once subscription system is implemented
-    // if (!await this.bot.isPremiumUser(message.user.id)) {
-    //   return message.reply(
-    //     "🔒 **Premium Costume!** Ascend to legendary status!\n" +
-    //     "Get premium for exclusive dragon transformations and unlimited usage."
-    //   );
-    // }
-
     const args = message.content.split(" ");
     const user = message.firstMentionOrAuthor;
     const dragonColor =

@@ -15,13 +15,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message): Promise<Message> {
-    if (!this.botClient.subscriptionManager) {
-      return message.reply(
-        "❌ **Subscription system not available**\n" +
-          "Premium subscriptions are currently not configured on this bot instance.",
-      );
-    }
-
     try {
       const subscription =
         await this.botClient.subscriptionManager.getUserSubscription(
@@ -46,7 +39,7 @@ export default class extends GameJoltCommand {
       billingInfo += `**Status:** ${this.getStatusDisplay(
         subscription.status,
       )}\n`;
-      billingInfo += `**PayPal Subscription ID:** ${subscription.paypalSubscriptionId}\n\n`;
+      billingInfo += `**Stripe Subscription ID:** ${subscription.stripeSubscriptionId}\n\n`;
 
       // Billing dates
       if (subscription.status === "active") {
@@ -54,7 +47,7 @@ export default class extends GameJoltCommand {
           billingInfo += `**Next Billing Date:** ${new Date(
             subscription.nextBillingDate,
           ).toLocaleDateString()}\n`;
-          const price = subscription.tier === "premium" ? "$4.99" : "$9.99";
+          const price = subscription.tier === "premium" ? "$2.99" : "$7.99";
           billingInfo += `**Next Charge:** ${price}/month\n`;
         }
 

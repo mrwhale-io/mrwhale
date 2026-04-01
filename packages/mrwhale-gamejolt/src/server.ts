@@ -7,8 +7,8 @@ import * as config from "../config.json";
 
 const app = express();
 
-// Middleware to parse raw body for PayPal webhook signature verification
-app.use("/webhook/paypal", express.raw({ type: "application/json" }));
+// Middleware to parse raw body for Stripe webhook signature verification
+app.use("/webhook/stripe", express.raw({ type: "application/json" }));
 app.use(express.json());
 
 // Initialize the bot client
@@ -29,12 +29,14 @@ const client = new GameJoltBotClient(
     privateKey: config.privateKey,
     gameId: config.gameId,
     provider: SqliteStorageProvider(path.join(process.cwd(), config.database)),
+    stripe: config.stripe,
+    development: config.development,
   },
 );
 
-// PayPal Webhook endpoint
+// Stripe Webhook endpoint
 app.post(
-  "/webhook/paypal",
+  "/webhook/stripe",
   async (req: express.Request, res: express.Response) => {
     try {
       if (!client.subscriptionManager) {
@@ -44,57 +46,27 @@ app.post(
           .json({ error: "Subscription system not configured" });
       }
 
-      const signature = req.headers["paypal-transmission-sig"] as string;
-      const transmissionId = req.headers["paypal-transmission-id"] as string;
-      const timestamp = req.headers["paypal-transmission-time"] as string;
-      const certId = req.headers["paypal-cert-id"] as string;
+      const signature = req.headers["stripe-signature"] as string;
 
-      if (!signature || !transmissionId || !timestamp || !certId) {
-        client.logger.error("Missing PayPal webhook headers");
+      if (!signature) {
+        client.logger.error("Missing Stripe webhook signature");
         return res
           .status(HttpStatusCode.BAD_REQUEST)
-          .json({ error: "Missing required headers" });
+          .json({ error: "Missing stripe-signature header" });
       }
 
-      const webhookId = config.paypal?.webhookId;
-      if (!webhookId) {
-        client.logger.error("PayPal webhook ID not configured");
-        return res
-          .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
-          .json({ error: "Webhook not configured" });
-      }
+      const rawBody = req.body.toString();
 
-      const rawBody = req.body;
-      const webhookEvent = JSON.parse(rawBody.toString());
+      client.logger.info(`Received Stripe webhook with signature`);
 
-      client.logger.info(`Received PayPal webhook: ${webhookEvent.event_type}`);
-
-      // Verify webhook signature
-      const isVerified =
-        await client.subscriptionManager.verifyWebhookSignature({
-          signature,
-          transmissionId,
-          timestamp,
-          certId,
-          webhookId,
-          rawBody: rawBody.toString(),
-        });
-
-      if (!isVerified) {
-        client.logger.error("PayPal webhook signature verification failed");
-        return res
-          .status(HttpStatusCode.NOT_FOUND)
-          .json({ error: "Signature verification failed" });
-      }
-
-      // Process webhook event
-      await client.subscriptionManager.handleWebhook(webhookEvent);
+      // Process webhook event (verification is handled internally)
+      await client.subscriptionManager.handleWebhook(rawBody, signature);
 
       res
         .status(HttpStatusCode.OK)
         .json({ message: "Webhook processed successfully" });
     } catch (error) {
-      client.logger.error("Error processing PayPal webhook:", error);
+      client.logger.error("Error processing Stripe webhook:", error);
       res
         .status(HttpStatusCode.INTERNAL_SERVER_ERROR)
         .json({ error: "Internal server error" });
@@ -140,12 +112,12 @@ app.get(
   },
 );
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 app.listen(PORT, () => {
-  client.logger.info(`PayPal webhook server running on port ${PORT}`);
+  client.logger.info(`Stripe webhook server running on port ${PORT}`);
   client.logger.info(
-    `Webhook endpoint: http://localhost:${PORT}/webhook/paypal`,
+    `Webhook endpoint: http://localhost:${PORT}/webhook/stripe`,
   );
 });
 
@@ -156,10 +128,8 @@ process.on("unhandledRejection", (err) => {
 
 process.on("SIGINT", () => {
   client.logger.info("Shutting down gracefully...");
-  client.logger.info("Shutting down gracefully...");
 
   client.destroy().then(() => {
-    client.logger.info("Shutdown complete. Exiting process.");
     client.logger.info("Shutdown complete. Exiting process.");
     process.exit(0);
   });

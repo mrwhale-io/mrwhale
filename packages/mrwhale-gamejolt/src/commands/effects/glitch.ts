@@ -11,7 +11,7 @@ export default class extends GameJoltCommand {
       name: "glitch",
       description:
         "Corrupt your avatar with digital glitch effects and RGB distortion! 👾",
-      type: "image",
+      type: "effects",
       usage: "<prefix>glitch @user [intensity]",
       examples: ["glitch", "glitch @user", "glitch @user 5"],
       cooldown: 8000,
@@ -20,14 +20,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, args: string[]): Promise<void> {
-    // TODO: Add premium check once subscription system is implemented
-    // if (!await this.bot.isPremiumUser(message.user.id)) {
-    //   return message.reply(
-    //     "🔒 **Premium Feature!** Upgrade to access advanced glitch effects!\n" +
-    //     "Get premium for exclusive image commands and unlimited usage."
-    //   );
-    // }
-
     const user = message.firstMentionOrAuthor;
     const intensity = Math.max(1, Math.min(10, parseInt(args[0]) || 5)); // 1-10 scale
     const responseMsg = await message.reply(

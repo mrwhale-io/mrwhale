@@ -11,7 +11,7 @@ export default class extends GameJoltCommand {
       name: "neon",
       description:
         "Transform your avatar with electric neon glow and vibrant outlines! ⚡",
-      type: "image",
+      type: "effects",
       usage: "<prefix>neon @user [color]",
       examples: [
         "neon",
@@ -25,14 +25,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message, args: string[]): Promise<void> {
-    // TODO: Add premium check once subscription system is implemented
-    // if (!await this.bot.isPremiumUser(message.user.id)) {
-    //   return message.reply(
-    //     "🔒 **Premium Feature!** Upgrade to access neon glow effects!\n" +
-    //     "Get premium for exclusive image commands and unlimited usage."
-    //   );
-    // }
-
     const user = message.firstMentionOrAuthor;
     const colorArg =
       args.find((arg) => arg.toLowerCase() !== user.username?.toLowerCase()) ||

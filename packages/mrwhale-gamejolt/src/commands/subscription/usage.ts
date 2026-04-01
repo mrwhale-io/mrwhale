@@ -15,13 +15,6 @@ export default class extends GameJoltCommand {
   }
 
   async action(message: Message): Promise<Message> {
-    if (!this.botClient.subscriptionManager) {
-      return message.reply(
-        "❌ **Subscription system not available**\n" +
-          "Premium subscriptions are currently not configured on this bot instance.",
-      );
-    }
-
     try {
       const subscription =
         await this.botClient.subscriptionManager.getUserSubscription(

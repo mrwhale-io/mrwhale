@@ -18,6 +18,8 @@ interface PayPalProduct {
   description: string;
   type: string;
   category: string;
+  image_url?: string;
+  home_url?: string;
 }
 
 interface PayPalPlan {
@@ -63,6 +65,7 @@ class PayPalPlanCreator {
       this.accessToken = response.data.access_token;
       return this.accessToken;
     } catch (error: any) {
+      console.error("PayPal API Error:", error.response?.data);
       throw new Error(
         `Failed to get PayPal access token: ${
           error.response?.data?.error_description || error.message
@@ -84,21 +87,29 @@ class PayPalPlanCreator {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            "PayPal-Request-Id": `product-${Date.now()}`, // Add unique request ID
           },
         },
       );
 
       return response.data;
     } catch (error: any) {
+      console.error("PayPal Product Creation Error:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+      });
+      
       if (
         error.response?.status === 422 &&
         error.response?.data?.name === "DUPLICATE_RESOURCE_IDENTIFIER"
       ) {
         // Product already exists, fetch it
         console.log(
-          `Product ${productData.id} already exists, fetching existing product...`,
+          `Product ${productData.name} already exists, fetching existing product...`,
         );
-        return await this.getProduct(productData.id!);
+        // Since we can't use custom IDs anymore, we'll need to list products and find by name
+        return await this.findProductByName(productData.name!);
       }
       throw new Error(
         `Failed to create product: ${
@@ -108,12 +119,12 @@ class PayPalPlanCreator {
     }
   }
 
-  async getProduct(productId: string): Promise<PayPalProduct> {
+  async findProductByName(productName: string): Promise<PayPalProduct> {
     const token = await this.getAccessToken();
 
     try {
       const response = await axios.get(
-        `${this.baseUrl}/v1/catalogs/products/${productId}`,
+        `${this.baseUrl}/v1/catalogs/products?page_size=20`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -122,10 +133,18 @@ class PayPalPlanCreator {
         },
       );
 
-      return response.data;
+      const product = response.data.products?.find((p: PayPalProduct) => 
+        p.name === productName
+      );
+
+      if (!product) {
+        throw new Error(`Product with name "${productName}" not found`);
+      }
+
+      return product;
     } catch (error: any) {
       throw new Error(
-        `Failed to get product: ${
+        `Failed to find product: ${
           error.response?.data?.message || error.message
         }`,
       );
@@ -143,15 +162,25 @@ class PayPalPlanCreator {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            "PayPal-Request-Id": `plan-${Date.now()}`, // Add unique request ID
           },
         },
       );
 
       return response.data;
     } catch (error: any) {
+      console.error("PayPal Plan Creation Error:", {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        planData: planData, // Log the data that failed
+      });
+      
       throw new Error(
         `Failed to create plan: ${
-          error.response?.data?.message || error.message
+          error.response?.data?.message || 
+          error.response?.data?.details?.[0]?.description ||
+          error.message
         }`,
       );
     }
@@ -162,22 +191,24 @@ class PayPalPlanCreator {
       `🚀 Creating PayPal subscription plans in ${this.config.environment} environment...`,
     );
 
-    // Create products first
+    // Create products first - PayPal generates the IDs
     const premiumProduct = await this.createProduct({
-      id: "PROD-MRWHALE-PREMIUM",
       name: "Mr Whale Premium",
-      description: "Premium features for Mr Whale GameJolt bot",
+      description: "Premium features for Mr Whale GameJolt bot including enhanced commands and visual effects",
       type: "SERVICE",
       category: "SOFTWARE",
+      image_url: "https://via.placeholder.com/300x300?text=Mr+Whale+Premium", // Optional but recommended
+      home_url: "https://github.com/mrwhale-io/mrwhale", // Required for some regions
     });
     console.log(`✅ Premium product created: ${premiumProduct.id}`);
 
     const proProduct = await this.createProduct({
-      id: "PROD-MRWHALE-PRO",
-      name: "Mr Whale Pro",
-      description: "Pro features with AI for Mr Whale GameJolt bot",
+      name: "Mr Whale Pro", 
+      description: "Pro features with AI capabilities for Mr Whale GameJolt bot including advanced commands and AI-powered features",
       type: "SERVICE",
-      category: "SOFTWARE",
+      category: "SOFTWARE", 
+      image_url: "https://via.placeholder.com/300x300?text=Mr+Whale+Pro", // Optional but recommended
+      home_url: "https://github.com/mrwhale-io/mrwhale", // Required for some regions
     });
     console.log(`✅ Pro product created: ${proProduct.id}`);
 
