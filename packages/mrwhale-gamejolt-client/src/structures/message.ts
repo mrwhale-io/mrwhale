@@ -268,25 +268,49 @@ export class Message {
    * If the current user is not the author, this method will silently return without action.
    *
    * @param message - The new content for the message. Can be plain text or rich Content object.
-   * @returns `void` - This method doesn't return the updated message.
+   * @returns A Promise that resolves when the message is successfully edited.
+   * @throws {Error} When the edit operation fails or content format is invalid.
    *
    * @example
    * ```typescript
    * // Edit with plain text
-   * message.edit('Updated message content');
+   * await message.edit('Updated message content');
    *
    * // Edit with rich content
    * const newContent = new Content().text('Updated: ').bold('Important info');
-   * message.edit(newContent);
+   * await message.edit(newContent);
    * ```
    */
-  edit(message: string | Content): void {
+  async edit(message: string | Content): Promise<void> {
     // Only allow editing if the message was sent by the current user
     if (!this.isClientUser) {
       return;
     }
 
-    this.client.chat.editMessage(message, this);
+    await this.client.chat.editMessage(message, this);
+  }
+
+  /**
+   * Delete this message.
+   *
+   * Note: Only the original author can delete their own messages.
+   * If the current user is not the author, this method will silently return without action.
+   *
+   * @returns A Promise that resolves when the message is successfully deleted.
+   * @throws {Error} When the delete operation fails.
+   *
+   * @example
+   * ```typescript
+   * await message.delete();
+   * ```
+   */
+  async delete(): Promise<void> {
+    // Only allow deletion if the message was sent by the current user
+    if (!this.isClientUser) {
+      return;
+    }
+
+    await this.client.chat.deleteMessage(this);
   }
 
   /**

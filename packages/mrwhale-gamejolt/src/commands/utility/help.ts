@@ -80,10 +80,7 @@ export default class extends GameJoltCommand {
     }
 
     if (cmd.examples.length > 0) {
-      info.addField(
-        "💡 Examples",
-        cmd.examples.join(", "),
-      );
+      info.addField("💡 Examples", cmd.examples.join(", "));
     }
 
     if (cmd.aliases.length > 0) {
@@ -190,9 +187,12 @@ export default class extends GameJoltCommand {
     let helpText = "🌟 **Premium Features**\n\n";
 
     helpText += "📊 **Tiers:**\n";
-    helpText += "🆓 Free: 5 cmds/day, 10 effects\n";
-    helpText += "⭐ Premium: 25 cmds/day, unlimited effects ($4.99)\n";
-    helpText += "💎 Pro: 100 cmds/day, unlimited + AI ($9.99)\n\n";
+    helpText +=
+      "🆓 Free: 5 cmds/day, 10 effects, 5 custom commands (room owners)\n";
+    helpText +=
+      "⭐ Premium: 25 cmds/day, unlimited effects, 25 custom commands ($4.99)\n";
+    helpText +=
+      "💎 Pro: 100 cmds/day, unlimited + AI, 100 custom commands ($9.99)\n\n";
 
     const maxLength = 900;
 
@@ -219,7 +219,9 @@ export default class extends GameJoltCommand {
     }
 
     helpText += `🎯 **Get Started:**\n`;
-    helpText += `\`${prefix}subscribe\` \`${prefix}mystatus\` \`${prefix}usage\``;
+    helpText += `\`${prefix}subscribe\` \`${prefix}mystatus\` \`${prefix}usage\`\n\n`;
+    helpText += `🔧 **Custom Commands:**\n`;
+    helpText += `\`${prefix}createcommand\` \`${prefix}listcommands\` \`${prefix}commandcooldowns\``;
 
     return message.reply(helpText);
   }
@@ -261,7 +263,8 @@ export default class extends GameJoltCommand {
     }
 
     helpText += `💡 **Quick Help:**\n`;
-    helpText += `\`${prefix}help premium\` \`${prefix}help [command]\` \`${prefix}subscribe\``;
+    helpText += `\`${prefix}help premium\` \`${prefix}help [command]\` \`${prefix}subscribe\`\n`;
+    helpText += `\`${prefix}listcommands\` \`${prefix}createcommand\` \`${prefix}commandcooldowns\``;
 
     return message.reply(helpText);
   }
@@ -273,7 +276,14 @@ export default class extends GameJoltCommand {
       ),
       premium: types.filter((t) => ["effects", "ai"].includes(t)),
       management: types.filter((t) =>
-        ["admin", "subscription", "level", "economy", "fishing"].includes(t),
+        [
+          "admin",
+          "custom",
+          "subscription",
+          "level",
+          "economy",
+          "fishing",
+        ].includes(t),
       ),
     };
   }
@@ -281,6 +291,7 @@ export default class extends GameJoltCommand {
   private getTypeDisplay(type: string): string {
     const typeMap: Record<string, string> = {
       admin: "🔧 Admin",
+      custom: "🛠️ Custom",
       economy: "💰 Economy",
       fishing: "🎣 Fishing",
       useful: "🔧 Useful",

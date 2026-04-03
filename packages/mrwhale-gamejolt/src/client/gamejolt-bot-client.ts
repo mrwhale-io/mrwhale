@@ -30,6 +30,7 @@ import { Policer } from "./managers/policer";
 import { GameJoltCommandDispatcher } from "./command/gamejolt-command-dispatcher";
 import { GameJoltCommand } from "./command/gamejolt-command";
 import { RoomStorageLoader } from "./storage/room-storage-loader";
+import { CustomCommandManager } from "./managers/custom-command-manager";
 import { MAX_PREFIX_LENGTH } from "../constants";
 import { VoteLeaveManager } from "./managers/vote-leave-manager";
 import { SubscriptionManager } from "./managers/subscription-manager";
@@ -214,6 +215,12 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
   readonly roomStorageLoader: RoomStorageLoader;
 
   /**
+   * Manages custom user-created commands for rooms.
+   * Handles storage, retrieval, execution, and premium limits for custom commands.
+   */
+  readonly customCommandManager: CustomCommandManager;
+
+  /**
    * Creates a new Game Jolt bot client instance.
    *
    * Initializes all required managers, validates configuration, and sets up
@@ -267,6 +274,7 @@ export class GameJoltBotClient extends BotClient<GameJoltCommand> {
       this.voteLeaveManager = new VoteLeaveManager(this);
       this.roomStorageLoader = new RoomStorageLoader(this);
       this.policer = new Policer(this);
+      this.customCommandManager = new CustomCommandManager(this);
 
       this.gameApi = new GameJolt({
         privateKey: botOptions.privateKey,

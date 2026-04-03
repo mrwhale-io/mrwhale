@@ -38,7 +38,7 @@ export abstract class GameJoltCommand extends Command<GameJoltBotClient> {
    * - 'pro': Requires Pro subscription ($9.99/month)
    * - undefined: No specific tier required (free command)
    */
-  premiumTier?: 'premium' | 'pro';
+  premiumTier?: "premium" | "pro";
 
   /**
    * A rate limiter instance to manage command usage and prevent spam.
@@ -61,6 +61,18 @@ export abstract class GameJoltCommand extends Command<GameJoltBotClient> {
     this.premium = options.premium ?? false;
     this.requiresPremium = options.requiresPremium ?? this.premium;
     this.premiumTier = options.premiumTier;
+  }
+
+  /**
+   * Gets the command name with the appropriate prefix for a given room.
+   * This is useful for generating usage instructions that include the correct prefix.
+   * @param roomId The ID of the room to get the prefix for.
+   * @returns The command name with prefix, e.g. "!greet".
+   */
+  async getNameWithPrefix(roomId: number): Promise<string> {
+    const prefix = await this.botClient.getPrefix(roomId);
+
+    return `${prefix}${this.name}`;
   }
 
   /**

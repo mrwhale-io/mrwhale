@@ -61,7 +61,14 @@ interface SubscriptionStats {
  * This class integrates with the Stripe API to handle subscription billing and status updates.
  */
 export class SubscriptionManager {
+  /**
+   * Stripe client instance for interacting with the Stripe API.
+   */
   private stripe: Stripe;
+
+  /**
+   * Configuration for Stripe integration, including API keys and environment settings.
+   */
   private stripeConfig: StripeConfig;
 
   /**
@@ -614,6 +621,7 @@ export class SubscriptionManager {
 
   /**
    * Handle subscription updates (status changes, etc.).
+   * This method processes updates to the subscription, such as cancellations, payment failures, or status changes, and updates the subscription record in the database accordingly.
    */
   private async handleSubscriptionUpdated(
     stripeSubscription: Stripe.Subscription,
@@ -707,6 +715,7 @@ export class SubscriptionManager {
 
   /**
    * Handle subscription deletion/cancellation.
+   * This method updates the subscription status to "cancelled" and sets the cancellation date in the database when a subscription is deleted or cancelled in Stripe.
    */
   private async handleSubscriptionDeleted(
     stripeSubscription: Stripe.Subscription,
@@ -797,6 +806,9 @@ export class SubscriptionManager {
 
   /**
    * Handle failed payment.
+   * This method increments the failed payment count for the subscription and updates the status to "past_due" if a payment fails. It also logs a warning with the number of failed payments for the subscription.
+   *
+   * @param invoice - The Stripe invoice object associated with the failed payment, which contains details about the subscription and user.
    */
   private async handlePaymentFailed(invoice: Stripe.Invoice): Promise<void> {
     // Type assertion needed as subscription field exists in runtime but not in TS definitions

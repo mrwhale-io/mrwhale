@@ -18,6 +18,11 @@ export enum Events {
   MESSAGE_UPDATE = "message_update",
 
   /**
+   * This event is triggered when a message is deleted from the chat.
+   */
+  MESSAGE_REMOVE = "message_remove",
+
+  /**
    * This event is triggered when a new notification is received.
    */
   NOTIFICATION = "notification",

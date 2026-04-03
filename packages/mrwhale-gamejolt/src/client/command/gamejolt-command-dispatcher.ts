@@ -23,21 +23,13 @@ import { GameJoltCommand } from "./gamejolt-command";
  * ```
  */
 export class GameJoltCommandDispatcher {
-  readonly bot: GameJoltBotClient;
-
   /**
    * Indicates whether the dispatcher is ready to process messages.
    * This can be used to delay command processing until the bot is fully initialized.
    */
-  set ready(value: boolean) {
-    this._ready = value;
-  }
-
-  /** Indicates whether the dispatcher is ready to process messages. */
-  private _ready = false;
-
-  constructor(bot: GameJoltBotClient) {
-    this.bot = bot;
+  ready: boolean = false;
+  
+  constructor(public readonly bot: GameJoltBotClient) {
     this.bot.client.on(Events.MESSAGE, (message) =>
       this.handleMessage(message),
     );
@@ -46,7 +38,7 @@ export class GameJoltCommandDispatcher {
   private async handleMessage(message: Message) {
     try {
       // Ignore messages from the bot itself or if dispatcher is not ready
-      if (message.isClientUser || !this._ready) {
+      if (message.isClientUser || !this.ready) {
         return;
       }
 
@@ -61,25 +53,37 @@ export class GameJoltCommandDispatcher {
       }
 
       // Extract the command name from the message and find corresponding command
-      const commandName = getCommandName(message.textContent, prefix);
-      const command = this.bot.commands.findByNameOrAlias(commandName);
+      const { command, commandName } = this.parseCommandFromMessage(
+        message,
+        prefix,
+      );
 
       if (!command) {
+        // Check for custom commands if no built-in command found
+        const customResult = await this.handleCustomCommand(
+          message,
+          commandName,
+        );
+
+        if (customResult) {
+          return;
+        }
+
         return message.reply(
           `❓ Unknown command. Use \`${prefix}help\` to view available commands.`,
         );
       }
 
-      // Cache frequently used values
+      // Check if user has permission to execute the command
       const room = this.bot.chat.activeRooms.get(message.room_id);
-      if (!this.hasPermissionToExecute(command, message, room, room.isPmRoom)) {
+      if (!this.hasPermissionToExecute(command, message, room)) {
         return; // Error messages are handled within the permission check
       }
 
       // Check premium access requirements
-      // if (!(await this.checkPremiumAccess(command, message))) {
-      //   return; // Error messages are handled within the premium check
-      // }
+      if (!(await this.checkPremiumAccess(command, message))) {
+        return; // Error messages are handled within the premium check
+      }
 
       // Check rate limits and cooldowns
       if (!this.checkRateLimits(message, command)) {
@@ -95,8 +99,7 @@ export class GameJoltCommandDispatcher {
 
       await this.executeCommand(command, message, args);
     } catch (error) {
-      this.bot.logger.error("Error in handleMessage:", error);
-      // Don't reply for general handler errors to avoid spam
+      this.bot.logger.error("Error while handling message:", error);
     }
   }
 
@@ -106,18 +109,16 @@ export class GameJoltCommandDispatcher {
    *
    * @param command The command to check permissions for
    * @param message The message that triggered the command
-   * @param room The room where the command was executed (if available)
-   * @param isFriendChat Whether this is a friend chat or group chat
+   * @param room The room where the command was executed
    * @returns true if user has permission, false otherwise (with error message sent)
    */
   private hasPermissionToExecute(
     command: GameJoltCommand,
     message: Message,
     room: Room | undefined,
-    isFriendChat: boolean,
   ): boolean {
     // Check group-only commands
-    if (command.groupOnly && isFriendChat) {
+    if (command.groupOnly && room?.isPmRoom) {
       message.reply("👥 This command can only be used in group chats.");
       return false;
     }
@@ -129,7 +130,7 @@ export class GameJoltCommandDispatcher {
     }
 
     // Check owner-only commands
-    if (command.owner && !message.isRoomOwner && !isFriendChat) {
+    if (command.owner && !message.isRoomOwner && !room?.isPmRoom) {
       message.reply("👑 You need to be the room owner to use this command.");
       return false;
     }
@@ -155,23 +156,12 @@ export class GameJoltCommandDispatcher {
       return true;
     }
 
-    // Development bypasses
-    if (this.isDevelopmentMode()) {
-      // Owner bypass - bot owner can always test premium features
-      if (message.user.id === this.bot.ownerId) {
-        this.bot.logger.debug(
-          `Premium bypass: Owner testing command '${command.name}'`,
-        );
-        return true;
-      }
-
-      // Environment bypass - if BYPASS_PREMIUM is set
-      if (process.env.BYPASS_PREMIUM === "true") {
-        this.bot.logger.debug(
-          `Premium bypass: Environment override for command '${command.name}'`,
-        );
-        return true;
-      }
+    // In development mode, allow bot owner to bypass premium checks for testing
+    if (this.isDevelopmentMode() && message.user.id === this.bot.ownerId) {
+      this.bot.logger.debug(
+        `Premium bypass: Owner testing command '${command.name}'`,
+      );
+      return true;
     }
 
     if (!this.bot.subscriptionManager) {
@@ -371,6 +361,91 @@ export class GameJoltCommandDispatcher {
     } else {
       message.reply("❌ Command failed to execute. Please try again later.");
     }
+  }
+
+  /**
+   * Handles custom commands defined by users in the room.
+   * Checks for matching custom commands and executes them if found.
+   * @param message The message that triggered the command
+   * @param commandName The name of the custom command
+   * @returns true if custom command was found and handled, false otherwise
+   */
+  private async handleCustomCommand(
+    message: Message,
+    commandName: string,
+  ): Promise<boolean> {
+    try {
+      const roomCommands =
+        await this.bot.customCommandManager.getRoomCustomCommands(
+          message.room_id,
+        );
+
+      // Check for exact match first
+      let command = roomCommands.commands.get(commandName.toLowerCase());
+
+      // If no exact match, check aliases
+      if (!command) {
+        for (const [, cmd] of roomCommands.commands) {
+          if (cmd.aliases.includes(commandName.toLowerCase())) {
+            command = cmd;
+            break;
+          }
+        }
+      }
+
+      if (!command || !command.enabled) {
+        return false;
+      }
+
+      // Execute the custom command
+      const response = await this.bot.customCommandManager.executeCustomCommand(
+        command,
+        message,
+      );
+
+      if (response) {
+        const sentMessage = await message.reply(response);
+
+        // Handle auto-delete if configured
+        if (command.behavior.autoDelete > 0) {
+          setTimeout(async () => {
+            try {
+              await sentMessage.delete();
+            } catch (error) {
+              // Silently ignore deletion errors
+            }
+          }, command.behavior.autoDelete);
+        }
+
+        // Delete trigger message if configured
+        if (command.behavior.deleteTrigger) {
+          try {
+            await message.delete();
+          } catch (error) {
+            // Silently ignore deletion errors
+          }
+        }
+      }
+
+      return true;
+    } catch (error) {
+      this.bot.logger.error("Error handling custom command:", error);
+      message.reply("❌ Error executing custom command.");
+      return true; // Return true to prevent "unknown command" message
+    }
+  }
+
+  /**
+   * Parses the command name from the message content and finds the corresponding command object.
+   *
+   * @param message The message containing the command
+   * @param prefix The command prefix for the room
+   * @returns An object containing the found command and the extracted command name
+   */
+  private parseCommandFromMessage(message: Message, prefix: string) {
+    const commandName = getCommandName(message.textContent, prefix);
+    const command = this.bot.commands.findByNameOrAlias(commandName);
+    return { command, commandName };
   }
 
   /**

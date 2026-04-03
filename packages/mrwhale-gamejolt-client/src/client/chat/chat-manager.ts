@@ -1,6 +1,5 @@
 import * as events from "events";
 import { Readable } from "stream";
-import { Push } from "phoenix-channels";
 
 import { Client } from "../client";
 import { User } from "../../structures/user";
@@ -299,39 +298,100 @@ export class ChatManager extends events.EventEmitter {
    *
    * @param editedContent - The new content for the message. Can be a string or a Content object.
    * @param message - The Message instance that needs to be edited.
-   * @returns A Push object representing the message update operation, or `undefined` if the operation fails.
+   * @returns A Promise that resolves when the message is successfully edited.
    * @throws {Error} When the room channel is not found or content format is invalid.
    *
    * @example
    * ```typescript
    * // Edit with plain text
-   * const push = chatManager.editMessage('Updated message content', existingMessage);
+   * await chatManager.editMessage('Updated message content', existingMessage);
    *
    * // Edit with rich content
    * const newContent = new Content('chat-message').text('Updated: ').bold('Important');
-   * const push = chatManager.editMessage(newContent, existingMessage);
+   * await chatManager.editMessage(newContent, existingMessage);
    * ```
    */
-  editMessage(
+  async editMessage(
     editedContent: string | Content,
     message: Message,
-  ): Push | undefined {
+  ): Promise<void> {
     const roomChannel = this.getRoomChannel(message.room_id);
     if (!roomChannel) {
       this.client.logger.warn(
         `Room channel ${message.room_id} not found. Cannot edit message.`,
       );
-      return;
+      throw new Error(
+        `Room channel ${message.room_id} not found. Cannot edit message.`,
+      );
     }
 
     const content = this.createContent(editedContent);
     const contentJson = this.getContentJson(content);
-    if (contentJson) {
-      return roomChannel.push(Events.MESSAGE_UPDATE, {
-        content: contentJson,
-        id: message.id,
-      });
+    if (!contentJson) {
+      this.client.logger.warn(`Invalid content format. Cannot edit message.`);
+      throw new Error(`Invalid content format. Cannot edit message.`);
     }
+
+    return new Promise((resolve, reject) => {
+      roomChannel
+        .push(Events.MESSAGE_UPDATE, {
+          content: contentJson,
+          id: message.id,
+        })
+        .receive("ok", () => {
+          this.client.logger.info(`Successfully edited message: ${message.id}`);
+          resolve();
+        })
+        .receive("error", (error) => {
+          this.client.logger.error(
+            `Failed to edit message ${message.id}: ${error}`,
+          );
+          reject(new Error(`Failed to edit message ${message.id}: ${error}`));
+        });
+    });
+  }
+
+  /**
+   * Deletes an existing chat message.
+   *
+   * @param message - The Message instance to delete.
+   * @returns A Promise that resolves when the message is successfully deleted.
+   * @throws {Error} When the room channel is not found.
+   *
+   * @example
+   * ```typescript
+   * await chatManager.deleteMessage(existingMessage);
+   * ```
+   */
+  async deleteMessage(message: Message): Promise<void> {
+    const roomChannel = this.getRoomChannel(message.room_id);
+    if (!roomChannel) {
+      this.client.logger.warn(
+        `Room channel ${message.room_id} not found. Cannot delete message.`,
+      );
+      throw new Error(
+        `Room channel ${message.room_id} not found. Cannot delete message.`,
+      );
+    }
+
+    return new Promise((resolve, reject) => {
+      roomChannel
+        .push(Events.MESSAGE_REMOVE, {
+          id: message.id,
+        })
+        .receive("ok", () => {
+          this.client.logger.info(
+            `Successfully deleted message: ${message.id}`,
+          );
+          resolve();
+        })
+        .receive("error", (error) => {
+          this.client.logger.error(
+            `Failed to delete message ${message.id}: ${error}`,
+          );
+          reject(new Error(`Failed to delete message ${message.id}: ${error}`));
+        });
+    });
   }
 
   /**

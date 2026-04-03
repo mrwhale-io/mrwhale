@@ -1,16 +1,5 @@
 import { BotOptions } from "@mrwhale-io/core";
-
-/**
- * Stripe configuration for subscription management.
- */
-interface StripeConfig {
-  /** Stripe secret key (starts with sk_) */
-  secretKey: string;
-  /** Stripe webhook endpoint secret (starts with whsec_) */
-  webhookSecret: string;
-  /** Environment: 'test' for development, 'live' for production */
-  environment: string;
-}
+import { StripeConfig } from "./stripe-config";
 
 /**
  * Contains options to be passed to a BotClient object on construction.

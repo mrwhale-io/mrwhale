@@ -18,11 +18,11 @@ export default class extends DiscordSelectMenu {
   }
 
   async action(
-    interaction: StringSelectMenuInteraction
+    interaction: StringSelectMenuInteraction,
   ): Promise<Message<boolean>> {
     const embed = await getCommandsByTypeEmbed(
       interaction.values[0],
-      this.botClient
+      this.botClient,
     );
 
     interaction.deferUpdate();
@@ -37,12 +37,12 @@ export default class extends DiscordSelectMenu {
       .setMinValues(1)
       .setMaxValues(1);
 
-    for (let category of COMMAND_TYPE_NAMES) {
+    for (const category of COMMAND_TYPE_NAMES) {
       selectCategoryMenu.addOptions(
         new StringSelectMenuOptionBuilder()
           .setLabel(capitalise(category))
           .setValue(category)
-          .setEmoji(this.getEmoji(category))
+          .setEmoji(this.getEmoji(category)),
       );
     }
 
