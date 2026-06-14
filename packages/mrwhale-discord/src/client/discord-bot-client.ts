@@ -59,6 +59,7 @@ import { ActivitySchedulerManager } from "./managers/activity-scheduler-manager"
 import { TreasureHuntManager } from "./managers/treasure-hunt-manager";
 import { Activities } from "../types/activities/activities";
 import { NotificationManager } from "./managers/notification-manager";
+import { JamManager } from "./managers/jam-manager";
 
 const { on, once, registerListeners } = ListenerDecorators;
 
@@ -193,6 +194,13 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   }
 
   /**
+   * Gets the instance of the JamManager.
+   */
+  get jamManager(): JamManager {
+    return this._jamManager;
+  }
+
+  /**
    * The discord bot list API key.
    */
   private discordBotList?: string;
@@ -214,6 +222,7 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
   private _fishingAttemptTracker: FishingAttemptTracker;
   private _fishSpawner: FishSpawner;
   private _notificationManager: NotificationManager;
+  private _jamManager: JamManager;
 
   constructor(botOptions: DiscordBotOptions, clientOptions: ClientOptions) {
     super(botOptions);
@@ -678,6 +687,8 @@ export class DiscordBotClient extends BotClient<DiscordCommand> {
     this.userBalanceManager = new UserBalanceManager();
     this.greetingsManager = new GreetingsManager(this);
     this._treasureHuntManager = new TreasureHuntManager(this);
+    this._jamManager = new JamManager(this);
+    this._jamManager.start().catch((e) => this.logger.error("JamManager failed to start:", e));
   }
 
   private initialiseHandlers(): void {
