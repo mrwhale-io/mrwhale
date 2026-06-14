@@ -13,4 +13,6 @@ export enum Settings {
   LevelChannel = "levelChannel",
   Prefix = "prefix",
   RankCard = "rankCard",
+  JamChannel = "jamChannel",
+  WeeklyJam = "weeklyJam",
 }
